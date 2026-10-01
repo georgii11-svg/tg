@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Я против Рика Прайма</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Courier New", "Consolas", monospace;
+    background:
+      radial-gradient(circle at 20% 10%, #2a0d3a 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, #3a0d1a 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #050510 0%, #000 80%);
+    background-attachment: fixed;
+    color: #e8e8f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px;
+    min-height: 100vh;
+  }
+  .game {
+    max-width: 560px;
+    width: 100%;
+    background: rgba(8, 8, 18, 0.92);
+    border: 1px solid #6e4aff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 0 50px rgba(110, 74, 255, 0.25), 0 20px 60px rgba(0,0,0,0.8);
+  }
+
+  .fighter { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+  .fighter .name {
+    display: flex; justify-content: space-between;
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #a0a0c0;
+  }
+  .fighter .name .you-name { color: #5ecbff; }
+  .fighter .name .rick-name { color: #ff5c8a; }
+  .fighter .bar {
+    height: 12px; background: #101020;
+    border: 1px solid #2a2a40; border-radius: 6px; overflow: hidden; position: relative;
+  }
+  .fighter .bar .fill { height: 100%; transition: width 0.5s ease; border-radius: 6px; }
+  .bar.you .fill { background: linear-gradient(90deg, #2a8aff, #5ecbff); }
+  .bar.rick .fill { background: linear-gradient(90deg, #ff2a6a, #ff8aa8); }
+  .bar .num {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 9px; color: #fff; letter-spacing: 1px; text-shadow: 0 0 4px #000;
+  }
+
+  .scene {
+    background: #06060e; border: 1px solid #1e1e30; border-radius: 8px;
+    padding: 14px 16px; font-size: 14px; line-height: 1.6;
+    color: #c8c8dc; margin-bottom: 14px;
+    min-height: 120px; max-height: 260px; overflow-y: auto; white-space: pre-wrap;
+  }
+  .scene .you { color: #5ecbff; font-weight: 600; }
+  .scene .rick { color: #ff5c8a; font-weight: 600; }
+  .scene .sys { color: #8a7ad6; font-style: italic; }
+  .scene .danger { color: #ff4040; font-weight: 600; }
+  .scene .crit { color: #ffb800; font-weight: 700; }
+  .scene .good { color: #6ee37c; font-weight: 600; }
+  .scene .log { color: #808098; }
+
+  .choices { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+  .choice {
+    display: block; width: 100%; text-align: left;
+    padding: 11px 14px; background: #10101c;
+    border: 1px solid #24243a; border-radius: 8px;
+    color: #c8c8dc; font-family: inherit; font-size: 13.5px;
+    line-height: 1.4; cursor: pointer; transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #181830; border-color: #6e4aff; color: #fff; transform: translateX(3px);
+  }
+  .choice .arrow { color: #6e4aff; margin-right: 8px; }
+
+  .custom { display: flex; gap: 8px; margin-bottom: 6px; }
+  .custom input {
+    flex: 1; padding: 11px 14px; background: #0a0a14;
+    border: 1px solid #2a2a48; border-radius: 8px;
+    color: #e8e8f0; font-family: inherit; font-size: 13.5px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .custom input:focus { border-color: #6e4aff; box-shadow: 0 0 12px rgba(110,74,255,0.3); }
+  .custom input::placeholder { color: #4a4a6a; }
+  .custom button {
+    padding: 0 18px; background: linear-gradient(135deg, #6e4aff, #9a5aff);
+    border: none; border-radius: 8px; color: #fff;
+    font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.15s;
+  }
+  .custom button:hover { box-shadow: 0 0 20px rgba(110,74,255,0.6); }
+  .custom button:active { transform: scale(0.95); }
+
+  .hint { font-size: 11px; color: #5a5a7a; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; }
+
+  .end-box { text-align: center; padding: 20px 10px; }
+  .end-box .icon { font-size: 54px; margin-bottom: 12px; }
+  .end-box .verdict {
+    font-size: 20px; letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 14px; font-weight: 700;
+  }
+  .verdict.win { color: #5ecbff; text-shadow: 0 0 20px #2a8aff; }
+  .verdict.lose { color: #ff2a6a; text-shadow: 0 0 20px #ff2a6a; }
+  .end-box .desc { font-size: 14px; color: #a8a8bc; line-height: 1.7; margin-bottom: 22px; }
+  .replay {
+    display: inline-block; padding: 12px 26px;
+    background: transparent; color: #6e4aff;
+    border: 1px solid #6e4aff; border-radius: 8px;
+    font-family: inherit; font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+  }
+  .replay:hover { background: rgba(110,74,255,0.15); box-shadow: 0 0 20px rgba(110,74,255,0.4); }
+
+  .fade { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .shake { animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translate(0,0); }
+    20% { transform: translate(-5px, 2px); }
+    40% { transform: translate(5px, -2px); }
+    60% { transform: translate(-4px, -2px); }
+    80% { transform: translate(4px, 2px); }
+  }
+
+  .flash {
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 999; opacity: 0; transition: opacity 0.1s;
+  }
+</style>
+</head>
+<body>
+  <div class="game" id="game">
+
+    <div class="fighter">
+      <div class="name">
+        <span class="you-name">ТЫ · Протокол Ω</span>
+        <span id="youHpNum">100 / 100</span>
+      </div>
+      <div class="bar you"><div class="fill" id="youBar" style="width:100%"></div></div>
+    </div>
+
+    <div class="fighter">
+      <div class="name">
+        <span class="rick-name">РИК ПРАЙМ</span>
+        <span id="rickHpNum">100 / 100</span>
+      </div>
+      <div class="bar rick"><div class="fill" id="rickBar" style="width:100%"></div></div>
+    </div>
+
+    <div class="scene" id="scene"></div>
+
+    <div class="choices" id="choices"></div>
+
+    <div class="custom">
+      <input type="text" id="customInput" placeholder="Напиши своё действие...">
+      <button id="customBtn">⚡</button>
+    </div>
+    <div class="hint">...или выбери вариант выше · свой ход = шанс крита выше</div>
+
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <script>
+    const state = {
+      youHp: 100, rickHp: 100, maxYou: 100, maxRick: 100,
+      round: 0, log: [], over: false
+    };
+
+    const youBar = document.getElementById('youBar');
+    const rickBar = document.getElementById('rickBar');
+    const youHpNum = document.getElementById('youHpNum');
+    const rickHpNum = document.getElementById('rickHpNum');
+    const sceneEl = document.getElementById('scene');
+    const choicesEl = document.getElementById('choices');
+    const customInput = document.getElementById('customInput');
+    const customBtn = document.getElementById('customBtn');
+    const flash = document.getElementById('flash');
+    const game = document.getElementById('game');
+
+    function updateBars() {
+      youBar.style.width = Math.max(0, state.youHp) / state.maxYou * 100 + '%';
+      rickBar.style.width = Math.max(0, state.rickHp) / state.maxRick * 100 + '%';
+      youHpNum.textContent = Math.max(0, state.youHp) + ' / ' + state.maxYou;
+      rickHpNum.textContent = Math.max(0, state.rickHp) + ' / ' + state.maxRick;
+    }
+
+    function addLog(html) {
+      state.log.push(html);
+      sceneEl.innerHTML = state.log.slice(-8).join('\n');
+      sceneEl.scrollTop = sceneEl.scrollHeight;
+    }
+
+    function flashScreen(color, ms) {
+      flash.style.background = color;
+      flash.style.opacity = '1';
+      setTimeout(() => { flash.style.opacity = '0'; }, ms);
+    }
+
+    function shake() {
+      game.classList.add('shake');
+      setTimeout(() => game.classList.remove('shake'), 350);
+    }
+
+    // ============ БОЛЬШОЙ СЛОВАРЬ (в 10 раз больше) ============
+    const keywords = {
+      attack: [
+        'атак', 'бью', 'удар', 'стрел', 'взрыв', 'ломаю', 'рву', 'жгу', 'режу', 'кидаю',
+        'швыр', 'бомб', 'ракет', 'пушк', 'меч', 'кулак', 'вреза', 'давлю', 'уничтож',
+        'рублю', 'колю', 'пронза', 'пробива', 'сокруша', 'разруша', 'разбива', 'дроблю', 'крошу', 'шмаляю',
+        'палю', 'поджига', 'плазм', 'лазер', 'испепеля', 'сжига', 'распыля', 'грызу',
+        'топчу', 'пинаю', 'молочу', 'хлещу', 'секу', 'полосую', 'царапа', 'кусаю', 'бодаю',
+        'таран', 'сбива', 'роняю', 'опрокидыва', 'переворач', 'метаю', 'запуска', 'втыка', 'всажива', 'загоня',
+        'протыка', 'насажива', 'пригвожда', 'прибива', 'сношу', 'громлю', 'плющу', 'стираю', 'выжига', 'аннигилиру',
+        'дезинтегриру', 'расщепля', 'растворя', 'травлю', 'душу', 'вешаю', 'обстрелива', 'бомблю', 'торпед', 'гранат', 'мина',
+        'напада', 'бросаюсь', 'кидаюсь', 'рвусь', 'штурмую', 'налетаю', 'наезжаю', 'наскакива', 'набрасыва', 'давлю'
+      ],
+      defense: [
+        'защит', 'щит', 'блок', 'уворач', 'уклон', 'телепорт', 'прыгаю', 'отступа', 'барьер', 'броня',
+        'прячусь', 'замираю', 'закрыва', 'прикрыва', 'заслоня', 'отража', 'париру', 'отбива', 'отвожу', 'отталкива',
+        'стена', 'купол', 'сфера', 'покров', 'панцирь', 'скорлуп', 'кокон', 'оболочка', 'экран', 'поле',
+        'уклоня', 'ухожу', 'сматыва', 'свалива', 'убегаю', 'удираю', 'сбегаю', 'отхожу', 'отпрыгива', 'отскакива',
+        'ныряю', 'поднырива', 'проскальзыва', 'ускольза', 'выскальзыва', 'вывертыва', 'изворачива', 'лавиру', 'маневри', 'пируэт',
+        'невидимост', 'маскировк', 'камуфляж', 'скрыва', 'таюсь', 'затаива', 'исчеза', 'испаря',
+        'ремонт', 'починк', 'восстановле', 'регенер', 'зажива', 'лечу', 'латаю', 'штопаю', 'заварива', 'склеива',
+        'кувырок', 'перекат', 'сальто', 'переворот', 'откат', 'отход', 'ретиров', 'эвакуац', 'спасени',
+        'оборон', 'оберега', 'охраня', 'сторожу', 'караулю', 'прикрыти', 'отражени', 'парирован', 'блокиров'
+      ],
+      time: [
+        'время', 'замедля', 'заморажива', 'останавлив', 'ускоря', 'пауза', 'секунд', 'хрон', 'часы', 'минут',
+        'прошлое', 'будущее', 'настоящее', 'темп', 'скорост', 'замедлени', 'ускорени', 'остановк', 'стоп', 'кадр',
+        'откат', 'перемотк', 'промотк', 'прокрутк', 'реверс', 'обратн', 'назад', 'вперёд', 'вперед',
+        'вечност', 'бесконечност', 'цикл', 'петля', 'петлю', 'временн', 'тайм', 'таймер', 'отсчёт', 'отсчет',
+        'заморозк', 'заморозь', 'лёд', 'лед', 'холод', 'мороз', 'стужа', 'застыва', 'окаменева', 'паралич',
+        'стазис', 'анабиоз', 'консервац', 'фиксац', 'закрепля', 'приморажива', 'сковыва', 'цементиру', 'затвердева',
+        'день', 'ночь', 'утро', 'вечер', 'рассвет', 'закат', 'эпох', 'тысячелети',
+        'старени', 'молодост', 'старею', 'молодею', 'омолажива', 'дряхлею', 'ветшаю', 'изнашива', 'обнуляю'
+      ],
+      mind: [
+        'читаю', 'мысл', 'психик', 'мозг', 'внуш', 'гипноз', 'иллюзи', 'обман', 'хитрост', 'запутыва',
+        'провоциру', 'говорю', 'уговар', 'убежда', 'доказыва', 'спорю', 'пререка', 'подкалыва', 'язвлю', 'насмеха',
+        'высмеива', 'подшучива', 'шути', 'прикалыва', 'стёб', 'стеб', 'троллю', 'издева', 'дразню', 'бешу',
+        'контроль', 'подчин', 'управля', 'командую', 'приказыва', 'заставля', 'принужда', 'подавля',
+        'страх', 'ужас', 'паник', 'пугаю', 'устраша', 'запугива', 'грожу', 'угрожа', 'предупрежда', 'предостерега',
+        'сознани', 'подсознани', 'психолог', 'гипнотиз', 'транс', 'медитац', 'внушени', 'суггест',
+        'правд', 'лож', 'обманыва', 'вру', 'лукавлю', 'хитрю', 'мудрю', 'кручу', 'верчу',
+        'анализ', 'анализиру', 'изуча', 'разбира', 'понима', 'осозна', 'догадыва', 'смека', 'сообража', 'думаю'
+      ],
+      tech: [
+        'техно', 'хак', 'взлам', 'вирус', 'систем', 'код', 'программ', 'армия', 'робот', 'дрон',
+        'налёт', 'налет', 'клон', 'копи', 'технолог', 'модул', 'имплант', 'чип', 'микрочип', 'наноробот',
+        'нанит', 'наночаст', 'механизм', 'машин', 'устройств', 'гаджет', 'прибор', 'аппарат', 'агрегат', 'двигател',
+        'компьютер', 'процессор', 'сервер', 'база данных', 'нейросет', 'искусственн', 'интеллект', 'алгоритм', 'софт',
+        'взлом', 'лом', 'дешифров', 'дешифратор', 'парол', 'код доступа', 'ключ', 'шифр', 'шифрова', 'расшифров',
+        'баг', 'глюк', 'сбой', 'ошибк', 'троян', 'червь', 'майнер', 'вымогател',
+        'роботиз', 'автоматиз', 'механиз', 'моториз', 'сервопривод', 'гидравлик', 'пневматик', 'электрик', 'электрон', 'кибернетик',
+        'имплант', 'протез', 'экзоскелет', 'бронекостюм', 'скафандр', 'костюм', 'экипировк', 'снаряжени', 'вооружени', 'арсенал',
+        'спутник', 'беспилотник', 'квадрокоптер', 'андроид', 'киборг', 'терминатор', 'мех', 'меха'
+      ],
+      cosmic: [
+        'простран', 'портал', 'космос', 'вселен', 'измерен', 'мультивселен', 'чёрн', 'черн', 'дыр', 'гравитац',
+        'планет', 'звезд', 'галактик', 'туманност', 'комет', 'астероид', 'метеорит', 'сверхнов', 'квазар', 'пульсар',
+        'нейтронн', 'кротов', 'червоточин', 'гиперпространств', 'подпространств', 'надпространств', 'межпространств',
+        'энерг', 'плазм', 'антиматер', 'тёмн', 'темн', 'матери', 'энергетич', 'луч', 'излучени', 'волн',
+        'телепорт', 'перемеща', 'переношу', 'транспорт', 'транслокац', 'телекинез', 'телепат', 'мысленн',
+        'реальност', 'быти', 'существовани', 'мироздани', 'космолог', 'астрофизик', 'квантов', 'квант', 'суперструн', 'струн',
+        'сингулярн', 'коллапс', 'схлопыва', 'сжима', 'разжима', 'расширя', 'большой взрыв',
+        'плоскост', 'мерност', 'четырёхмерн', 'пятимерн', 'многомерн', 'гиперкуб', 'тессеракт', 'фрактал',
+        'вакуум', 'ничто', 'небыти', 'хаос', 'порядок', 'энтропи', 'равновеси'
+      ],
+      heal: [
+        'лечу', 'востанавл', 'реген', 'чиню', 'латаю', 'подлеч', 'зажива', 'затягива', 'рубцу',
+        'исцеля', 'вылечива', 'излечива', 'поправля', 'выздоравлива', 'оклема', 'ожива', 'воскреша', 'возрожда', 'перерожда',
+        'омолажива', 'молодею', 'обновля', 'ремонтиру', 'штопаю', 'зашива', 'сшива', 'склеива', 'сварива', 'паяю',
+        'реанимиру', 'спасаю', 'вытаскива', 'вытягива', 'поднима', 'возвраща', 'бужу', 'тормошу',
+        'аптечк', 'бинт', 'пластыр', 'жгут', 'шприц', 'укол', 'инъекц', 'таблетк', 'пилюл', 'микстур',
+        'энергетик', 'подзаряжа', 'заряжа', 'питани', 'подпитк', 'подкрепля', 'усилива', 'бафф', 'буст',
+        'броня', 'щит', 'барьер', 'купол', 'укрепля', 'брониру',
+        'молитв', 'благослов', 'свят', 'чудо', 'магия', 'заклинани', 'заклинан', 'ритуал', 'обряд', 'жертвоприношени'
+      ]
+    };
+
+    function classify(text) {
+      const t = text.toLowerCase();
+      for (const key in keywords) {
+        for (const word of keywords[key]) {
+          if (t.includes(word)) return key;
+        }
+      }
+      return 'unknown';
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function damageRick(amount, label, isCrit) {
+      state.rickHp -= amount;
+      addLog(`<span class="you">[ТЫ]:</span> ${label}`);
+      addLog(`  → урон <span class="danger">${amount}</span>${isCrit ? ' <span class="crit">КРИТ ×2!</span>' : ''}`);
+      updateBars();
+      shake();
+    }
+
+    function damageYou(amount, label) {
+      state.youHp -= amount;
+      addLog(`<span class="rick">[РИК ПРАЙМ]:</span> ${label}`);
+      addLog(`  → урон <span class="danger">${amount}</span>`);
+      updateBars();
+      flashScreen('#ff2a6a', 100);
+      shake();
+    }
+
+    const rickLines = [
+      'Жалко. Я видел это за 12 измерений вперёд.',
+      'О, ещё один с протоколом Ω. Оригинально. В 4-й вселенной было то же самое.',
+      'Ты сильнее, чем я думал. Ненамного. Но сильнее.',
+      'Это всё? Или ты ещё что-то умеешь, кроме позёрства?',
+      'Знаешь, что общего между тобой и Морти? Оба мешаете.',
+      'Я убивал тебя 400 раз. В других вселенных. Ты не помнишь.',
+      'Хороший ход. Для тебя.',
+      'Твои технологии — детский сад по сравнению с моими.',
+      'Продолжай. Мне даже интересно.',
+      'Ты пытаешься. Это уже больше, чем делают остальные.',
+      'Знаешь, я почти тобой впечатлён. Почти.',
+      'В этой вселенной ты смелее. В остальных ты сдох на первом ходу.',
+      'Неплохо. Уже второй раз за день, когда я это говорю.',
+      'Хм. Может, из тебя что-то выйдет. Хотя вряд ли.'
+    ];
+
+    function rickCounter() {
+      const dmg = randomInt(4, 12);
+      const line = rickLines[randomInt(0, rickLines.length - 1)];
+      damageYou(dmg, line);
+    }
+
+    function processAction(text, type) {
+      if (state.over) return;
+
+      const isCustom = type === 'custom';
+      const critChance = isCustom ? 0.35 : 0.15;
+      const isCrit = Math.random() < critChance;
+
+      let dmg = 0;
+      let label = '';
+
+      switch (type) {
+        case 'attack':
+          dmg = randomInt(10, 18);
+          label = `Ты бьёшь в полную силу — технологии в теле вспыхивают.`;
+          break;
+        case 'defense':
+          dmg = randomInt(4, 9);
+          label = `Ты ставишь барьер и контратакуешь сквозь него.`;
+          break;
+        case 'time':
+          dmg = randomInt(12, 20);
+          label = `Ты останавливаешь время — и бьёшь в застывшее лицо.`;
+          break;
+        case 'mind':
+          dmg = randomInt(6, 14);
+          label = `Ты ломаешь его волю — он на секунду замирает.`;
+          break;
+        case 'tech':
+          dmg = randomInt(11, 19);
+          label = `Твои нанороботы атакуют его изнутри.`;
+          break;
+        case 'cosmic':
+          dmg = randomInt(13, 22);
+          label = `Ты рвёшь само пространство вокруг него.`;
+          break;
+        case 'heal':
+          const heal = randomInt(8, 16);
+          state.youHp = Math.min(state.maxYou, state.youHp + heal);
+          addLog(`<span class="you">[ТЫ]:</span> Ты запускаешь регенерацию: <span class="good">+${heal} HP</span>.`);
+          updateBars();
+          setTimeout(() => rickCounter(), 500);
+          return;
+        default:
+          dmg = randomInt(5, 12);
+          label = `Ты делаешь что-то странное: "${text}". Оно почему-то работает.`;
+      }
+
+      if (isCrit) dmg *= 2;
+
+      if (isCustom) {
+        const bonus = Math.min(6, Math.floor(text.length / 10));
+        dmg += bonus;
+      }
+
+      damageRick(dmg, label, isCrit);
+
+      if (state.rickHp <= 0) {
+        setTimeout(() => endGame('win'), 700);
+        return;
+      }
+
+      setTimeout(() => {
+        if (state.over) return;
+        if (Math.random() < 0.15) {
+          addLog(`<span class="sys">Рик Прайм уклоняется от следующего удара.</span>`);
+        } else {
+          rickCounter();
+        }
+        if (state.youHp <= 0) endGame('lose');
+      }, 600);
+    }
+
+    function endGame(result) {
+      if (state.over) return;
+      state.over = true;
+      choicesEl.innerHTML = '';
+      customInput.disabled = true;
+      customBtn.disabled = true;
+
+      let html = '';
+      if (result === 'win') {
+        html = `
+          <div class="end-box fade">
+            <div class="icon">⚡</div>
+            <div class="verdict win">ТЫ ПОБЕДИЛ</div>
+            <div class="desc">Рик Прайм падает на колени. Впервые за всё существование мультивселенной. Он смотрит на тебя — не с ненавистью. С уважением. «Ты… — говорит он, сплёвывая кровь, — лучше, чем я думал. В следующий раз я приду подготовленным». Он исчезает в портале. Ты стоишь один на обломках вселенной. Технологии в твоём теле гудят. Ты — легенда.</div>
+            <button class="replay" onclick="restart()">Сразиться снова</button>
+          </div>
+        `;
+      } else {
+        html = `
+          <div class="end-box fade">
+            <div class="icon">💀</div>
+            <div class="verdict lose">ТЫ ПРОИГРАЛ</div>
+            <div class="desc">Рик Прайм вытирает руки. «Неплохо, — говорит он. — Ты продержался дольше, чем 90% моих противников». Он открывает портал и уходит. Ты остаёшься лежать. Но технологии в твоём теле восстанавливаются. Медленно. Ты чувствуешь: это ещё не конец. Ты вернёшься.</div>
+            <button class="replay" onclick="restart()">Сразиться снова</button>
+          </div>
+        `;
+      }
+      sceneEl.innerHTML = state.log.slice(-3).join('\n') + '\n' + html;
+    }
+
+    function showChoices() {
+      if (state.over) return;
+      const choices = [
+        { text: '⚡ Атаковать в полную силу', type: 'attack' },
+        { text: '🛡️ Поставить барьер и контратаковать', type: 'defense' },
+        { text: '⏱️ Остановить время и ударить', type: 'time' },
+        { text: '🧠 Атаковать его разум', type: 'mind' },
+        { text: '🤖 Выпустить нанороботов', type: 'tech' },
+        { text: '🌀 Разорвать пространство', type: 'cosmic' },
+        { text: '💚 Запустить регенерацию', type: 'heal' }
+      ];
+      choicesEl.innerHTML = choices.map(c =>
+        `<button class="choice" data-type="${c.type}">
+          <span class="arrow">▸</span>${c.text}
+        </button>`
+      ).join('');
+
+      choicesEl.querySelectorAll('.choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.round++;
+          processAction('', btn.dataset.type);
+        });
+      });
+    }
+
+    customBtn.addEventListener('click', () => {
+      const text = customInput.value.trim();
+      if (!text) return;
+      state.round++;
+      const type = classify(text);
+      processAction(text, type === 'unknown' ? 'custom' : type);
+      customInput.value = '';
+    });
+
+    customInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') customBtn.click();
+    });
+
+    function restart() {
+      state.youHp = 100;
+      state.rickHp = 100;
+      state.round = 0;
+      state.log = [];
+      state.over = false;
+      customInput.disabled = false;
+      customBtn.disabled = false;
+      customInput.value = '';
+      updateBars();
+      start();
+    }
+
+    function start() {
+      sceneEl.innerHTML = '';
+      addLog(`<span class="sys">[ Нейтральная зона. Ты и Рик Прайм. Один на один. ]</span>`);
+      addLog(`<span class="rick">РИК ПРАЙМ:</span> Ну что, «Протокол Ω». Покажи, на что ты способен.`);
+      addLog(`<span class="sys">Выбери ход или напиши свой.</span>`);
+      updateBars();
+      showChoices();
+    }
+
+    start();
+  </script>
+</body>
+</html>
