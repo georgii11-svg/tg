@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>🎁 Нажми — получи приз</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 30%, #2b1a4a 0%, #0a0a14 70%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    user-select: none;
+  }
+  .gift {
+    font-size: 90px;
+    margin-bottom: 24px;
+    animation: bounce 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 200, 100, 0.4));
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-12px) rotate(3deg); }
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    background: linear-gradient(90deg, #ffd166, #ff8fa3, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.5px;
+  }
+  p {
+    font-size: 15px;
+    color: #b8b8c8;
+    line-height: 1.6;
+    max-width: 320px;
+    margin-bottom: 36px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 18px 44px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a0a2a;
+    background: linear-gradient(135deg, #ffd166 0%, #ffb347 100%);
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 0 #b87820, 0 12px 30px rgba(255, 180, 60, 0.4);
+    transition: all 0.1s ease;
+    animation: pulseBtn 2s ease-in-out infinite;
+  }
+  @keyframes pulseBtn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .btn:active {
+    transform: translateY(6px) scale(1.02);
+    box-shadow: 0 2px 0 #b87820, 0 6px 16px rgba(255, 180, 60, 0.4);
+  }
+  .hint {
+    margin-top: 28px;
+    font-size: 12px;
+    color: #5a5a70;
+    letter-spacing: 1px;
+  }
+
+  /* экран после нажатия */
+  #after {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  #after.show {
+    display: flex;
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  #after .pig {
+    font-size: 120px;
+    margin-bottom: 20px;
+    animation: shake 0.3s ease infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: rotate(-8deg) scale(1); }
+    50% { transform: rotate(8deg) scale(1.1); }
+  }
+  #after h2 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #ff8fa3;
+    text-shadow: 0 0 20px rgba(255, 143, 163, 0.6);
+  }
+  #after p {
+    color: #e0e0e8;
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+  .flash-red {
+    position: fixed;
+    inset: 0;
+    background: #ff2a5a;
+    opacity: 0;
+    pointer-events: none;
+    animation: redFlash 0.5s ease;
+  }
+  @keyframes redFlash {
+    0% { opacity: 0; }
+    30% { opacity: 0.4; }
+    100% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <div id="main">
+    <div class="gift">🎁</div>
+    <h1>Секретный приз</h1>
+    <p>Внутри — подарок за твоё любопытство. Нажми на кнопку, чтобы открыть.</p>
+    <button class="btn" id="prizeBtn">Забрать приз</button>
+    <div class="hint">*только сегодня · один раз</div>
+  </div>
+
+  <div id="after">
+    <div class="pig">🐷</div>
+    <h2>ПРИЗ — СВИНЬЯ!</h2>
+    <p>Поздравляем, ты выиграл настоящую свинью. Хрю.</p>
+  </div>
+
+  <script>
+    // ---------- генерация звука свиньи через Web Audio ----------
+    // (никаких файлов снаружи — всё синтезируется в браузере)
+
+    let audioCtx = null;
+
+    function getCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    // один "хрюк" — комбинация визга и носового гудения
+    function oink(startTime, volume, baseFreq) {
+      const ctx = getCtx();
+
+      // основной визг — пила, резкий
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      const filter1 = ctx.createBiquadFilter();
+
+      osc1.type = 'sawtooth';
+      osc1.frequency.setValueAtTime(baseFreq, startTime);
+      osc1.frequency.linearRampToValueAtTime(baseFreq * 1.8, startTime + 0.06);
+      osc1.frequency.linearRampToValueAtTime(baseFreq * 0.7, startTime + 0.25);
+
+      filter1.type = 'bandpass';
+      filter1.frequency.value = 900;
+      filter1.Q.value = 4;
+
+      gain1.gain.setValueAtTime(0, startTime);
+      gain1.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+      gain1.gain.linearRampToValueAtTime(volume * 0.7, startTime + 0.15);
+      gain1.gain.linearRampToValueAtTime(0, startTime + 0.28);
+
+      osc1.connect(filter1).connect(gain1).connect(ctx.destination);
+      osc1.start(startTime);
+      osc1.stop(startTime + 0.3);
+
+      // носовое гудение снизу
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(baseFreq * 0.4, startTime);
+      osc2.frequency.linearRampToValueAtTime(baseFreq * 0.5, startTime + 0.2);
+
+      gain2.gain.setValueAtTime(0, startTime);
+      gain2.gain.linearRampToValueAtTime(volume * 0.5, startTime + 0.03);
+      gain2.gain.linearRampToValueAtTime(0, startTime + 0.28);
+
+      osc2.connect(gain2).connect(ctx.destination);
+      osc2.start(startTime);
+      osc2.stop(startTime + 0.3);
+    }
+
+    // серия хрюков — "визг свиньи"
+    function screamPig() {
+      const ctx = getCtx();
+      const t = ctx.currentTime;
+
+      // очень громко: 0.6 — существенно громче обычного
+      const vol = 0.6;
+
+      // быстрая серия из 8 хрюков
+      for (let i = 0; i < 8; i++) {
+        const freq = 320 + Math.random() * 200;
+        oink(t + i * 0.14, vol, freq);
+      }
+
+      // финальный длинный визг
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, t + 1.2);
+      osc.frequency.linearRampToValueAtTime(1600, t + 1.5);
+      osc.frequency.linearRampToValueAtTime(280, t + 2.2);
+
+      filter.type = 'bandpass';
+      filter.frequency.value = 1100;
+      filter.Q.value = 3;
+
+      gain.gain.setValueAtTime(0, t + 1.2);
+      gain.gain.linearRampToValueAtTime(vol * 0.9, t + 1.25);
+      gain.gain.linearRampToValueAtTime(0, t + 2.3);
+
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(t + 1.2);
+      osc.stop(t + 2.4);
+    }
+
+    // ---------- логика кнопки ----------
+
+    const btn = document.getElementById('prizeBtn');
+    const main = document.getElementById('main');
+    const after = document.getElementById('after');
+
+    btn.addEventListener('click', () => {
+      // 1. запускаем громкий визг
+      try { screamPig(); } catch(e) {}
+
+      // 2. красная вспышка
+      const flash = document.createElement('div');
+      flash.className = 'flash-red';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 500);
+
+      // 3. вибрируем телефон (если поддерживается)
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 400]);
+      }
+
+      // 4. переключаем на экран с призом
+      setTimeout(() => {
+        main.style.display = 'none';
+        after.classList.add('show');
+      }, 300);
+    });
+  </script>
+</body>
+</html>
