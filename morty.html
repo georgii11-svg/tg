@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Рик и Морти: Портал в 03:47</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Comic Sans MS", "Chalkboard SE", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, #1a4d2e 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, #2d1a4d 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #0a0e1a 0%, #000 80%);
+    background-attachment: fixed;
+    color: #e8f5e9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .game {
+    max-width: 520px;
+    width: 100%;
+    background: rgba(10, 15, 25, 0.88);
+    border: 2px solid #6ee37c;
+    border-radius: 18px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 0 40px rgba(110, 227, 124, 0.25), 0 20px 60px rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #6ee37c;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #2a4a3a;
+  }
+  .hud .inv { color: #f7c948; font-size: 12px; text-transform: none; letter-spacing: 0; }
+  .scene-title {
+    font-size: 13px;
+    color: #6ee37c;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .scene-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #d8e8dc;
+    margin-bottom: 20px;
+    min-height: 100px;
+    white-space: pre-wrap;
+  }
+  .scene-text .rick { color: #6ee37c; font-weight: 600; }
+  .scene-text .morty { color: #f7c948; font-weight: 600; }
+  .scene-text .you { color: #5eb3ff; font-weight: 600; }
+  .scene-text .sys { color: #8a7ad6; font-style: italic; }
+  .scene-text .danger { color: #ff5c5c; font-weight: 600; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 13px 15px;
+    background: #14202e;
+    border: 1px solid #1e3a4a;
+    border-radius: 10px;
+    color: #c8dcdc;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #1c2e40;
+    border-color: #6ee37c;
+    color: #e8f5e9;
+    transform: translateX(3px);
+  }
+  .choice .arrow { color: #6ee37c; margin-right: 8px; }
+  .choice .risk { color: #ff5c5c; }
+  .choice .smart { color: #6ee37c; }
+  .end-screen {
+    text-align: center;
+    padding: 12px 0;
+  }
+  .end-screen .final { font-size: 42px; margin-bottom: 10px; }
+  .end-screen .verdict {
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .verdict.bad { color: #ff5c5c; }
+  .verdict.good { color: #6ee37c; }
+  .verdict.weird { color: #f7c948; }
+  .verdict.neutral { color: #8a7ad6; }
+  .end-screen .desc {
+    font-size: 14px;
+    color: #a8b8bc;
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+  .replay {
+    display: inline-block;
+    padding: 11px 22px;
+    background: #14202e;
+    color: #6ee37c;
+    border: 1px solid #6ee37c;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .replay:hover { background: #1c2e40; box-shadow: 0 0 20px rgba(110,227,124,0.3); }
+  .fade { animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="game">
+    <div class="hud">
+      <div id="chapterLabel">Эпизод 1</div>
+      <div class="inv">🎒 <span id="invVal">пусто</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    // ---------- состояние ----------
+    const state = {
+      inv: [],
+      flags: {},
+      steps: 0
+    };
+
+    // ---------- сцены ----------
+    const scenes = {
+      start: {
+        chapter: 'Эпизод 1 · Гараж',
+        text: `<span class="sys">[ 03:47 ночи. Ты спишь. ]</span>
+
+Тебя будит звук. Не будильник. Не сирена. Что-то среднее между кофемолкой и умирающим котом.
+
+Прямо посреди твоей комнаты — <span class="rick">светящийся зелёный портал</span>. Из него вылезает взъерошенный старик с фляжкой. За ним — испуганный парень лет четырнадцати.
+
+<span class="rick">РИК:</span> О, отлично, ты не умер во сне. Это уже больше, чем я ожидал. Собирайся, у нас <span class="danger">миссия</span>.
+<span class="morty">МОРТИ:</span> Р-Рик, может, не стоит его втягивать? В прошлый раз кончилось плохо…
+<span class="rick">РИК:</span> Заткнись, Морти. В прошлый раз кончилось <span class="danger">нормально</span>. Просто половина вселенной исчезла. Мелочи.`,
+        choices: [
+          { text: 'Спросить, что вообще происходит', next: 'ask' },
+          { text: 'Молча встать и пойти за ними', next: 'goSilent', smart: true },
+          { text: 'Сказать «нет» и лечь обратно', next: 'refuse' }
+        ]
+      },
+
+      ask: {
+        chapter: 'Эпизод 1 · Гараж',
+        text: `<span class="you">ТЫ:</span> Что происходит? Кто вы вообще такие?
+
+<span class="rick">РИК:</span> Ага, классика. Вопросы. Всегда вопросы. Я — Рик Санчез, самый умный человек во всех известных и неизвестных вселенных. Это — Морти, мой внук, коэффициент полезного действия примерно <span class="danger">12%</span>. А ты — наш <span class="rick">третий</span>.
+
+<span class="morty">МОРТИ:</span> Т-третий? Рик, ты же говорил, что нас двое!
+<span class="rick">РИК:</span> Я много чего говорил, Морти. Я говорил, что не буду пить. Смотри, как я держу слово.`,
+        choices: [
+          { text: '«Почему именно я?»', next: 'whyMe' },
+          { text: '«Окей, я в деле»', next: 'goSilent', smart: true },
+          { text: 'Закрыть портал шваброй', next: 'refuse' }
+        ]
+      },
+
+      whyMe: {
+        chapter: 'Эпизод 1 · Гараж',
+        text: `<span class="rick">РИК:</span> Потому что ты в списке. В <span class="danger">списке</span>. Не спрашивай, в каком. Скажу так: в твоей квартире ровно в 03:47 в прошлый вторник открылся портал, который я <span class="rick">не открывал</span>. Это значит, что кто-то другой знает координаты твоей комнаты.
+
+<span class="morty">МОРТИ:</span> Это… это плохо, да?
+<span class="rick">РИК:</span> Это <span class="danger">очень</span> плохо, Морти. Это как найти у себя дома вторую кухню, о которой ты не знал. И на ней кто-то <span class="rick">готовит</span>.`,
+        choices: [
+          { text: '«Так, ну, поехали»', next: 'goSilent' },
+          { text: '«А если я откажусь?»', next: 'refuse' }
+        ]
+      },
+
+      refuse: {
+        chapter: 'Эпизод 1 · Гараж',
+        text: `Ты ложишься обратно. Укрываешься одеялом. Демонстративно закрываешь глаза.
+
+<span class="rick">РИК:</span> Ага. Классика. Ладно, Морти, включай <span class="danger">протокол Б</span>.
+<span class="morty">МОРТИ:</span> Р-Рик, ты же сказал, что протокола Б не существует!
+<span class="rick">РИК:</span> Я соврал, Морти. Я часто вру. Это моя фишка. Это как у тебя — <span class="morty">заикание</span>.`,
+        choices: [
+          { text: 'Подскочить и спросить, что за протокол Б', next: 'protocolB' },
+          { text: 'Не реагировать', next: 'protocolB' }
+        ]
+      },
+
+      protocolB: {
+        chapter: 'Эпизод 1 · Гараж',
+        text: `Что-то холодное и мокрое касается твоего лица. Ты открываешь глаза. Над тобой — <span class="danger">маленькое существо</span>, похожее на слизня с зубами. Оно улыбается.
+
+<span class="rick">РИК:</span> Знакомься. Это <span class="rick">Глорп</span>. Он просыпается на запах страха. И знаешь, что? Ты пахнешь, как <span class="danger">индейка на День благодарения</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, убери его, он меня тоже трогает!
+<span class="rick">РИК:</span> Терпи, Морти. Ты вообще полезен только когда <span class="rick">страдаешь</span>.`,
+        choices: [
+          { text: 'Согласиться пойти', next: 'goSilent', smart: true },
+          { text: 'Схватить Глорпа и выкинуть в окно', next: 'throwGlop' }
+        ]
+      },
+
+      throwGlop: {
+        chapter: 'Эпизод 2 · Ошибка',
+        text: `Ты хватаешь Глорпа и швыряешь в окно. Стекло звенит. Слизень летит в темноту и <span class="danger">не приземляется</span>. Просто исчезает.
+
+<span class="rick">РИК:</span> Ага. Классика. Ты <span class="danger">убил</span> Глорпа. Точнее, отправил его в измерение, где живут его сородичи. Теперь они знают, как пахнет твоя квартира. Поздравляю. Ты только что сделал свою первую дипломатическую ошибку.
+
+<span class="morty">МОРТИ:</span> Т-то есть за ним придут?
+<span class="rick">РИК:</span> О, Морти, они уже <span class="rick">идут</span>. Но это неважно, потому что мы сейчас <span class="rick">уходим</span>.`,
+        choices: [
+          { text: 'Пойти с ними (деваться некуда)', next: 'goSilent' },
+          { text: 'Остаться и ждать глорпов', next: 'endGlops' }
+        ]
+      },
+
+      goSilent: {
+        chapter: 'Эпизод 2 · Портал',
+        text: `Ты встаёшь, натягиваешь первую попавшуюся футболку. Рик кивает. Морти облегчённо выдыхает.
+
+<span class="rick">РИК:</span> Умный выбор. Хотя, честно говоря, у тебя его не было. Идём.
+
+Он достаёт <span class="rick">портальную пушку</span> — зелёный блестящий пистолет с лампочками. Направляет в стену. Открывается портал.
+
+<span class="rick">РИК:</span> Правила простые. Не трогай ничего. Не ешь ничего. Не разговаривай с <span class="danger">местными</span>. И ради всего святого, если увидишь себя — <span class="danger">не смотри в глаза</span>.
+
+Ты делаешь шаг.`,
+        choices: [
+          { text: 'Войти в портал', next: 'planet' }
+        ]
+      },
+
+      planet: {
+        chapter: 'Эпизод 2 · Планета Глорк',
+        text: `Ты выходишь наружу. Небо <span class="sys">фиолетовое</span>, две луны, воздух пахнет лимоном и бензином. Под ногами — песок, который <span class="danger">шевелится</span>.
+
+<span class="rick">РИК:</span> Глорк. Одиннадцатое измерение. Тут живут <span class="rick">глорксы</span> — торгуют редкими элементами. Мне нужен <span class="smart">гиперкуб</span>. Без него мой портал взорвётся вместе с нашей вселенной. Ну, твоей точно.
+
+<span class="morty">МОРТИ:</span> А почему они торгуют, если мы просто можем взять?
+<span class="rick">РИК:</span> Потому что у них <span class="danger">лазеры</span>, Морти. И потому что я не идиот. Ну, почти.`,
+        choices: [
+          { text: 'Спросить, что такое гиперкуб', next: 'hypercube' },
+          { text: 'Пойти на базар глорксов', next: 'market' },
+          { text: 'Проверить, шевелится ли песок', next: 'sand', risk: true }
+        ]
+      },
+
+      hypercube: {
+        chapter: 'Эпизод 2 · Планета Глорк',
+        text: `<span class="rick">РИК:</span> Гиперкуб — это такая штука, которая хранит <span class="rick">бесконечное</span> количество энергии в конечном объёме. Представь, что у тебя в кармане лежит звезда. Только она не сжигает тебя. Обычно.
+
+<span class="morty">МОРТИ:</span> Обычно?
+<span class="rick">РИК:</span> Заткнись, Морти. Есть шанс, что она <span class="danger">взорвётся</span>. Но шанс небольшой. Один к <span class="danger">семи</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> Ладно. Один к четырём.`,
+        choices: [
+          { text: '«Может, ну его, этот гиперкуб?»', next: 'chicken' },
+          { text: '«Ладно, идём»', next: 'market' }
+        ]
+      },
+
+      chicken: {
+        chapter: 'Эпизод 2 · Планета Глорк',
+        text: `<span class="rick">РИК:</span> Ага. <span class="danger">Цыплёнок</span>. Классика. Знаешь, кто ещё так говорил? Твой сосед по лестничной клетке. Ты не знал, но он тоже был моим напарником.
+
+<span class="morty">МОРТИ:</span> И что с ним стало?
+<span class="rick">РИК:</span> Он сказал «может, ну его». Теперь он <span class="danger">работает в налоговой</span>. В аду. В девятом круге. Сортирует квитанции.
+
+Тишина.
+
+<span class="rick">РИК:</span> Идём на базар, цыплёнок.`,
+        choices: [
+          { text: 'Пойти на базар', next: 'market' }
+        ]
+      },
+
+      sand: {
+        chapter: 'Эпизод 2 · Ошибка',
+        text: `Ты наклоняешься и трогаешь песок. Он <span class="danger">тёплый</span>. И — под твоей рукой что-то <span class="danger">хрустит</span>. Ты отдёргиваешь руку.
+
+Из-под песка медленно поднимается <span class="danger">палец</span>. Потом рука. Потом — вся фигура. Гуманоид из песка с двумя горящими глазами.
+
+<span class="rick">РИК:</span> Ага. <span class="danger">Песчаный страж</span>. Ты его разбудил. Поздравляю. У нас теперь <span class="danger">проблема</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, что делать?!
+<span class="rick">РИК:</span> Убить его, Морти. Или <span class="rick">убежать</span>. Я лично предпочитаю второе, потому что первое — это <span class="danger">долго</span>.`,
+        choices: [
+          { text: 'Бежать к базару', next: 'marketChase', risk: true },
+          { text: 'Драться со стражем', next: 'fightSand', risk: true }
+        ]
+      },
+
+      marketChase: {
+        chapter: 'Эпизод 3 · Побег',
+        text: `Вы бежите. Песчаный страж за вами — <span class="danger">быстро</span>. Морти падает, ты его подхватываешь. Рик на ходу стреляет из портальной пушки — открывает микро-порталы, страж проваливается в один из них и исчезает.
+
+<span class="rick">РИК:</span> Всё. Отстал. Но ты мне должен <span class="danger">новую пару кроссовок</span>. Эти я берёг для похорон.
+
+<span class="morty">МОРТИ:</span> Ч-чьих похорон?
+<span class="rick">РИК:</span> Пока <span class="rick">неизвестно</span>.`,
+        choices: [
+          { text: 'Дойти до базара', next: 'market' }
+        ]
+      },
+
+      fightSand: {
+        chapter: 'Эпизод 3 · Ошибка',
+        text: `Ты бьёшь стража кулаком. Кулак проходит <span class="danger">сквозь</span>. Страж хватает тебя за руку. Холодно. Очень.
+
+<span class="rick">РИК:</span> Идиот. Я же сказал — <span class="danger">бежать</span>, а не геройствовать. Ладно, стой смирно.
+
+Он достаёт маленькую колбу с жёлтой жидкостью и бросает в стража. Тот <span class="rick">взрывается</span> в облако песка.
+
+<span class="rick">РИК:</span> Это был <span class="danger">последний</span> анти-песочный реагент. Ты мне его <span class="danger">должен</span>. Запомни это.`,
+        choices: [
+          { text: 'Извиниться', next: 'market' },
+          { text: 'Промолчать', next: 'market' }
+        ]
+      },
+
+      market: {
+        chapter: 'Эпизод 3 · Базар',
+        text: `Базар глорксов — это <span class="sys">хаос</span>. Тысячи существ разных форм торгуют кристаллами, глазами, тишиной в банках и <span class="rick">временем</span>. Один глоркс продаёт «запах бабушкиного пирога», другой — «первый поцелуй, оригинальная упаковка».
+
+<span class="rick">РИК:</span> Нам нужен <span class="smart">Графф</span>. Он держит гиперкубы. Он — <span class="danger">мошенник</span>. Я его знаю лично. Мы вместе сидели в тюрьме.
+
+<span class="morty">МОРТИ:</span> Т-ты сидел в тюрьме?!
+<span class="rick">РИК:</span> Морти, я сидел в тюрьмах <span class="rick">семи</span> галактик. Спроси что-нибудь посложнее.`,
+        choices: [
+          { text: 'Идти к Граффу', next: 'graff' },
+          { text: 'Осмотреть товары на базаре', next: 'browse' },
+          { text: 'Спросить у прохожего, где Графф', next: 'askLocal', risk: true }
+        ]
+      },
+
+      browse: {
+        chapter: 'Эпизод 3 · Базар',
+        text: `Ты рассматриваешь прилавки. Одна глоркса — маленькая, с шестью глазами — предлагает тебе <span class="rick">«бутылку с удачей»</span>. Ты берёшь её в руки. Стекло тёплое.
+
+<span class="rick">РИК:</span> Не бери. Она ворует <span class="danger">дни жизни</span>. Три дня за глоток.
+<span class="morty">МОРТИ:</span> А если… если она правда работает?
+<span class="rick">РИК:</span> Работает, Морти. Только ты потом <span class="danger">забываешь</span>, зачем она тебе была нужна.`,
+        choices: [
+          { text: 'Купить бутылку (взять в инвентарь)', next: 'buyBottle' },
+          { text: 'Положить и идти к Граффу', next: 'graff' }
+        ]
+      },
+
+      buyBottle: {
+        chapter: 'Эпизод 3 · Базар',
+        text: `Ты отдаёшь глорксе <span class="rick">что-то из кармана</span> — она не смотрит, что именно, просто кивает. Бутылка твоя.
+
+<span class="rick">РИК:</span> Ты только что продал <span class="danger">часть своей жизни</span> за стекляшку. Поздравляю. Ты — официально <span class="rick">глоркс</span>.
+<span class="morty">МОРТИ:</span> Э-это же шутка, да? Рик? Ри-и-ик?`,
+        choices: [
+          { text: 'Убрать бутылку и идти к Граффу', next: 'graff', pickup: 'бутылка удачи' }
+        ]
+      },
+
+      askLocal: {
+        chapter: 'Эпизод 3 · Ошибка',
+        text: `Ты подходишь к прохожему — <span class="danger">трёхглазому</span> существу с щупальцами. Спрашиваешь про Граффа.
+
+Существо медленно поворачивается. Все три глаза — на тебя.
+
+<span class="danger">СУЩЕСТВО:</span> Графф. Да. Мы знаем, кто ищет Граффа. Мы <span class="danger">записываем</span> тех, кто ищет Граффа. Ты — <span class="danger">четвёртый</span> за сегодня.
+
+<span class="rick">РИК:</span> Отлично. Просто <span class="danger">отлично</span>. Ты только что засветил нас перед местной службой безопасности.`,
+        choices: [
+          { text: 'Бежать к Граффу', next: 'graffChase', risk: true },
+          { text: 'Стоять и оправдываться', next: 'graffChase' }
+        ]
+      },
+
+      graffChase: {
+        chapter: 'Эпизод 3 · Побег',
+        text: `Вы бежите сквозь базар. За вами — <span class="danger">четверо</span> в серых мантиях. Рик стреляет порталами. Морти спотыкается. Ты тащишь Морти. Какой-то глоркс бросает в вас <span class="danger">огурцом</span> — почему огурцом, никто не знает.
+
+Вы влетаете в тёмный переулок. Рик закрывает проход порталом.
+
+<span class="rick">РИК:</span> Всё. Отстали. Хотя теперь у нас <span class="danger">долг</span> перед Граффом. Двойной.`,
+        choices: [
+          { text: 'Идти к Граффу', next: 'graff' }
+        ]
+      },
+
+      graff: {
+        chapter: 'Эпизод 4 · Графф',
+        text: `Логово Граффа — <span class="rick">пещера</span> под базаром. Внутри — кристаллы, светящиеся зелёным. В центре сидит <span class="rick">Графф</span>: огромный, с четырьмя руками и улыбкой, которая делает его похожим на довольного крокодила.
+
+<span class="rick">ГРАФФ:</span> Ри-и-ик Санчез. Ты <span class="danger">должен</span> мне с прошлого раза. Три галактики, два спутника и <span class="rick">одну левую пятку</span>.
+<span class="rick">РИК:</span> Да-да, всё в силе. Слушай, мне нужен гиперкуб. Один.
+<span class="rick">ГРАФФ:</span> Гиперкуб стоит <span class="danger">дорого</span>. Что у тебя есть?
+
+Рик смотрит на тебя.
+
+<span class="rick">РИК:</span> Вот. Мой новый напарник. <span class="danger">Свежий</span>.`,
+        choices: [
+          { text: '«Стоп. Что значит — свежий?»', next: 'fresh' },
+          { text: 'Промолчать и смотреть', next: 'deal' },
+          { text: 'Предложить бутылку удачи (если есть)', next: 'bottleDeal', need: 'бутылка удачи' }
+        ]
+      },
+
+      fresh: {
+        chapter: 'Эпизод 4 · Графф',
+        text: `<span class="rick">РИК:</span> Расслабься. Ты — <span class="rick">свежий</span>, не значит «на продажу». Значит «не пользованный». Графф, скажи ему.
+<span class="rick">ГРАФФ:</span> Да. Мы, глорксы, <span class="rick">не покупаем</span> свежих. Мы покупаем <span class="danger">уставших</span>. Ты пока недостаточно устал. Но, судя по лицу, это вопрос <span class="danger">времени</span>.
+
+Рик ухмыляется.
+
+<span class="rick">РИК:</span> Видишь? Всё честно.`,
+        choices: [
+          { text: 'Предложить что-то своё', next: 'deal' },
+          { text: 'Спросить, что хочет Графф', next: 'deal' }
+        ]
+      },
+
+      bottleDeal: {
+        chapter: 'Эпизод 4 · Сделка',
+        text: `Ты достаёшь <span class="rick">бутылку удачи</span> и ставишь на стол.
+
+Графф берёт её, крутит в руке. Все четыре глаза сужаются.
+
+<span class="rick">ГРАФФ:</span> О-о-о. Это <span class="smart">хорошая</span> вещь. Хорошая. За неё я дам тебе гиперкуб. Даже <span class="smart">без долга</span>.
+
+Рик поднимает бровь.
+
+<span class="rick">РИК:</span> Хм. Ты, оказывается, не совсем идиот. Запомню.`,
+        choices: [
+          { text: 'Взять гиперкуб и уходить', next: 'gotCube', pickup: 'гиперкуб' }
+        ]
+      },
+
+      deal: {
+        chapter: 'Эпизод 4 · Сделка',
+        text: `<span class="rick">ГРАФФ:</span> Значит так. Гиперкуб я тебе дам. Но у меня есть <span class="danger">проблема</span>. В соседнем секторе — пиратская шахта. Они <span class="danger">копают</span> под мой базар. Хочу, чтобы вы зашли туда и <span class="danger">разобрались</span>.
+
+<span class="rick">РИК:</span> «Разобрались» — это сколько трупов?
+<span class="rick">ГРАФФ:</span> Ноль. Просто <span class="smart">выключите</span> их бур. Или уговорите. Как хотите.
+
+Рик смотрит на тебя.
+
+<span class="rick">РИК:</span> Ну? Твоё слово, напарник. Хотя, если честно, у нас нет выбора.`,
+        choices: [
+          { text: 'Идти на шахту', next: 'mine' },
+          { text: 'Отказаться и найти гиперкуб самим', next: 'soloCube', risk: true }
+        ]
+      },
+
+      soloCube: {
+        chapter: 'Эпизод 4 · Ошибка',
+        text: `Ты говоришь, что вы найдёте гиперкуб сами. Рик качает головой. Графф <span class="danger">смеётся</span> — громко, раскатисто, на весь зал.
+
+<span class="rick">ГРАФФ:</span> Давай. Попробуйте. Гиперкубы есть только у меня. Я — <span class="rick">монополия</span>.
+
+Вы выходите.
+
+<span class="rick">РИК:</span> Знаешь, что ты сейчас сделал? Ты отказался от <span class="danger">единственного</span> шанса. Поздравляю. Теперь мы идём туда, куда обычно <span class="danger">не ходят</span>.`,
+        choices: [
+          { text: 'Идти на чёрный рынок', next: 'blackMarket', risk: true }
+        ]
+      },
+
+      mine: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Шахта — <span class="sys">глубокая дыра</span> в скале, освещённая красными лампами. Внутри — <span class="danger">десятки</span> гуманоидов в скафандрах, работающих на буре. Шум — как будто рядом садится самолёт.
+
+<span class="rick">РИК:</span> Так. План простой. Ты идёшь вперёд. Я — <span class="rick">прикрываю</span>. Морти — стоит и не отсвечивает.
+<span class="morty">МОРТИ:</span> Я всегда стою и не отсвечиваю! Это моя <span class="morty">работа</span>!
+<span class="rick">РИК:</span> Вот и не подводи коллектив, Морти.`,
+        choices: [
+          { text: 'Идти напролом', next: 'mineFront', risk: true },
+          { text: 'Пробраться тихо', next: 'mineStealth', smart: true },
+          { text: 'Поговорить с шахтёрами', next: 'mineTalk' }
+        ]
+      },
+
+      mineFront: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Ты идёшь прямо. Тебя замечают сразу. Двое шахтёров выходят навстречу — <span class="danger">огромные</span>, с бур-руками.
+
+<span class="danger">ШАХТЁР 1:</span> Ты кто такой?
+<span class="you">ТЫ:</span> Я… э-э-э…
+
+Рик сзади что-то кричит, но из-за шума не слышно.
+
+Шахтёр делает шаг. Земля <span class="danger">дрожит</span>.`,
+        choices: [
+          { text: 'Сказать, что вы от Граффа', next: 'mineTalk', smart: true },
+          { text: 'Драться', next: 'mineFight', risk: true }
+        ]
+      },
+
+      mineTalk: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Ты говоришь, что вы от Граффа. Шахтёры переглядываются.
+
+<span class="danger">ШАХТЁР 1:</span> От Граффа? Опять? Третий раз за месяц.
+
+<span class="rick">РИК:</span> Ага. Классика. Графф <span class="rick">забыл</span>, что он нас послал. Он старенький, у него провалы.
+<span class="danger">ШАХТЁР 2:</span> Так мы же не под Граффом. Мы под <span class="danger">Кзантом</span>.
+<span class="rick">РИК:</span> Под Кзантом?! Тогда всё <span class="danger">проще</span>.
+
+Рик достаёт фляжку и делает глоток.`,
+        choices: [
+          { text: 'Спросить, кто такой Кзант', next: 'kzant' },
+          { text: 'Спросить, почему это проще', next: 'kzant' }
+        ]
+      },
+
+      kzant: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `<span class="rick">РИК:</span> Кзант — мой <span class="smart">должник</span>. Я ему как-то спас планету. Он мне — три желания. Два я уже потратил на глупости. Осталось <span class="smart">одно</span>.
+
+Он подходит к главному шахтёру и что-то шепчет. Тот кивает.
+
+<span class="rick">РИК:</span> Всё. Договорились. Они <span class="smart">выключают бур</span> на неделю и говорят Граффу, что мы всё сделали.
+
+<span class="morty">МОРТИ:</span> Т-то есть мы просто… соврали?
+<span class="rick">РИК:</span> Морти, я <span class="rick">горжусь</span> тобой. Ты начинаешь понимать.`,
+        choices: [
+          { text: 'Вернуться к Граффу за гиперкубом', next: 'graffReturn', pickup: 'гиперкуб' }
+        ]
+      },
+
+      mineStealth: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Вы крадётесь вдоль стены. Рик глушит шаги — у него есть маленькая машинка, которая <span class="smart">стирает звук</span> вокруг вас. Морти идёт на цыпочках. Ты тоже.
+
+В центре шахты — <span class="rick">пульт бура</span>. Один шахтёр стоит у пульта, отвернувшись. Идеальный момент.`,
+        choices: [
+          { text: 'Отключить бур на пульте', next: 'mineSwitch', smart: true },
+          { text: 'Подождать, пока шахтёр отойдёт сам', next: 'mineWait' }
+        ]
+      },
+
+      mineSwitch: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Ты тихо подходишь к пульту. Один щелчок — и <span class="smart">бур затихает</span>. Шахтёры останавливаются, растерянно смотрят друг на друга. Никто не замечает вас.
+
+Рик хлопает тебя по плечу.
+
+<span class="rick">РИК:</span> Чисто. Почти как я. Ну, на <span class="rick">30%</span> как я. Но для человека это <span class="smart">отлично</span>.`,
+        choices: [
+          { text: 'Уходить и вернуться к Граффу', next: 'graffReturn', pickup: 'гиперкуб' }
+        ]
+      },
+
+      mineWait: {
+        chapter: 'Эпизод 5 · Шахта',
+        text: `Вы ждёте. Долго. Шахтёр <span class="danger">не отходит</span>. Он стоит у пульта, как статуя. Проходит 10 минут. 20. Морти начинает ныть. Рик — ругаться шёпотом.
+
+Потом шахтёр <span class="danger">медленно поворачивается</span>. Смотрит прямо на вас.
+
+<span class="danger">ШАХТЁР:</span> Я <span class="danger">знаю</span>, что вы там. У меня четыре глаза. Два сзади.`,
+        choices: [
+          { text: 'Выйти и поговорить', next: 'mineTalk' },
+          { text: 'Бежать', next: 'mineFight', risk: true }
+        ]
+      },
+
+      mineFight: {
+        chapter: 'Эпизод 5 · Ошибка',
+        text: `Ты бьёшь. Шахтёр хватает тебя бур-рукой. Это <span class="danger">больно</span>. Рик стреляет, шахтёр падает. Двое других бегут на помощь.
+
+Морти кричит. Рик ругается. Где-то падает лампа.
+
+Три минуты — и вы <span class="danger">снаружи</span>, все в пыли. Рик держится за плечо. У тебя рассечена бровь.
+
+<span class="rick">РИК:</span> Ну вот. Снова <span class="danger">драка</span>. Ты знаешь, сколько я <span class="danger">ненавижу</span> драки? Я их ненавижу больше, чем Морти.`,
+        choices: [
+          { text: 'Идти к Граффу', next: 'graffReturn' }
+        ]
+      },
+
+      blackMarket: {
+        chapter: 'Эпизод 5 · Чёрный рынок',
+        text: `Чёрный рынок — <span class="sys">под базаром</span>, в тоннелях. Здесь торгуют тем, что нельзя. Украденные воспоминания. Живые эмоции в ампулах. И — <span class="danger">гиперкубы</span>, но краденые.
+
+<span class="rick">РИК:</span> Я предупреждаю. Здесь нас <span class="danger">обманут</span>. Это не вопрос. Это факт. Вопрос только в том, <span class="rick">насколько</span>.
+
+Вы идёте вглубь. В темноте — фигура в капюшоне.`,
+        choices: [
+          { text: 'Подойти к фигуре', next: 'blackDeal' },
+          { text: 'Уйти к Граффу и сдаться', next: 'graff' }
+        ]
+      },
+
+      blackDeal: {
+        chapter: 'Эпизод 5 · Чёрный рынок',
+        text: `Фигура поднимает голову. Под капюшоном — <span class="danger">знакомое лицо</span>. Ты видишь… себя. Просто себя, только уставшего и с царапиной на щеке.
+
+<span class="rick">ТЫ-ИЗ-ПРОШЛОГО:</span> Не бери. Они подменят.
+<span class="rick">РИК:</span> <span class="danger">Правило первое</span>, я же говорил! Не смотреть в глаза! Ты смотришь в глаза!
+<span class="rick">ТЫ-ИЗ-ПРОШЛОГО:</span> Слишком поздно.
+
+Фигура растворяется. В зале становится тихо. <span class="danger">Слишком</span> тихо.`,
+        choices: [
+          { text: 'Бежать наверх', next: 'graffReturn', pickup: 'гиперкуб' },
+          { text: 'Идти дальше в темноту', next: 'endLost', risk: true }
+        ]
+      },
+
+      graffReturn: {
+        chapter: 'Эпизод 6 · Финал',
+        text: `Вы возвращаетесь к Граффу. Рик держит гиперкуб, светящийся зелёным. Графф недовольно косится, но отдаёт.
+
+<span class="rick">ГРАФФ:</span> Ладно. Забирай. Но ты мне <span class="danger">должен</span>. Опять.
+<span class="rick">РИК:</span> Да-да. Записал. В блокнот. <span class="rick">Несуществующий</span>.
+
+Вы выходите из пещеры. Рик поднимает портальную пушку.
+
+<span class="rick">РИК:</span> Ну что, напарник. Первое дело закрыто. <span class="smart">Осталось ещё девять</span>. Поехали домой.`,
+        choices: [
+          { text: 'Войти в портал домой', next: 'home' }
+        ]
+      },
+
+      home: {
+        chapter: 'Финал',
+        text: `Ты выходишь из портала прямо в свою комнату. За окном — рассвет. Ты падаешь на кровать. Всё тело болит. Но ты жив.
+
+Рик и Морти уже стоят в дверях.
+
+<span class="rick">РИК:</span> Слушай. Ты мне <span class="rick">понравился</span>. Не как человек. Как <span class="smart">инструмент</span>. В следующий вторник в 03:47 будь готов. Я приду.
+<span class="morty">МОРТИ:</span> П-прости. Он всегда так. Но, если честно, ты был <span class="morty">крут</span>. Немного. По сравнению с остальными.
+
+Рик открывает портал и уходит. Морти машет рукой и исчезает следом.
+
+Ты смотришь в потолок. Через шесть дней всё начнётся снова.`,
+        choices: [
+          { text: 'Закрыть глаза', next: 'endGood' },
+          { text: 'Проверить, не забыли ли они что-нибудь', next: 'endCurious' }
+        ]
+      },
+
+      // ---------- концовки ----------
+      endGood: {
+        end: true,
+        verdict: 'good',
+        icon: '🛸',
+        title: 'ЭПИЗОД ЗАВЕРШЁН',
+        desc: 'Ты стал частью команды. Рик не признает этого вслух, но он запомнил твоё имя. Морти теперь здоровается с тобой как со своим. Впереди — девять дел, три спасённые вселенные и одна очень странная дружба. В следующий вторник, 03:47. Будь готов.'
+      },
+
+      endCurious: {
+        end: true,
+        verdict: 'weird',
+        icon: '🧪',
+        title: 'ЭПИЗОД ЗАВЕРШЁН… ИЛИ НЕТ',
+        desc: 'Ты проверяешь комнату. Под кроватью — маленькая бутылочка с зелёной жидкостью и записка: «Не пей. Или пей. Мне всё равно. — Р.». На столе — устройство, похожее на будильник, но с антенной. Оно тикает. Через шесть дней — 03:47. Ты почему-то уже знаешь, что опоздать нельзя.'
+      },
+
+      endGlops: {
+        end: true,
+        verdict: 'bad',
+        icon: '🦠',
+        title: 'СЪЕДЕН ГЛОРПАМИ',
+        desc: 'Ты остаёшься в квартире. Через час из окна начинают лезть слизни. Их много. Очень много. Они не злые — они просто голодные. К утру от тебя остаётся только тапочка. Рик узнает об этом и скажет: «Я же говорил». Морти расстроится на две минуты и пойдёт играть в приставку.'
+      },
+
+      endLost: {
+        end: true,
+        verdict: 'bad',
+        icon: '🌀',
+        title: 'ПОТЕРЯН В ТОННЕЛЯХ',
+        desc: 'Ты идёшь в темноту. Тоннели бесконечные. Каждый поворот выглядит одинаково. Через час ты уже не помнишь, откуда пришёл. Через сутки — не помнишь, кто ты. Через неделю — ты сам становишься торговцем на чёрном рынке. Продаёшь чужие воспоминания. Почти как свои.'
+      }
+    };
+
+    // ---------- движок ----------
+    const content = document.getElementById('content');
+    const invVal = document.getElementById('invVal');
+    const chapterLabel = document.getElementById('chapterLabel');
+
+    function renderInv() {
+      invVal.textContent = state.inv.length ? state.inv.join(', ') : 'пусто';
+    }
+
+    function renderScene(id) {
+      const s = scenes[id];
+      if (!s) return;
+
+      if (s.chapter) chapterLabel.textContent = s.chapter;
+
+      if (s.end) {
+        state.flags.ended = true;
+        content.innerHTML = `
+          <div class="end-screen fade">
+            <div class="final">${s.icon}</div>
+            <div class="verdict ${s.verdict}">${s.title}</div>
+            <div class="desc">${s.desc}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.steps++;
+
+      // фильтр выбора по инвентарю
+      const available = s.choices.filter(c => !c.need || state.inv.includes(c.need));
+
+      let choicesHtml = available.map((c) => {
+        const cls = c.risk ? 'risk' : c.smart ? 'smart' : '';
+        return `<button class="choice" onclick="choose('${c.next}', '${(c.pickup || '').replace(/'/g, "\\'")}')">
+          <span class="arrow">▸</span><span class="${cls}">${c.text}</span>
+        </button>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="fade">
+          <div class="scene-text">${s.text}</div>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+    }
+
+    function choose(next, pickup) {
+      if (pickup && !state.inv.includes(pickup)) {
+        state.inv.push(pickup);
+        renderInv();
+      }
+      renderScene(next);
+    }
+
+    function restart() {
+      state.inv = [];
+      state.flags = {};
+      state.steps = 0;
+      renderScene('start');
+      renderInv();
+    }
+
+    renderScene('start');
+    renderInv();
+  </script>
+</body>
+</html>
