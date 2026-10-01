@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Геолокация</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: "Courier New", "Consolas", monospace;
+    color: #33ff66;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 20px;
+    text-shadow: 0 0 6px rgba(51, 255, 102, 0.5);
+  }
+  #terminal { white-space: pre-wrap; word-break: break-all; }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 16px;
+    background: #33ff66;
+    vertical-align: middle;
+    animation: blink 0.7s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Экран с твоей кнопкой */
+  #consent {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 28px;
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  #consent.show { display: flex; opacity: 1; }
+  #consent .icon {
+    font-size: 56px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px #33ff66);
+  }
+  #consent h2 {
+    color: #33ff66;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  #consent p {
+    color: #b8e8c8;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 360px;
+    margin-bottom: 12px;
+  }
+  .consent-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 24px;
+    width: 100%;
+    max-width: 280px;
+  }
+  .consent-buttons button {
+    padding: 14px 24px;
+    font-family: inherit;
+    font-size: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+  }
+  .btn-yes {
+    background: #33ff66;
+    color: #000;
+    border: 2px solid #33ff66;
+    font-weight: 700;
+  }
+  .btn-yes:hover, .btn-yes:active { background: #1acc4a; }
+  .btn-no {
+    background: transparent;
+    color: #4a7a5a;
+    border: 2px solid #2a4a3a;
+  }
+  .btn-no:hover, .btn-no:active { color: #6a9a7a; border-color: #4a7a5a; }
+
+  /* финальный экран */
+  #result {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  #result.show { display: flex; opacity: 1; }
+  .card {
+    max-width: 400px;
+    width: 100%;
+    border: 1px solid #33ff66;
+    padding: 28px 22px;
+    background: rgba(51, 255, 102, 0.04);
+    box-shadow: 0 0 40px rgba(51, 255, 102, 0.25);
+  }
+  .card .icon { font-size: 48px; margin-bottom: 16px; }
+  .card h1 {
+    color: #33ff66;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .card .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #1a3a25;
+    font-size: 13px;
+    text-align: left;
+  }
+  .card .row:last-of-type { border-bottom: none; }
+  .card .label { color: #4a7a5a; }
+  .card .val { color: #33ff66; font-weight: 700; }
+  .card .note {
+    margin-top: 20px;
+    font-size: 11px;
+    color: #4a7a5a;
+    line-height: 1.5;
+  }
+  .map-link {
+    display: inline-block;
+    margin-top: 18px;
+    padding: 10px 20px;
+    background: #0d1f14;
+    border: 1px solid #33ff66;
+    color: #33ff66;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    border-radius: 4px;
+  }
+  .replay {
+    margin-top: 14px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #2a4a3a;
+    color: #4a7a5a;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+  <div id="terminal"><span class="cursor"></span></div>
+
+  <!-- Твой экран согласия с твоими кнопками -->
+  <div id="consent">
+    <div class="icon">🔒</div>
+    <h2>Запрос доступа</h2>
+    <p>Модуль геолокации запрашивает разрешение на доступ к вашей позиции.</p>
+    <p>Разрешить определение местоположения?</p>
+    <div class="consent-buttons">
+      <button class="btn-yes" id="yesBtn">Разрешить</button>
+      <button class="btn-no" id="noBtn">Запретить</button>
+    </div>
+  </div>
+
+  <div id="result">
+    <div class="card">
+      <div class="icon">📍</div>
+      <h1>Ваше местоположение</h1>
+      <div class="row"><span class="label">Широта:</span><span class="val" id="lat">—</span></div>
+      <div class="row"><span class="label">Долгота:</span><span class="val" id="lon">—</span></div>
+      <div class="row"><span class="label">Точность:</span><span class="val" id="acc">—</span></div>
+      <div class="row"><span class="label">Время:</span><span class="val" id="time">—</span></div>
+      <div class="note">Данные видны только вам. Никуда не отправляются, никем не сохраняются.</div>
+      <a class="map-link" id="mapLink" href="#" target="_blank" rel="noopener">Открыть на карте</a>
+      <br>
+      <button class="replay" onclick="restart()">Запросить снова</button>
+    </div>
+  </div>
+
+  <script>
+    const term = document.getElementById('terminal');
+    const consent = document.getElementById('consent');
+    const result = document.getElementById('result');
+    const cursor = '<span class="cursor"></span>';
+
+    const linesBefore = [
+      "[*] Инициализация модуля геолокации...",
+      "[*] Проверка API браузера... OK",
+      "[*] Запрос разрешения у пользователя..."
+    ];
+
+    let i = 0;
+
+    function typeLine(text, done) {
+      let j = 0;
+      const speed = 20;
+      function tick() {
+        if (j <= text.length) {
+          term.innerHTML = linesBefore.slice(0, i).join('\n') +
+            (i > 0 ? '\n' : '') + text.slice(0, j) + cursor;
+          j++;
+          setTimeout(tick, speed);
+        } else {
+          i++;
+          setTimeout(done, 220);
+        }
+      }
+      tick();
+    }
+
+    function runTyping() {
+      if (i >= linesBefore.length) {
+        setTimeout(() => consent.classList.add('show'), 400);
+        return;
+      }
+      typeLine(linesBefore[i], runTyping);
+    }
+
+    function appendLine(text) {
+      term.innerHTML = term.innerHTML.replace(cursor, '') + '\n' + text + cursor;
+    }
+
+    // своя кнопка «Разрешить»
+    document.getElementById('yesBtn').addEventListener('click', () => {
+      consent.classList.remove('show');
+      setTimeout(() => {
+        term.innerHTML = term.innerHTML.replace(cursor, '') + '\n' +
+          '[*] Разрешение выдано. Запрос к GPS...' + cursor;
+        askGeo();
+      }, 300);
+    });
+
+    // своя кнопка «Запретить»
+    document.getElementById('noBtn').addEventListener('click', () => {
+      consent.classList.remove('show');
+      setTimeout(() => {
+        appendLine("[!] Отказано пользователем. Доступ закрыт.");
+      }, 300);
+    });
+
+    function askGeo() {
+      if (!navigator.geolocation) {
+        appendLine("[!] Браузер не поддерживает геолокацию.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lon = pos.coords.longitude.toFixed(6);
+          const acc = Math.round(pos.coords.accuracy) + ' м';
+          const t = new Date(pos.timestamp).toLocaleTimeString('ru-RU');
+
+          appendLine("[+] Координаты определены: " + lat + ", " + lon);
+          appendLine("[✓] Готово.");
+
+          document.getElementById('lat').textContent = lat;
+          document.getElementById('lon').textContent = lon;
+          document.getElementById('acc').textContent = acc;
+          document.getElementById('time').textContent = t;
+          document.getElementById('mapLink').href =
+            'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lon + '#map=16/' + lat + '/' + lon;
+
+          setTimeout(() => result.classList.add('show'), 600);
+        },
+        (err) => {
+          let msg = 'Неизвестная ошибка.';
+          if (err.code === 1) msg = 'Система отклонила запрос.';
+          if (err.code === 2) msg = 'Позиция недоступна.';
+          if (err.code === 3) msg = 'Таймаут.';
+          appendLine("[!] " + msg);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    }
+
+    function restart() {
+      result.classList.remove('show');
+      i = 0;
+      term.innerHTML = '<span class="cursor"></span>';
+      setTimeout(runTyping, 300);
+    }
+
+    setTimeout(runTyping, 400);
+  </script>
+</body>
+</html>
