@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Ночная смена</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0a0a0c;
+    color: #d8d8d8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .game {
+    max-width: 460px;
+    width: 100%;
+    background: #111114;
+    border: 1px solid #1e1e22;
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #1a1a1e;
+  }
+  .hud .hp { color: #8b1e1e; }
+  .hud .hp span { color: #d84444; }
+  .scene-title {
+    font-size: 13px;
+    color: #6a6a75;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .scene-text {
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: #c8c8cc;
+    margin-bottom: 22px;
+    min-height: 90px;
+    white-space: pre-wrap;
+  }
+  .scene-text .em { color: #d8b25e; }
+  .scene-text .blood { color: #b83232; font-weight: 500; }
+  .scene-text .sys { color: #5a7a9a; font-style: italic; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 13px 15px;
+    background: #191a1f;
+    border: 1px solid #25262c;
+    border-radius: 8px;
+    color: #b8b8bd;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #20222a;
+    border-color: #3a3c46;
+    color: #e8e8ec;
+    transform: translateX(2px);
+  }
+  .choice .arrow { color: #555; margin-right: 8px; }
+  .choice .danger { color: #c04a4a; }
+  .choice .good { color: #5c9a6c; }
+  .end-screen {
+    text-align: center;
+    padding: 12px 0;
+  }
+  .end-screen .final {
+    font-size: 34px;
+    margin-bottom: 12px;
+  }
+  .end-screen .verdict {
+    font-size: 17px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 600;
+  }
+  .verdict.bad { color: #b83232; }
+  .verdict.good { color: #5c9a6c; }
+  .verdict.neutral { color: #7a7a85; }
+  .end-screen .desc {
+    font-size: 14px;
+    color: #8a8a92;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .replay {
+    display: inline-block;
+    padding: 11px 22px;
+    background: #25262c;
+    color: #d8d8dc;
+    border: 1px solid #35363e;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .replay:hover { background: #2c2d35; }
+  .fade {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .cursor-blink {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: #5a7a9a;
+    vertical-align: text-bottom;
+    animation: blink 0.9s steps(1) infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+  <div class="game" id="game">
+    <div class="hud">
+      <div>Ночная смена · 03:00</div>
+      <div class="hp">HP <span id="hpVal">●●●</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    // ---------- сценарий ----------
+    const state = {
+      hp: 3,
+      steps: 0,
+      flags: {}
+    };
+
+    const scenes = {
+      start: {
+        title: 'Глава 1 — Обход',
+        text: `<span class="sys">[ 03:00. Двенадцатый этаж. Пустые коридоры. ]</span>
+
+Ты — ночной охранник бизнес-центра. Обход по расписанию. Фонарь в руке, рация на поясе, тревога — кнопка справа.
+
+На втором пролёте слышен звук. Похоже на шаги. Но по журналу в здании никого нет.`,
+        choices: [
+          { text: 'Пойти на звук', next: 'sound', danger: true },
+          { text: 'Спуститься в подвал к щитку', next: 'basement' },
+          { text: 'Вернуться в комнату охраны', next: 'room' }
+        ]
+      },
+
+      // ---------- ветка со звуком ----------
+      sound: {
+        title: 'Глава 2 — Шаги',
+        text: `Ты идёшь на звук. Фонарь режет темноту. Коридор длинный, лампы мигают через раз.
+
+Шаги стихли. Но теперь слышно <span class="em">дыхание</span>. За колонной. Прямо у лифтовой шахты.`,
+        choices: [
+          { text: 'Засветить фонарём за колонну', next: 'soundReveal', danger: true },
+          { text: 'Тихо отступить', next: 'soundRetreat' },
+          { text: 'Нажать тревогу', next: 'alarm' }
+        ]
+      },
+
+      soundReveal: {
+        title: 'Глава 3 — Лицо',
+        text: `Луч фонаря падает на лицо. Оно серое, с потрескавшейся кожей. Глаза <span class="blood">пустые</span>, вместо них — тёмные впадины. Оно улыбается.
+
+Прежде чем ты успеваешь отступить, оно делает шаг.`,
+        choices: [
+          { text: 'Бежать', next: 'runCorridor', danger: true },
+          { text: 'Стоять и смотреть', next: 'endMadness' },
+          { text: 'Ударить фонарём', next: 'fight' }
+        ]
+      },
+
+      soundRetreat: {
+        title: 'Глава 3 — Отступление',
+        text: `Ты отходишь. Медленно. Не поворачиваясь спиной. Дыхание за колонной становится ближе.
+
+Оно знает, что ты его слышишь.`,
+        choices: [
+          { text: 'Ускориться', next: 'runCorridor' },
+          { text: 'Закричать', next: 'scream' }
+        ]
+      },
+
+      scream: {
+        title: 'Глава 4 — Ответ',
+        text: `Крик уходит в пустоту. Ответ приходит не сразу.
+
+<span class="blood">Из глубины коридора отвечает другой крик. Точно как твой.</span>`,
+        choices: [
+          { text: 'Бежать к выходу', next: 'runCorridor', danger: true },
+          { text: 'Идти на ответ', next: 'endTaken' }
+        ]
+      },
+
+      fight: {
+        title: 'Глава 3 — Удар',
+        text: `Ты бьёшь фонарём. Он проходит <span class="em">сквозь</span> лицо. Ты теряешь равновесие, падаешь. Фонарь гаснет.
+
+В темноте — только дыхание. Очень близко.`,
+        choices: [
+          { text: 'Ползти к выходу', next: 'crawl', danger: true },
+          { text: 'Лежать и не двигаться', next: 'endFrozen' }
+        ]
+      },
+
+      crawl: {
+        title: 'Глава 4 — Ползком',
+        text: `Ты ползёшь. Шаги за спиной. Не бегут. Идут. Спокойно.
+
+Дверь пожарного выхода — в семи метрах. Внизу, на этаже ниже, свет.`,
+        choices: [
+          { text: 'Рывок к двери', next: 'endEscape', good: true },
+          { text: 'Оглянуться', next: 'endTaken' }
+        ]
+      },
+
+      runCorridor: {
+        title: 'Глава 4 — Коридор',
+        text: `Ты бежишь. Лампы одна за другой гаснут позади тебя. Свет кончается быстрее, чем коридор.
+
+Впереди — поворот. За ним — лестница вниз.`,
+        choices: [
+          { text: 'Вниз по лестнице', next: 'stairs', good: true },
+          { text: 'Войти в открытую дверь справа', next: 'sideRoom' },
+          { text: 'Обернуться', next: 'endTaken' }
+        ]
+      },
+
+      stairs: {
+        title: 'Глава 5 — Лестница',
+        text: `Ты спускаешься через три ступени. Сердце в горле. За спиной — тишина.
+
+На втором этаже — <span class="em">открытая дверь</span> на улицу.`,
+        choices: [
+          { text: 'Выйти на улицу', next: 'endEscape', good: true },
+          { text: 'Остановиться, отдышаться', next: 'endTwoFace' }
+        ]
+      },
+
+      sideRoom: {
+        title: 'Глава 5 — Комната',
+        text: `Ты вбегаешь и закрываешь дверь. Тишина. Комната пустая, только шкаф у стены и окно, забитое досками.
+
+По ту сторону двери — <span class="em">стук</span>. Спокойный. Словно проверяют, запер ли ты.`,
+        choices: [
+          { text: 'Затаиться в шкафу', next: 'endHide' },
+          { text: 'Открыть дверь', next: 'endTaken' },
+          { text: 'Ломать окно', next: 'endEscape', good: true }
+        ]
+      },
+
+      // ---------- ветка подвала ----------
+      basement: {
+        title: 'Глава 2 — Подвал',
+        text: `Ты спускаешься в подвал. Лампы гудят, щиток справа, но ты замечаешь, что одна из дверей приоткрыта. За ней — темнота, густая, как вода.
+
+Из темноты тянет холодом.`,
+        choices: [
+          { text: 'Зайти в дверь', next: 'basementRoom', danger: true },
+          { text: 'Закрыть её и идти к щитку', next: 'basementFuse' },
+          { text: 'Подняться обратно', next: 'start' }
+        ]
+      },
+
+      basementRoom: {
+        title: 'Глава 3 — За дверью',
+        text: `Помещение маленькое. На стене — <span class="blood">много старых надписей</span>, нацарапанных гвоздём. Одно и то же слово на разных языках. Разными почерками.
+
+В центре — стул. Он ещё тёплый.`,
+        choices: [
+          { text: 'Осмотреть надписи', next: 'inscriptions' },
+          { text: 'Уйти', next: 'basement' }
+        ]
+      },
+
+      inscriptions: {
+        title: 'Глава 4 — Надписи',
+        text: `Надписи складываются в одно: <span class="em">«не выходи на двенадцатый этаж»</span>. У тебя перехватывает дыхание. Ты вспоминаешь, что твоя смена — <span class="blood">как раз на двенадцатом</span>.
+
+На стене, снизу, свежая. Ещё сырая.`,
+        choices: [
+          { text: 'Бежать наверх', next: 'climbBack', danger: true },
+          { text: 'Остаться и читать дальше', next: 'endMadness' }
+        ]
+      },
+
+      basementFuse: {
+        title: 'Глава 3 — Щиток',
+        text: `Ты открываешь щиток. Одна из линий перегружена. Ты вырубаешь её — свет на этажах гаснет.
+
+Теперь в здании темно. Совсем.`,
+        choices: [
+          { text: 'Подняться со фонарём', next: 'climbBack' },
+          { text: 'Остаться у щитка', next: 'endFrozen' }
+        ]
+      },
+
+      climbBack: {
+        title: 'Глава 4 — Возвращение',
+        text: `Ты идёшь наверх. Этаж за этажом. На одиннадцатом — тишина. На двенадцатом — свет. Кто-то включил его, пока ты был внизу.
+
+Дверь твоей смены открыта.`,
+        choices: [
+          { text: 'Войти', next: 'startRoom' },
+          { text: 'Уйти', next: 'endEscape', good: true }
+        ]
+      },
+
+      // ---------- ветка комнаты охраны ----------
+      room: {
+        title: 'Глава 2 — Комната охраны',
+        text: `Ты возвращаешься в комнату. Мониторы показывают этажи. Все камеры работают. Кроме одной — на двенадцатом, в конце коридора. Там — <span class="em">белый шум</span>.
+
+По рации слышно чужой голос. Он повторяет одну фразу.`,
+        choices: [
+          { text: 'Слушать рацию', next: 'radio' },
+          { text: 'Проверить камеру №12', next: 'camera' },
+          { text: 'Вызвать наряд', next: 'alarm' }
+        ]
+      },
+
+      radio: {
+        title: 'Глава 3 — Голос',
+        text: `Голос повторяет: <span class="em">«двенадцатый этаж, конец коридора, за колонной»</span>. Ты поднимаешь взгляд — и понимаешь, что камера №12, та самая, показывает <span class="blood">тебя</span>. Сидящего в комнате. Со спины.
+
+Ты один.`,
+        choices: [
+          { text: 'Обернуться', next: 'endTaken' },
+          { text: 'Выключить монитор', next: 'endMadness' },
+          { text: 'Бежать', next: 'runCorridor' }
+        ]
+      },
+
+      camera: {
+        title: 'Глава 3 — Камера',
+        text: `Ты приближаешь изображение камеры №12. Белый шум. Потом на секунду — картинка.
+
+Коридор. В конце — фигура. Она поднимает голову. Смотрит прямо в камеру.`,
+        choices: [
+          { text: 'Отключить камеру', next: 'startRoom' },
+          { text: 'Смотреть дальше', next: 'endMadness' }
+        ]
+      },
+
+      startRoom: {
+        title: 'Глава 4 — Пустая комната',
+        text: `Ты входишь. Стул твой, кружка твоя, куртка на спинке. Всё как было.
+
+Только на столе — <span class="em">журнал обхода</span>. Открыт на сегодняшней дате. Но твоей рукой уже написано: <span class="blood">«03:47 — двенадцатый этаж, конец коридора»</span>.
+
+Сейчас 03:14.`,
+        choices: [
+          { text: 'Зачеркнуть запись', next: 'endEscape', good: true },
+          { text: 'Пойти в конец коридора', next: 'endTaken' }
+        ]
+      },
+
+      alarm: {
+        title: 'Глава 3 — Тревога',
+        text: `Ты нажимаешь кнопку. Сирена не включается. Вместо неё все динамики в здании начинают тихо играть <span class="em">одну и ту же мелодию</span>. Она знакомая. Слишком.
+
+Ты вспоминаешь: это была мелодия из твоего детства. Ты её никому не рассказывал.`,
+        choices: [
+          { text: 'Идти к лифтам', next: 'runCorridor' },
+          { text: 'Сесть и слушать', next: 'endFrozen' }
+        ]
+      },
+
+      // ---------- концовки ----------
+      endEscape: {
+        end: true,
+        verdict: 'good',
+        icon: '🌅',
+        title: 'ВЫБРАЛСЯ',
+        desc: 'Ты выходишь на улицу. Воздух холодный, город спит. За спиной — тишина. Ты не оборачиваешься. Утром ты увольняешься по собственному. Больше ты никогда не работаешь ночью.'
+      },
+
+      endTaken: {
+        end: true,
+        verdict: 'bad',
+        icon: '🕳️',
+        title: 'ТЕБЯ ВЗЯЛИ',
+        desc: 'Ты оборачиваешься. Поздно. В темноте — рука, холодная, длинная. Тебя больше не найдут. На утренней смене скажут: «ушёл домой, наверное».'
+      },
+
+      endMadness: {
+        end: true,
+        verdict: 'bad',
+        icon: '🌀',
+        title: 'РАССУДОК ПОТЕРЯН',
+        desc: 'Ты смотришь слишком долго. На то, что нельзя было смотреть. Тебя находят утром — на двенадцатом этаже, сидящего на полу. Ты улыбаешься и повторяешь одну фразу. Никто не понимает, что она значит.'
+      },
+
+      endFrozen: {
+        end: true,
+        verdict: 'bad',
+        icon: '🧊',
+        title: 'ОСТАЛСЯ НА МЕСТЕ',
+        desc: 'Ты не двинулся. Оно подошло. Оно не спешило. Через час ты всё ещё там — с открытыми глазами. Тело твоё, но тебя в нём уже нет.'
+      },
+
+      endHide: {
+        end: true,
+        verdict: 'neutral',
+        icon: '🚪',
+        title: 'СПРЯТАЛСЯ',
+        desc: 'Ты сидишь в шкафу до утра. Стук за дверью прекратился через час. В 06:00 заходит уборщица. Она видит тебя — бледного, мокрого, но живого. Ты молчишь. Ты не расскажешь никому.'
+      },
+
+      endTwoFace: {
+        end: true,
+        verdict: 'neutral',
+        icon: '👥',
+        title: 'ДВОЕ',
+        desc: 'Ты остановился отдышаться. Рядом — ещё один охранник. Такой же, как ты. Смотрит на тебя и говорит: «Ты тоже с двенадцатого?» Вы оба знаете, что этого охранника в смене не было. Но идёте дальше вместе.'
+      }
+    };
+
+    // ---------- движок ----------
+    const content = document.getElementById('content');
+    const hpVal = document.getElementById('hpVal');
+
+    function renderHp() {
+      const h = state.hp;
+      hpVal.innerHTML = '●'.repeat(h) + '○'.repeat(3 - h);
+    }
+
+    function renderScene(id) {
+      const s = scenes[id];
+      if (!s) return;
+
+      if (s.end) {
+        state.flags.ended = true;
+        content.innerHTML = `
+          <div class="end-screen fade">
+            <div class="final">${s.icon}</div>
+            <div class="verdict ${s.verdict}">${s.title}</div>
+            <div class="desc">${s.desc}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.steps++;
+      let choicesHtml = s.choices.map((c, i) => {
+        const cls = c.danger ? 'danger' : c.good ? 'good' : '';
+        return `<button class="choice" onclick="choose('${c.next}')">
+          <span class="arrow">▸</span><span class="${cls}">${c.text}</span>
+        </button>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="fade">
+          <div class="scene-title">${s.title}</div>
+          <div class="scene-text">${s.text}</div>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+    }
+
+    function choose(next) {
+      renderScene(next);
+      renderHp();
+    }
+
+    function restart() {
+      state.hp = 3;
+      state.steps = 0;
+      state.flags = {};
+      renderScene('start');
+      renderHp();
+    }
+
+    // старт
+    renderScene('start');
+    renderHp();
+  </script>
+</body>
+</html>
