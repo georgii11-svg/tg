@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Рик и Морти: Гиперкуб</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Comic Sans MS", "Chalkboard SE", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, #1a4d2e 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, #2d1a4d 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #0a0e1a 0%, #000 80%);
+    background-attachment: fixed;
+    color: #e8f5e9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .game {
+    max-width: 520px;
+    width: 100%;
+    background: rgba(10, 15, 25, 0.88);
+    border: 2px solid #6ee37c;
+    border-radius: 18px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 0 40px rgba(110, 227, 124, 0.25), 0 20px 60px rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #6ee37c;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #2a4a3a;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .hud .inv { color: #f7c948; font-size: 12px; text-transform: none; letter-spacing: 0; }
+  .hud .ep { color: #8a7ad6; }
+  .scene-title {
+    font-size: 13px;
+    color: #6ee37c;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .scene-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #d8e8dc;
+    margin-bottom: 20px;
+    min-height: 100px;
+    white-space: pre-wrap;
+  }
+  .scene-text .rick { color: #6ee37c; font-weight: 600; }
+  .scene-text .morty { color: #f7c948; font-weight: 600; }
+  .scene-text .you { color: #5eb3ff; font-weight: 600; }
+  .scene-text .sys { color: #8a7ad6; font-style: italic; }
+  .scene-text .danger { color: #ff5c5c; font-weight: 600; }
+  .scene-text .new { color: #ff9f43; font-weight: 600; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 13px 15px;
+    background: #14202e;
+    border: 1px solid #1e3a4a;
+    border-radius: 10px;
+    color: #c8dcdc;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #1c2e40;
+    border-color: #6ee37c;
+    color: #e8f5e9;
+    transform: translateX(3px);
+  }
+  .choice .arrow { color: #6ee37c; margin-right: 8px; }
+  .choice .risk { color: #ff5c5c; }
+  .choice .smart { color: #6ee37c; }
+  .end-screen {
+    text-align: center;
+    padding: 12px 0;
+  }
+  .end-screen .final { font-size: 42px; margin-bottom: 10px; }
+  .end-screen .verdict {
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .verdict.bad { color: #ff5c5c; }
+  .verdict.good { color: #6ee37c; }
+  .verdict.weird { color: #f7c948; }
+  .verdict.neutral { color: #8a7ad6; }
+  .end-screen .desc {
+    font-size: 14px;
+    color: #a8b8bc;
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+  .replay {
+    display: inline-block;
+    padding: 11px 22px;
+    background: #14202e;
+    color: #6ee37c;
+    border: 1px solid #6ee37c;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin: 4px;
+  }
+  .replay:hover { background: #1c2e40; box-shadow: 0 0 20px rgba(110,227,124,0.3); }
+  .fade { animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="game">
+    <div class="hud">
+      <div id="chapterLabel">Эпизод 1</div>
+      <div class="ep" id="epLabel">Сезон 2</div>
+      <div class="inv">🎒 <span id="invVal">пусто</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    // ---------- состояние ----------
+    const state = {
+      inv: [],
+      flags: {},
+      steps: 0,
+      rickRespect: 0, // внутренний счётчик
+      mortyPanic: 0
+    };
+
+    // ---------- сцены ----------
+    const scenes = {
+
+      // ============================================================
+      // АКТ I — СНОВА ВТОРНИК
+      // ============================================================
+
+      start: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="sys">[ Прошло ровно шесть дней. Ровно в 03:47. ]</span>
+
+Ты не спишь. Ты знал, что он придёт. И он приходит — прямо через стену, как будто её и не было.
+
+<span class="rick">РИК:</span> Подъём, <span class="rick">свежий</span>. У нас проблема. Большая. Точнее — <span class="danger">вселенского масштаба</span>. Ну, как всегда.
+<span class="morty">МОРТИ:</span> Р-Рик, ты обещал, что во второй раз будет <span class="morty">спокойнее</span>!
+<span class="rick">РИК:</span> Я обещал, Морти. Я не говорил, что <span class="danger">сдержу</span>. Это разные вещи.
+
+Рик бросает тебе на кровать маленький металлический кубик. Он <span class="smart">холодный</span>. И тикает.
+
+<span class="rick">РИК:</span> Гиперкуб, который мы добыли в прошлый раз. Он <span class="danger">испортился</span>.`,
+        choices: [
+          { text: 'Спросить, что значит «испортился»', next: 'broken' },
+          { text: 'Спросить, кто виноват', next: 'whoGuilty' },
+          { text: 'Молча одеться и встать рядом', next: 'silentReady', smart: true }
+        ]
+      },
+
+      broken: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="rick">РИК:</span> Значит, что он <span class="danger">разваливается</span>. Изнутри. Гиперкубы не должны разваливаться. Это как если бы у тебя на кухне <span class="danger">загнила</span> звезда. Очень плохо. Очень быстро.
+
+<span class="morty">МОРТИ:</span> А что будет, если он р-развалится?
+<span class="rick">РИК:</span> Хороший вопрос, Морти. <span class="smart">Наконец-то</span>. Если он развалится — исчезнет <span class="danger">сектор</span>. Не вселенная. Сектор. Это примерно… — Рик делает паузу. — Двадцать три планеты. Одна из них — <span class="danger">Земля</span>.`,
+        choices: [
+          { text: '«Так почему мы ещё тут стоим?»', next: 'goNow', smart: true },
+          { text: '«А есть план?»', next: 'plan' },
+          { text: '«Я хочу отказаться»', next: 'cantRefuse' }
+        ]
+      },
+
+      whoGuilty: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="rick">РИК:</span> Виноват <span class="rick">я</span>. Точнее — виноват Графф. Точнее — <span class="danger">ты</span>, потому что согласился в прошлый раз на сделку.
+
+<span class="morty">МОРТИ:</span> Это же несправедливо!
+<span class="rick">РИК:</span> Морти, ты сейчас защищаешь человека, который <span class="danger">утопил</span> в песочном страже последний анти-песочный реагент. Ты серьёзно?
+<span class="morty">МОРТИ:</span> Н-ну… это было случайно.
+<span class="rick">РИК:</span> «Случайно» — это когда ты случайно забываешь, что такое <span class="rick">гравитация</span>. А это — <span class="danger">систематическая</span> ошибка.`,
+        choices: [
+          { text: 'Согласиться, что виноват', next: 'plan' },
+          { text: 'Сказать, что виноват Рик', next: 'blameRick' },
+          { text: 'Молча идти собираться', next: 'goNow', smart: true }
+        ]
+      },
+
+      blameRick: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `Ты говоришь, что виноват <span class="danger">Рик</span>. Он останавливается. Смотрит на тебя долго. Потом — ухмыляется.
+
+<span class="rick">РИК:</span> Знаешь, за это я тебя <span class="smart">уважаю</span>. Все остальные молчат. Морти — молчит. Саммер — молчит. Даже Джерри молчит, хотя Джерри молчит <span class="rick">всегда</span>, потому что у него нет мнения.
+
+Он делает глоток из фляжки.
+
+<span class="rick">РИК:</span> Да. Виноват я. Но это не значит, что <span class="danger">я</span> буду разгребать. Потому что у меня есть ты. И Морти. В основном Морти.`,
+        choices: [
+          { text: 'Идти собираться', next: 'goNow' }
+        ]
+      },
+
+      silentReady: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `Ты ничего не говоришь. Просто встаёшь, одеваешься — первое, что попалось — и встаёшь рядом с Риком.
+
+Он смотрит на тебя. Хмыкает.
+
+<span class="rick">РИК:</span> Вот это <span class="smart">по-нашему</span>. Меньше слов, больше дела. Морти, учись.
+<span class="morty">МОРТИ:</span> Я учусь! Я просто… я просто не хочу <span class="morty">умирать</span>, Рик!
+<span class="rick">РИК:</span> Классическая ошибка новичка. Все хотят жить. Проблема в том, что <span class="danger">планета</span> тоже хочет.`,
+        choices: [
+          { text: 'Выйти в портал', next: 'goNow' }
+        ]
+      },
+
+      cantRefuse: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="rick">РИК:</span> Ты не можешь отказаться. Технически. Юридически. <span class="danger">Космически</span>.
+
+Он открывает портал. Из него тянет холодом. Ты видишь незнакомое небо — тёмно-синее, с тремя лунами.
+
+<span class="rick">РИК:</span> Прошлый раз ты был <span class="smart">новичком</span>. Сейчас ты — <span class="danger">напарник</span>. У напарников <span class="danger">нет</span> права отказаться. Это правило. Я его <span class="rick">только что</span> придумал.
+
+<span class="morty">МОРТИ:</span> Р-Рик, это не правило, это шантаж!
+<span class="rick">РИК:</span> Морти, в этой вселенной разницы <span class="rick">нет</span>.`,
+        choices: [
+          { text: 'Войти в портал', next: 'goNow' }
+        ]
+      },
+
+      plan: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="rick">РИК:</span> План такой. Мы идём к <span class="new">Кзарну</span> — это инженер, который делает <span class="smart">стабилизаторы</span> для гиперкубов. Он живёт на планете <span class="new">Мортелл-9</span>. Скучная дыра. Жара сорок два градуса. Пыль. И у него <span class="danger">плохой характер</span>.
+
+<span class="morty">МОРТИ:</span> А почему у него плохой характер?
+<span class="rick">РИК:</span> Потому что я ему <span class="danger">должен</span>. Как и всем остальным, к кому мы идём. Это, Морти, называется <span class="rick">нетворкинг</span>.`,
+        choices: [
+          { text: 'Выйти в портал', next: 'goNow', smart: true },
+          { text: 'Спросить, что он должен Кзарну', next: 'whatOwe' }
+        ]
+      },
+
+      whatOwe: {
+        chapter: 'Акт I · Вторник, 03:47',
+        text: `<span class="rick">РИК:</span> Я должен ему <span class="danger">жену</span>.
+
+Тишина.
+
+<span class="morty">МОРТИ:</span> Ч-что?!
+<span class="rick">РИК:</span> Не в том смысле, Морти. Я <span class="smart">одолжил</span> у него жену. Для эксперимента. По квантовой запутанности. Она <span class="danger">не вернулась</span>. Точнее, вернулась, но <span class="danger">в виде дерева</span>.
+
+Тишина становится плотнее.
+
+<span class="rick">РИК:</span> Ладно. Всё. Идём.`,
+        choices: [
+          { text: 'Выйти в портал', next: 'goNow' }
+        ]
+      },
+
+      goNow: {
+        chapter: 'Акт I · Портал',
+        text: `Рик поднимает портальную пушку. Зелёный луч режет воздух. Портал открывается — и из него <span class="danger">вырывается</span> горячий воздух, как из печи.
+
+<span class="rick">РИК:</span> Мортелл-9. Правила те же. Не трогай ничего. Не ешь ничего. Не разговаривай с местными. И — <span class="danger">главное</span> — не смотри в глаза <span class="new">Кзарну</span>. У него их три. И все три <span class="danger">гипнотические</span>.
+
+<span class="morty">МОРТИ:</span> А зачем тогда мы к нему идём?!
+<span class="rick">РИК:</span> Затем, Морти, что без него мы <span class="danger">умрём</span>. Выбор небогатый, согласен.
+
+Ты делаешь шаг в портал.`,
+        choices: [
+          { text: 'Войти', next: 'arrival' }
+        ]
+      },
+
+      // ============================================================
+      // АКТ II — МОРТЕЛЛ-9
+      // ============================================================
+
+      arrival: {
+        chapter: 'Акт II · Мортелл-9',
+        text: `Планета Мортелл-9 — это <span class="sys">пустыня</span>, выжженная дотла. Воздух дрожит от жара. Горизонт — оранжевый, небо — тёмно-синее, три луны висят как прожекторы. Пыль забивается в нос с первой секунды.
+
+<span class="rick">РИК:</span> Добро пожаловать в <span class="danger">самое скучное место</span> во всей мультивселенной. Тут нет ничего. Вообще. Ни воды, ни жизни, ни смысла. Только Кзарн и его мастерская.
+
+Вдалеке — силуэт. Огромное здание из <span class="new">ржавого металла</span>, окружённое трубами. Из труб идёт пар.
+
+<span class="morty">МОРТИ:</span> К-красиво. По-своему.
+<span class="rick">РИК:</span> Морти, ты назвал <span class="danger">ржавую жестянку</span> красивой. Это объясняет, почему ты до сих пор не умер. У тебя <span class="rick">нет вкуса</span>, но есть удача.`,
+        choices: [
+          { text: 'Идти прямо к мастерской', next: 'shopFront', smart: true },
+          { text: 'Осмотреть окрестности', next: 'exploreWasteland' },
+          { text: 'Спросить Рика, что внутри', next: 'askInside' }
+        ]
+      },
+
+      exploreWasteland: {
+        chapter: 'Акт II · Мортелл-9',
+        text: `Ты идёшь в сторону от мастерской. Песок под ногами хрустит. Ты замечаешь <span class="new">что-то блестящее</span> в бархане — наполовину засыпано.
+
+Рик замечает твой интерес.
+
+<span class="rick">РИК:</span> О, нет. Нет-нет-нет. Не трогай. Это <span class="danger">останки</span> предыдущего напарника. Точнее — его часов. Точнее — то, что от них осталось после того, как Кзарн <span class="danger">разозлился</span>.
+
+<span class="morty">МОРТИ:</span> А почему он разозлился?
+<span class="rick">РИК:</span> Потому что напарник не <span class="danger">смотрел в глаза</span>. Или смотрел слишком долго. Я не помню. Оба варианта кончились плохо.`,
+        choices: [
+          { text: 'Всё равно поднять находку', next: 'pickWatch', risk: true },
+          { text: 'Оставить и идти к мастерской', next: 'shopFront', smart: true },
+          { text: 'Спросить, что случилось с тем напарником', next: 'prevPartner' }
+        ]
+      },
+
+      prevPartner: {
+        chapter: 'Акт II · Мортелл-9',
+        text: `<span class="rick">РИК:</span> Его звали <span class="new">Дэвид</span>. Обычный человек. Работал в аптеке. Я его вытащил из <span class="danger">сгоревшего</span> дома и предложил приключение. Он согласился.
+
+Пауза.
+
+<span class="rick">РИК:</span> Он продержался <span class="danger">четыре</span> дела. На пятом Кзарн выпил его <span class="danger">эмоции</span>. Не убил — выпил. Дэвид сейчас живёт где-то в Огайо и <span class="danger">не помнит</span>, что такое радость. Говорит, что «как-то пусто».
+
+<span class="morty">МОРТИ:</span> Р-Рик, это же ужасно!
+<span class="rick">РИК:</span> Морти, ты сам <span class="rick">напомнил</span>. Я не хотел вспоминать. Спасибо. Идём.`,
+        choices: [
+          { text: 'Идти к мастерской', next: 'shopFront' }
+        ]
+      },
+
+      pickWatch: {
+        chapter: 'Акт II · Ошибка',
+        text: `Ты поднимаешь часы. Они старые, треснувшие. Внутри — <span class="new">механизм</span>, который… тикает. Медленно, как сердце.
+
+Рик резко оборачивается.
+
+<span class="rick">РИК:</span> Ты <span class="danger">идиот</span>. Полный. Я же сказал не трогать.
+<span class="morty">МОРТИ:</span> Р-Рик, что это?
+<span class="rick">РИК:</span> Это <span class="danger">маячок</span>. Теперь Кзарн знает, что мы здесь. Он <span class="danger">всегда</span> знал, но теперь он знает <span class="rick">официально</span>. Это разница.
+
+Пыль вокруг начинает <span class="danger">подниматься</span>. Ветер крепчает.`,
+        choices: [
+          { text: 'Бросить часы и бежать', next: 'shopFront', smart: true },
+          { text: 'Оставить часы и идти спокойно', next: 'shopFront' }
+        ]
+      },
+
+      askInside: {
+        chapter: 'Акт II · Мортелл-9',
+        text: `<span class="rick">РИК:</span> Внутри — <span class="new">лаборатория</span>. Кзарн создаёт стабилизаторы, антиматерию и очень много <span class="danger">долгов</span>. У него работает <span class="new">двенадцать</span> существ. Все — из разных измерений. Все — <span class="danger">наёмники</span>. Все — <span class="danger">с пистолетами</span>.
+
+<span class="morty">МОРТИ:</span> А если они не пустят?
+<span class="rick">РИК:</span> Пустят, Морти. У меня есть <span class="smart">пропуск</span>. Я его получил в прошлый раз. Но не спрашивай, как.
+
+Пауза.
+
+<span class="rick">РИК:</span> Спрашивай.
+<span class="morty">МОРТИ:</span> Как?
+<span class="rick">РИК:</span> Я женился на его <span class="danger">дочери</span>. На два дня.`,
+        choices: [
+          { text: 'Идти к мастерской', next: 'shopFront' }
+        ]
+      },
+
+      shopFront: {
+        chapter: 'Акт II · Мастерская',
+        text: `Вы подходите к мастерской. Огромная <span class="new">дверь</span> из чёрного металла. На ней — три замка. Каждый с <span class="danger">глазом</span>. Глаза медленно следят за вами, куда бы вы ни пошли.
+
+<span class="rick">РИК:</span> Приготовься. Он откроет. И будет <span class="danger">разговор</span>.
+<span class="morty">МОРТИ:</span> П-плохой?
+<span class="rick">РИК:</span> Разный, Морти. Разный.
+
+Рик стучит три раза. Дверь открывается.`,
+        choices: [
+          { text: 'Войти', next: 'kzarnFirst' }
+        ]
+      },
+
+      kzarnFirst: {
+        chapter: 'Акт II · Кзарн',
+        text: `Внутри — прохладно. Резкий контраст с пустыней. Стены покрыты схемами, чертежами, картами галактик. В центре зала — <span class="new">Кзарн</span>.
+
+Он <span class="new">высокий</span>, тонкий, с тремя глазами. Одет в металлический костюм, похожий на панцирь. Одна рука — живая, вторая — <span class="danger">механическая</span>. Все три глаза — <span class="danger">фиолетовые</span>. Они смотрят на тебя.
+
+<span class="new">КЗАРН:</span> Рик. Ты вернулся. И привёл ещё одного <span class="danger">смертника</span>.
+<span class="rick">РИК:</span> Кзарн. Друг. Брат. Спаситель моей задницы.
+<span class="new">КЗАРН:</span> Задница — да. Друг — <span class="danger">нет</span>. Ты должен мне жену.
+<span class="rick">РИК:</span> Про жену — отдельно. Сейчас — <span class="smart">гиперкуб</span>.`,
+        choices: [
+          { text: 'Молчать и наблюдать', next: 'kzarnTalk', smart: true },
+          { text: 'Сказать, что Рик действительно виноват', next: 'kzarnAlly', risk: true },
+          { text: 'Смотреть Кзарну в глаза', next: 'kzarnEyes', risk: true }
+        ]
+      },
+
+      kzarnEyes: {
+        chapter: 'Акт II · Ошибка',
+        text: `Ты смотришь Кзарну в глаза. Все три. Фиолетовые. Они <span class="danger">вращаются</span>. Внутри — спирали. Внутри — <span class="danger">вечность</span>. Ты не можешь отвести взгляд. Время растягивается.
+
+<span class="rick">РИК:</span> <span class="danger">Твою мать</span>! Я же говорил!
+<span class="new">КЗАРН:</span> Поздно. Он мой.
+
+Ты слышишь голос Рика, но он доносится <span class="danger">откуда-то издалека</span>. Как из-под воды.`,
+        choices: [
+          { text: 'Попытаться отвести взгляд', next: 'kzarnBreak', risk: true },
+          { text: 'Смотреть дальше', next: 'endHypno' }
+        ]
+      },
+
+      kzarnBreak: {
+        chapter: 'Акт II · Спасение',
+        text: `Ты <span class="smart">собираешь всю волю</span> в кулак и отводишь взгляд. Больно — как будто вырываешь <span class="danger">зуб</span> без анестезии. Голова гудит. По щеке — кровь из носа.
+
+<span class="rick">РИК:</span> Ого. Ты <span class="smart">первый</span>, кто вырвался за последние <span class="smart">семь лет</span>. Уважаю. Кзарн, ты видел? Он вырвался.
+<span class="new">КЗАРН:</span> …видел. <span class="new">Любопытно</span>.
+
+Он смотрит на тебя <span class="new">по-другому</span>. С интересом.`,
+        choices: [
+          { text: 'Поблагодарить Рика', next: 'kzarnTalk' },
+          { text: 'Спросить у Кзарна, что произошло', next: 'kzarnTalk' }
+        ]
+      },
+
+      kzarnAlly: {
+        chapter: 'Акт II · Кзарн',
+        text: `Ты говоришь, что Рик действительно виноват. Что долг — есть долг. Что ты не поддерживаешь поведение напарника.
+
+Тишина. Кзарн медленно поворачивает голову к Рику. Рик — к тебе.
+
+<span class="rick">РИК:</span> Ты <span class="danger">серьёзно</span>?
+<span class="new">КЗАРН:</span> Мне нравится этот. Оставь его.
+
+Пауза.
+
+<span class="rick">РИК:</span> …ладно. Я запомню. Оба.
+
+Рик недоволен, но Кзарн явно <span class="smart">смягчился</span>.`,
+        choices: [
+          { text: 'Продолжить разговор о гиперкубе', next: 'kzarnTalk' }
+        ]
+      },
+
+      kzarnTalk: {
+        chapter: 'Акт II · Кзарн',
+        text: `Кзарн садится в кресло. Живой рукой берёт гиперкуб, который Рик кладёт перед ним. Смотрит. Вертит. Хмурится.
+
+<span class="new">КЗАРН:</span> Да. Он <span class="danger">разваливается</span>. Изнутри. Ты знаешь, что это значит, Рик?
+<span class="rick">РИК:</span> Знаю. Кто-то в него <span class="danger">залез</span>. Изнутри. И высасывает.
+<span class="new">КЗАРН:</span> Верно. И я знаю кто. <span class="new">Глорксы</span>. Те, у которых ты украл гиперкуб в прошлый раз. Они <span class="danger">пришли в себя</span>. И теперь они мстят.
+<span class="morty">МОРТИ:</span> Т-так мы же договорились с Граффом!
+<span class="rick">РИК:</span> Морти, Графф — <span class="danger">мошенник</span>. Я же говорил. Мыши плакали, кололись, но продолжали <span class="rick">жрать кактус</span>.`,
+        choices: [
+          { text: 'Спросить, что делать', next: 'solution' },
+          { text: 'Спросить, есть ли другой выход', next: 'solution' },
+          { text: 'Спросить, кто такой Графф на самом деле', next: 'graffTruth' }
+        ]
+      },
+
+      graffTruth: {
+        chapter: 'Акт II · Правда о Граффе',
+        text: `<span class="new">КЗАРН:</span> Графф — не торговец. Он — <span class="danger">паразит</span>. Он живёт в чужих долгах. Он выдаёт гиперкубы только тем, кто <span class="danger">не сможет</span> их вернуть. Ему нужен не долг. Ему нужна <span class="danger">зависимость</span>.
+
+<span class="rick">РИК:</span> Ага. И я <span class="smart">подозревал</span>. Но мне нужен был гиперкуб, и я выбрал <span class="danger">короткий путь</span>. Как всегда.
+<span class="new">КЗАРН:</span> И теперь ты <span class="danger">расплачиваешься</span>. Как всегда.
+
+Рик делает большой глоток из фляжки. Не отвечает.`,
+        choices: [
+          { text: 'Спросить, что делать сейчас', next: 'solution' }
+        ]
+      },
+
+      solution: {
+        chapter: 'Акт II · План',
+        text: `<span class="new">КЗАРН:</span> Есть два пути. Первый — <span class="smart">стабилизатор</span>. Я могу его сделать. Он закроет гиперкуб, и никто не сможет высасывать из него энергию. Но у него есть <span class="danger">цена</span>.
+<span class="rick">РИК:</span> Сколько?
+<span class="new">КЗАРН:</span> Не деньги. <span class="new">Услуга</span>. Ты знаешь, какая.
+
+Рик молчит.
+
+<span class="new">КЗАРН:</span> Второй путь — <span class="danger">убить глорксов</span>. Всех. Несколько тысяч. Это займёт <span class="danger">вечность</span>. И ты, скорее всего, умрёшь.`,
+        choices: [
+          { text: 'Выбрать стабилизатор', next: 'chooseStabil', smart: true },
+          { text: 'Выбрать убить глорксов', next: 'chooseKill', risk: true },
+          { text: 'Спросить, что за услуга', next: 'serviceAsk' }
+        ]
+      },
+
+      serviceAsk: {
+        chapter: 'Акт II · Услуга',
+        text: `<span class="new">КЗАРН:</span> Услуга проста. Ты <span class="danger">оставляешь</span> мне своего напарника. На <span class="danger">одну неделю</span>. Я изучаю его. Не убиваю. Не калечу. Просто <span class="smart">наблюдаю</span>. У меня давно не было <span class="new">человека</span>.
+
+<span class="rick">РИК:</span> Кзарн, ты <span class="danger">охуел</span>.
+<span class="new">КЗАРН:</span> Возможно. Но у тебя нет выбора, Рик. У тебя <span class="danger">никогда</span> не было выбора. Ты пришёл ко мне. Значит, согласен.
+
+Кзарн смотрит на тебя. Три глаза. Очень спокойные.`,
+        choices: [
+          { text: 'Согласиться', next: 'chooseStabil' },
+          { text: 'Отказаться и уйти', next: 'endLeave' },
+          { text: 'Спросить, что именно он будет изучать', next: 'serviceDetails' }
+        ]
+      },
+
+      serviceDetails: {
+        chapter: 'Акт II · Услуга',
+        text: `<span class="new">КЗАРН:</span> Твои <span class="new">реакции</span>. Твой <span class="new">страх</span>. Твою <span class="new">память</span> о детстве. Моменты, когда ты <span class="danger">теряешь контроль</span>. Мне интересно, как работает <span class="new">человек</span>. Я давно не видел живого, настоящего человека. Одни наёмники, глорксы, мутанты.
+
+Пауза.
+
+<span class="new">КЗАРН:</span> Обещаю. Больно не будет. Скучно — <span class="danger">будет</span>.`,
+        choices: [
+          { text: 'Согласиться', next: 'chooseStabil' },
+          { text: 'Отказаться', next: 'endLeave' }
+        ]
+      },
+
+      chooseStabil: {
+        chapter: 'Акт III · Стабилизатор',
+        text: `Ты соглашаешься. Кзарн кивает. Встаёт. Идёт к дальней стене, где — <span class="new">шкаф</span> с десятками маленьких устройств. Он берёт одно. Возвращается.
+
+Кладёт его на гиперкуб. Устройство <span class="smart">вспыхивает</span>. Гиперкуб перестаёт тикать. Становится <span class="smart">спокойным</span>.
+
+<span class="new">КЗАРН:</span> Всё. Теперь он стабилен. Никто не сможет его <span class="danger">открыть</span>. Даже я. Даже Рик.
+
+Рик поднимает бровь.
+
+<span class="rick">РИК:</span> Хм. А я думал, ты скажешь «даже ты». Ну, ладно. Спасибо.`,
+        choices: [
+          { text: 'Спросить, когда нужно вернуться к Кзарну', next: 'kzarnReturn' },
+          { text: 'Спросить Рика, доволен ли он', next: 'rickSatisfied' }
+        ]
+      },
+
+      kzarnReturn: {
+        chapter: 'Акт III · Условие',
+        text: `<span class="new">КЗАРН:</span> Услуга остаётся. Я не беру с тебя сегодня. Но я <span class="danger">позову</span>. Через неделю. Может — через месяц. Может — <span class="danger">через год</span>. Ты никогда не будешь знать, когда.
+
+Пауза.
+
+<span class="new">КЗАРН:</span> Это и есть <span class="new">настоящий долг</span>. Не сумма. Не услуга. <span class="danger">Ожидание</span>.
+
+Он улыбается. Впервые. Улыбка у него — <span class="new">жуткая</span>, как у статуи.
+
+<span class="rick">РИК:</span> Знакомься, напарник. Ты теперь <span class="danger">в системе</span>. Поздравляю. Добро пожаловать в клуб.`,
+        choices: [
+          { text: 'Выйти из мастерской', next: 'exitShop', smart: true },
+          { text: 'Спросить, что за клуб', next: 'clubAsk' }
+        ]
+      },
+
+      clubAsk: {
+        chapter: 'Акт III · Клуб',
+        text: `<span class="rick">РИК:</span> Клуб тех, кто <span class="danger">должен</span>. Все, кто работает с межпространственным, кому-то должны. Кзарну. Граффу. Глорксам. <span class="new">Совету</span>. Это называется <span class="rick">жизнь</span>, напарник.
+
+<span class="morty">МОРТИ:</span> А кому должен <span class="morty">ты</span>, Рик?
+<span class="rick">РИК:</span> Я должен <span class="danger">всем</span>, Морти. Всем. И я с этим <span class="rick">прекрасно</span> живу.
+
+Он делает глоток. Морти вздыхает. Ты — идёшь к выходу.`,
+        choices: [
+          { text: 'Выйти из мастерской', next: 'exitShop' }
+        ]
+      },
+
+      rickSatisfied: {
+        chapter: 'Акт III · Стабилизатор',
+        text: `<span class="rick">РИК:</span> Доволен? Я <span class="smart">всегда</span> доволен, когда не умираю. Это мой базовый уровень.
+
+Он смотрит на гиперкуб, потом на тебя.
+
+<span class="rick">РИК:</span> Ты справился. Не идеально. Но <span class="smart">справился</span>. Хочешь совет? Не соглашайся на услуги Кзарна. Даже если кажется, что <span class="danger">дёшево</span>. У него <span class="danger">длинная память</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> Ладно, поздно. Ты уже согласился. Идём домой.`,
+        choices: [
+          { text: 'Выйти из мастерской', next: 'exitShop' }
+        ]
+      },
+
+      // ============================================================
+      // ВЕТКА — УБИТЬ ГЛОРКСОВ
+      // ============================================================
+
+      chooseKill: {
+        chapter: 'Акт III · Война',
+        text: `<span class="rick">РИК:</span> Ну, <span class="danger">отлично</span>. Мы идём на глорксов. Ты знаешь, сколько их?
+<span class="new">КЗАРН:</span> Пять тысяч. Плюс-минус. Они живут в <span class="new">улье</span> на планете Глорк-7.
+<span class="rick">РИК:</span> Отлично. И ты предлагаешь нам <span class="danger">двоим</span> идти против пяти тысяч.
+<span class="new">КЗАРН:</span> Троим. Морти — <span class="danger">полчеловека</span>.
+
+<span class="morty">МОРТИ:</span> Э-это оскорбление?!
+<span class="rick">РИК:</span> Морти, это <span class="smart">комплимент</span>. Полчеловека — это больше, чем ты обычно показываешь.`,
+        choices: [
+          { text: 'Спросить, есть ли план', next: 'warPlan' },
+          { text: 'Идти к Кзарну за оружием', next: 'kzarnWeapons', smart: true }
+        ]
+      },
+
+      kzarnWeapons: {
+        chapter: 'Акт III · Оружие',
+        text: `Кзарн открывает <span class="new">арсенал</span>. Стена — от пола до потолка оружием. Лазеры. Плазменные резаки. Что-то, похожее на <span class="danger">кнут</span> из света. Что-то, что выглядит как <span class="danger">живое</span> и дышит.
+
+<span class="new">КЗАРН:</span> Выбирай. Один предмет. Условия прежние — <span class="danger">услуга</span>.
+<span class="rick">РИК:</span> Кзарн, я уже <span class="danger">согласился</span> на услугу. Не жадничай.
+<span class="new">КЗАРН:</span> Услуга — за стабилизатор. Оружие — <span class="danger">отдельно</span>.
+
+Тишина.
+
+<span class="rick">РИК:</span> …ладно. Ты — <span class="danger">грёбаный</span> ростовщик.`,
+        choices: [
+          { text: 'Взять лазерный резак', next: 'warBegin', pickup: 'лазерный резак' },
+          { text: 'Взять световой кнут', next: 'warBegin', pickup: 'световой кнут' },
+          { text: 'Взять живое оружие', next: 'warBegin', pickup: 'живое оружие', risk: true },
+          { text: 'Отказаться от оружия', next: 'warBegin', smart: true }
+        ]
+      },
+
+      warPlan: {
+        chapter: 'Акт III · План',
+        text: `<span class="rick">РИК:</span> План такой. Глорксы — <span class="danger">коллективный разум</span>. У них одна мысль на всех. Значит — <span class="smart">одна точка отказа</span>. Если уничтожить центр улья — они <span class="smart">рассыпятся</span>.
+
+<span class="morty">МОРТИ:</span> А если не рассыпятся?
+<span class="rick">РИК:</span> Тогда мы <span class="danger">умрём</span>, Морти. Это тоже вариант. Не лучший, но вариант.
+
+Пауза.
+
+<span class="rick">РИК:</span> Идём. Кзарн, дай нам <span class="danger">транспорт</span> до Глорк-7.`,
+        choices: [
+          { text: 'Лететь к Глорк-7', next: 'warBegin' }
+        ]
+      },
+
+      warBegin: {
+        chapter: 'Акт III · Глорк-7',
+        text: `Вы летите на корабле Кзарна — маленьком, быстром, с <span class="new">пушкой</span> на носу. Рик за штурвалом, Морти пристёгнут с закрытыми глазами.
+
+Планета Глорк-7 — <span class="danger">коричневый шар</span>, покрытый ходами. Улей. Ты видишь вход — огромное отверстие, из которого <span class="danger">идёт свет</span>.
+
+<span class="rick">РИК:</span> Приготовься. Здесь будет <span class="danger">весело</span>. Или мы <span class="danger">умрём</span>. Я, честно говоря, до сих пор не решил, что из этого лучше.`,
+        choices: [
+          { text: 'Высадиться у главного входа', next: 'warFront', risk: true },
+          { text: 'Найти другой вход', next: 'warSide', smart: true }
+        ]
+      },
+
+      warFront: {
+        chapter: 'Акт III · Война',
+        text: `Вы заходите в главный вход. Тысячи глорксов. Все поворачиваются <span class="danger">одновременно</span>. Как один.
+
+<span class="rick">РИК:</span> <span class="danger">Открываем огонь!</span>
+
+Рик стреляет из портальной пушки — открывает порталы, глорксы проваливаются в разные измерения. Ты бьёшь тем, что взял у Кзарна. Морти кричит.
+
+Но их слишком много.`,
+        choices: [
+          { text: 'Пробиваться к центру улья', next: 'warCenter', risk: true },
+          { text: 'Отступить', next: 'warRetreat' }
+        ]
+      },
+
+      warSide: {
+        chapter: 'Акт III · Война',
+        text: `Ты находишь боковой ход. Меньше, тише, темнее. Рик идёт первым. Ты — за ним. Морти спотыкается в темноте каждые три шага.
+
+<span class="rick">РИК:</span> Тише, Морти. Я тебя <span class="danger">умоляю</span>.
+<span class="morty">МОРТИ:</span> Я н-не могу, здесь т-темно и я ч-чувствую, как меня кто-то <span class="danger">лижет</span>!
+<span class="rick">РИК:</span> Это стены, Морти. Стены живые. Не трогай их. Они <span class="danger">запоминают</span>.`,
+        choices: [
+          { text: 'Идти к центру улья', next: 'warCenter', smart: true },
+          { text: 'Вернуться к главному входу', next: 'warFront' }
+        ]
+      },
+
+      warCenter: {
+        chapter: 'Акт III · Центр',
+        text: `Вы доходите до центра. Здесь — <span class="danger">огромный мозг</span>. Не как у людей. Как у улья. Он пульсирует. Из него идут тысячи нитей — к каждому глорксу в улье.
+
+<span class="rick">РИК:</span> Вот он. Центр. Я говорил.
+
+Он поднимает пушку. Но останавливается.
+
+<span class="rick">РИК:</span> Слушай. Тут выбор. Я могу <span class="danger">убить</span> его. Или <span class="smart">уговорить</span>. Мозг улья разумен. Я с ним уже <span class="smart">разговаривал</span> однажды.
+
+<span class="morty">МОРТИ:</span> К-когда?!
+<span class="rick">РИК:</span> До того, как ты родился, Морти. Мы были <span class="danger">друзьями</span>.`,
+        choices: [
+          { text: 'Убить мозг', next: 'killBrain', risk: true },
+          { text: 'Поговорить с мозгом', next: 'talkBrain', smart: true },
+          { text: 'Пусть Рик решает сам', next: 'rickDecides' }
+        ]
+      },
+
+      talkBrain: {
+        chapter: 'Акт III · Разговор',
+        text: `Рик опускает пушку. Подходит к мозгу. Кладёт на него руку.
+
+<span class="rick">РИК:</span> Эй. Это я.
+
+Мозг <span class="new">пульсирует</span> сильнее. Из нитей выходит голос — низкий, многоголосый, как хор.
+
+<span class="new">МОЗГ:</span> Рик. Ты пришёл. Ты привёл <span class="danger">ещё одного</span>. Ты всегда приводишь кого-то, кого <span class="danger">теряешь</span>.
+
+<span class="rick">РИК:</span> Я знаю. Прости.
+
+Тишина. Рик смотрит на тебя. Потом — на Морти. Потом — на мозг.
+
+<span class="rick">РИК:</span> Нам нужен <span class="smart">мир</span>. Гиперкуб. Вы высасываете энергию. Я не могу это допустить.
+<span class="new">МОЗГ:</span> Мы <span class="danger">голодны</span>, Рик.
+<span class="rick">РИК:</span> Я знаю. Я дам вам <span class="smart">другой источник</span>. Планету, где нет жизни. Только энергия.`,
+        choices: [
+          { text: 'Ждать, что решит мозг', next: 'brainDecides' }
+        ]
+      },
+
+      killBrain: {
+        chapter: 'Акт III · Ошибка',
+        text: `Ты стреляешь первым. Рик не успевает тебя остановить. Мозг улья <span class="danger">взрывается</span>.
+
+Всё вокруг <span class="danger">рушится</span>. Тысячи глорксов — <span class="danger">умирают</span>. Сразу. Как один. Ты чувствуешь <span class="danger">волну</span> боли, которая проходит по всей планете. Морти кричит. Рик — не кричит. Рик <span class="danger">молчит</span>.
+
+<span class="rick">РИК:</span> Ты только что убил <span class="danger">пять тысяч</span>. Не врагов. Просто <span class="danger">голодных</span>. Существ, у которых не было выбора.
+
+Пауза.
+
+<span class="rick">РИК:</span> Ладно. Идём домой.`,
+        choices: [
+          { text: 'Идти домой', next: 'endSlaughter' }
+        ]
+      },
+
+      brainDecides: {
+        chapter: 'Акт III · Ответ',
+        text: `Мозг молчит <span class="sys">долго</span>. Секунды тянутся. Рик не двигается. Ты — тоже. Морти — <span class="morty">дрожит</span>.
+
+Потом мозг пульсирует.
+
+<span class="new">МОЗГ:</span> Хорошо, Рик. Но с <span class="danger">условием</span>. Ты <span class="danger">будешь приходить</span> раз в год. Один раз. И разговаривать со мной. Как <span class="smart">друг</span>. Не как враг.
+
+<span class="rick">РИК:</span> …идёт.
+
+Он кладёт ладонь на мозг ещё раз. Медленно, как будто <span class="smart">прощается</span>. Потом отходит.
+
+<span class="rick">РИК:</span> Всё. Уходим.`,
+        choices: [
+          { text: 'Вернуться к кораблю', next: 'backToShip', smart: true }
+        ]
+      },
+
+      rickDecides: {
+        chapter: 'Акт III · Решение',
+        text: `Ты не решаешь. Это решает Рик. Он стоит <span class="danger">долго</span>. Потом опускает пушку. Подходит к мозгу. Что-то говорит ему <span class="smart">шёпотом</span>. Ты не слышишь — что.
+
+Потом Рик отходит. Идёт к выходу.
+
+<span class="rick">РИК:</span> Всё. Пойдём.
+<span class="morty">МОРТИ:</span> А что ты ему сказал?
+<span class="rick">РИК:</span> <span class="danger">Ничего</span>, Морти. Просто <span class="danger">ничего</span>.
+
+Из его голоса ясно: спрашивать не надо.`,
+        choices: [
+          { text: 'Идти к кораблю', next: 'backToShip' }
+        ]
+      },
+
+      warRetreat: {
+        chapter: 'Акт III · Отступление',
+        text: `Вы отступаете. Глорксы не преследуют. Они возвращаются в улей. Рик смотрит на тебя.
+
+<span class="rick">РИК:</span> Мы не будем их убивать. Я не хочу. Пойдём другой дорогой.
+<span class="morty">МОРТИ:</span> К-какой?
+<span class="rick">РИК:</span> К Кзарну. Скажем, что убили. Он <span class="danger">проверять</span> не будет. Он <span class="smart">ленивый</span>.`,
+        choices: [
+          { text: 'Лететь к Кзарну', next: 'backToShip' }
+        ]
+      },
+
+      backToShip: {
+        chapter: 'Акт III · Возвращение',
+        text: `Вы возвращаетесь к кораблю. Рик запускает двигатели. Морти засыпает на заднем сиденье.
+
+Рик смотрит на тебя.
+
+<span class="rick">РИК:</span> Слушай. Я хочу сказать тебе <span class="smart">одну вещь</span>. Ты не первый напарник. И не последний. Я не буду притворяться, что ты <span class="danger">особенный</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> Но ты <span class="smart">живой</span>. И ты не сдох. Это уже <span class="smart">больше</span>, чем я ожидал.
+
+Он отворачивается к приборам. Корабль летит к порталу домой.`,
+        choices: [
+          { text: 'Молча смотреть в окно', next: 'homeArrival', smart: true },
+          { text: 'Сказать Рику спасибо', next: 'thankRick' },
+          { text: 'Спросить, что с Кзарном', next: 'kzarnFollowup' }
+        ]
+      },
+
+      thankRick: {
+        chapter: 'Акт III · Возвращение',
+        text: `Ты говоришь спасибо. Рик не отвечает сразу.
+
+<span class="rick">РИК:</span> <span class="danger">Не благодари</span>. Благодарность — это долг. А я не хочу, чтобы ты мне <span class="danger">был должен</span>. У меня <span class="danger">достаточно</span> должников.
+
+Пауза.
+
+<span class="rick">РИК:</span> …но <span class="smart">спасибо</span> принял. Молча. Не повторяй.
+
+Он делает глоток из фляжки.`,
+        choices: [
+          { text: 'Молча смотреть в окно', next: 'homeArrival' }
+        ]
+      },
+
+      kzarnFollowup: {
+        chapter: 'Акт III · Возвращение',
+        text: `<span class="rick">РИК:</span> Кзарн? Он позовёт. Через месяц, через год — <span class="danger">неважно</span>. Придёшь. Он <span class="danger">не забудет</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> Знаешь, что самое стрёмное? Он никогда не просит <span class="danger">сразу</span>. Он просит <span class="danger">потом</span>. Когда ты уже думаешь, что <span class="smart">пронесло</span>. Вот тогда он и звонит.
+
+Он смотрит в окно.
+
+<span class="rick">РИК:</span> Это и есть его <span class="danger">настоящая</span> сила.`,
+        choices: [
+          { text: 'Молча смотреть в окно', next: 'homeArrival' }
+        ]
+      },
+
+      // ============================================================
+      // ФИНАЛ — ДОМ
+      // ============================================================
+
+      exitShop: {
+        chapter: 'Акт III · Выход',
+        text: `Вы выходите из мастерской. Снаружи — всё та же пустыня. Жара. Пыль. Кзарн закрывает за вами дверь. Три замка щёлкают.
+
+<span class="morty">МОРТИ:</span> И-и всё? Мы просто уходим?
+<span class="rick">РИК:</span> Да, Морти. Мы <span class="smart">справились</span>. Это редкость. Наслаждайся моментом. Через неделю всё будет <span class="danger">опять</span> плохо.
+
+Рик открывает портал. Перед вами — твоя комната. Та же, что была. Но как будто <span class="sys">другая</span>.`,
+        choices: [
+          { text: 'Войти домой', next: 'homeArrival' }
+        ]
+      },
+
+      homeArrival: {
+        chapter: 'Финал · Дом',
+        text: `Ты входишь. Окно открыто. Утро. Ты садишься на кровать. Гиперкуб лежит рядом, тёплый, стабильный. Больше не тикает.
+
+Рик стоит в дверях. Морти — за ним. Оба собираются уходить.
+
+<span class="rick">РИК:</span> Ладно. Слушай сюда. Ты <span class="smart">официально</span> в деле. Следующий вторник, 03:47. Опять. Приду. Не удивляйся.
+
+<span class="morty">МОРТИ:</span> П-пока. Спасибо. Ты был к-крут. По-настоящему.
+
+Рик открывает портал. Уходит. Морти — за ним. Портал закрывается.`,
+        choices: [
+          { text: 'Лечь спать', next: 'endGood' },
+          { text: 'Осмотреть гиперкуб', next: 'inspectCube' },
+          { text: 'Проверить, не забыли ли что-то', next: 'checkRoom' }
+        ]
+      },
+
+      inspectCube: {
+        chapter: 'Финал · Гиперкуб',
+        text: `Ты берёшь гиперкуб. Он <span class="smart">холодный</span> и спокойный. Внутри что-то <span class="sys">светится</span> мягким зелёным. Ты крутишь его в руках.
+
+На одной из граней — <span class="danger">царапина</span>. Не случайная. Буквы. Ты вглядываешься.
+
+<span class="new">«НЕ ДАЙ ЕМУ УВИДЕТЬ»</span>.
+
+Кто это написал? Когда? Ты не знаешь. Но понимаешь: это <span class="danger">предупреждение</span>.`,
+        choices: [
+          { text: 'Спрятать гиперкуб', next: 'endCubeWarning', smart: true },
+          { text: 'Забыть и лечь спать', next: 'endGood' }
+        ]
+      },
+
+      checkRoom: {
+        chapter: 'Финал · Комната',
+        text: `Ты осматриваешь комнату. Всё как было. Но на столе — <span class="new">записка</span>. Почерк Рика. Рваный, торопливый.
+
+<span class="rick">«Напарник. Если читаешь это — значит, я ушёл. Не ищи меня. Через шесть дней я вернусь. Если не вернусь — <span class="danger">не открывай дверь</span> никому. Даже мне. Особенно мне. — Р.»</span>
+
+Ты смотришь на записку долго. Потом кладёшь её в карман.`,
+        choices: [
+          { text: 'Лечь спать', next: 'endNote' }
+        ]
+      },
+
+      // ============================================================
+      // КОНЦОВКИ
+      // ============================================================
+
+      endGood: {
+        end: true,
+        verdict: 'good',
+        icon: '🛸',
+        title: 'ЭПИЗОД ЗАВЕРШЁН',
+        desc: 'Ты жив. Гиперкуб стабилен. Рик ушёл, но обещал вернуться. Морти не погиб (что уже достижение). В следующий вторник в 03:47 он снова придёт. Ты знаешь это. И, что странно, ты ждёшь. Не потому что скучно. Потому что рядом с Риком ты наконец чувствуешь себя нужным. Хотя он никогда этого не скажет вслух.'
+      },
+
+      endCubeWarning: {
+        end: true,
+        verdict: 'weird',
+        icon: '⚠️',
+        title: 'ПРЕДУПРЕЖДЕНИЕ',
+        desc: 'Ты прячешь гиперкуб в шкаф. Под старую куртку. Через час ты слышишь, как он тихо гудит. Через два — гудение стихает. Ночью тебе снится человек с тремя глазами. Он говорит: «Спасибо, что не отдал». Ты просыпаешься в холодном поту. На следующий день — вторник. 03:47. Ты не удивлён. Ты готов.'
+      },
+
+      endNote: {
+        end: true,
+        verdict: 'neutral',
+        icon: '📝',
+        title: 'ЗАПИСКА',
+        desc: 'Ты засыпаешь с запиской в кармане. Утром она исчезает. Ты обыскиваешь всю комнату — ничего. Через три дня приходит письмо. Без обратного адреса. Внутри — та же записка, тем же почерком. Но последняя строка другая: «Передумал. Не открывай никому. — Р.» Ты больше никогда не видишь Рика. Но гиперкуб на полке продолжает тихо светиться зелёным. Иногда, ночью, он напоминает: ты не один.'
+      },
+
+      endHypno: {
+        end: true,
+        verdict: 'bad',
+        icon: '🌀',
+        title: 'ГИПНОЗ',
+        desc: 'Ты смотришь слишком долго. Кзарн поглощает твоё сознание. Ты жив, но тебя нет. Ты стал одним из его наёмников. Одно из двенадцати существ в мастерской. Иногда Рик приходит на Мортелл-9 по делам. Он смотрит на тебя. Ты смотришь сквозь него. Рик говорит: «Ещё один». И уходит. Морти плачет. Каждый раз.'
+      },
+
+      endLeave: {
+        end: true,
+        verdict: 'bad',
+        icon: '🚪',
+        title: 'УШЁЛ НИ С ЧЕМ',
+        desc: 'Ты отказываешься от сделки. Кзарн молча показывает на выход. Рик идёт за тобой. Гиперкуб остаётся нестабильным. Через шесть часов он взрывается. Погибает сектор. Погибает Земля. Рик успевает вытащить тебя в другую вселенную — параллельную. Здесь ты живёшь в квартире, где нет ни одной твоей вещи. Ни одной фотографии. Здесь у тебя никогда не было родителей. Рик говорит: «Это твоя новая жизнь. Не благодари».'
+      },
+
+      endSlaughter: {
+        end: true,
+        verdict: 'bad',
+        icon: '💀',
+        title: 'ГЕНОЦИД',
+        desc: 'Ты уничтожаешь мозг улья. Пять тысяч разумных существ умирают в одну секунду. Галактика узнаёт. Тебе дают имя — его произносят шёпотом в четырёх секторах. Кзарн доволен. Рик — нет. Рик никогда не говорит об этом вслух, но после этого дела он приходит к тебе реже. Раз в месяц. Потом — раз в год. Потом — перестаёт. Ты остаёшься один с гиперкубом, который теперь работает. И с памятью, которую ничем не вычистить.'
+      }
+    };
+
+    // ---------- движок ----------
+    const content = document.getElementById('content');
+    const invVal = document.getElementById('invVal');
+    const chapterLabel = document.getElementById('chapterLabel');
+    const epLabel = document.getElementById('epLabel');
+
+    function renderInv() {
+      invVal.textContent = state.inv.length ? state.inv.join(', ') : 'пусто';
+    }
+
+    function renderScene(id) {
+      const s = scenes[id];
+      if (!s) return;
+
+      if (s.chapter) chapterLabel.textContent = s.chapter;
+
+      if (s.end) {
+        state.flags.ended = true;
+        content.innerHTML = `
+          <div class="end-screen fade">
+            <div class="final">${s.icon}</div>
+            <div class="verdict ${s.verdict}">${s.title}</div>
+            <div class="desc">${s.desc}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.steps++;
+
+      const available = s.choices.filter(c => !c.need || state.inv.includes(c.need));
+
+      let choicesHtml = available.map((c) => {
+        const cls = c.risk ? 'risk' : c.smart ? 'smart' : '';
+        return `<button class="choice" onclick="choose('${c.next}', '${(c.pickup || '').replace(/'/g, "\\'")}')">
+          <span class="arrow">▸</span><span class="${cls}">${c.text}</span>
+        </button>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="fade">
+          <div class="scene-text">${s.text}</div>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+    }
+
+    function choose(next, pickup) {
+      if (pickup && !state.inv.includes(pickup)) {
+        state.inv.push(pickup);
+        renderInv();
+      }
+      renderScene(next);
+    }
+
+    function restart() {
+      state.inv = [];
+      state.flags = {};
+      state.steps = 0;
+      renderScene('start');
+      renderInv();
+    }
+
+    renderScene('start');
+    renderInv();
+  </script>
+</body>
+</html>
