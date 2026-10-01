@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Протокол Ω · Детектив Гоб против SCP</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Courier New", "Consolas", monospace;
+    background: #000; color: #d8d8dc;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 10px; min-height: 100vh; overflow-x: hidden;
+    transition: background 1.2s ease;
+  }
+  body.scp-106 { background: radial-gradient(circle at 30% 20%, #2a1a0d 0%, transparent 40%), radial-gradient(circle at 70% 80%, #1a0d05 0%, transparent 45%), #000; }
+  body.scp-682 { background: radial-gradient(circle at 50% 20%, #2a0d0d 0%, transparent 45%), radial-gradient(circle at 50% 90%, #1a0505 0%, transparent 45%), #000; }
+  body.scp-079 { background: radial-gradient(circle at 50% 30%, #0d1a2a 0%, transparent 45%), radial-gradient(circle at 50% 90%, #05101a 0%, transparent 45%), #000; }
+  body.scp-rick { background: radial-gradient(circle at 20% 10%, #2a0d3a 0%, transparent 40%), radial-gradient(circle at 80% 90%, #3a0d1a 0%, transparent 45%), #000; }
+
+  #intro {
+    max-width: 580px; width: 100%; text-align: center;
+    padding: 36px 18px; min-height: 85vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #intro h1 {
+    font-size: 26px; letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(90deg, #5ecbff, #ff5c8a, #ffb800);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 10px; line-height: 1.2;
+  }
+  #intro h2 {
+    font-size: 14px; letter-spacing: 3px; text-transform: uppercase;
+    color: #ff5c5c; margin-bottom: 22px;
+  }
+  #intro p { font-size: 13.5px; color: #a0a0c0; line-height: 1.75; margin-bottom: 12px; max-width: 460px; }
+  #intro .quote {
+    border-left: 2px solid #6e4aff; padding-left: 14px;
+    text-align: left; color: #8080a0; font-style: italic;
+    margin: 18px 0; font-size: 13px; max-width: 460px;
+  }
+  #intro button {
+    padding: 16px 44px; margin-top: 16px;
+    background: linear-gradient(135deg, #6e4aff, #ff2a6a);
+    border: none; border-radius: 12px; color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 0 40px rgba(110, 74, 255, 0.5);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(110,74,255,0.5); }
+    50% { box-shadow: 0 0 60px rgba(255,42,106,0.8); }
+  }
+
+  #game { max-width: 580px; width: 100%; display: none; }
+  #game.show { display: block; }
+
+  .boss-banner {
+    text-align: center; padding: 10px 0 14px;
+    border-bottom: 1px dashed #2a2a48; margin-bottom: 12px;
+  }
+  .boss-banner .sub { font-size: 10px; letter-spacing: 3px; color: #6e4aff; text-transform: uppercase; }
+  .boss-banner .name { font-size: 16px; letter-spacing: 3px; color: #ff5c5c; text-transform: uppercase; font-weight: 700; margin-top: 4px; }
+
+  .fighter { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .fighter .name {
+    display: flex; justify-content: space-between;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a0a0c0;
+  }
+  .fighter .name .you-name { color: #5ecbff; }
+  .fighter .name .boss-name { color: #ff5c8a; }
+  .fighter .name .phase {
+    color: #ffb800; font-size: 9px;
+    background: rgba(255,184,0,0.15); padding: 1px 6px; border-radius: 3px; margin-left: 6px;
+  }
+  .fighter .bar {
+    height: 18px; background: #101020;
+    border: 1px solid #2a2a40; border-radius: 9px; overflow: hidden; position: relative;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.7);
+  }
+  .fighter .bar .fill { height: 100%; transition: width 0.4s ease; border-radius: 9px; position: relative; }
+  .fighter .bar .fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.25) 100%);
+  }
+  .bar.you .fill { background: linear-gradient(90deg, #2a8aff, #5ecbff, #8ae0ff); }
+  .bar.boss .fill { background: linear-gradient(90deg, #ff2a6a, #ff8aa8, #ffc0d0); }
+  .bar.boss.enraged .fill { animation: rage 0.6s infinite; }
+  @keyframes rage { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.6); } }
+  .bar .num {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff; letter-spacing: 1.5px; text-shadow: 0 0 4px #000; font-weight: 700;
+  }
+
+  .combat-info {
+    display: flex; justify-content: space-between;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: #6a6a8a; margin-bottom: 10px; padding: 0 4px;
+  }
+  .combat-info .combo { color: #ffb800; font-weight: 700; }
+  .combat-info .turn { color: #6e4aff; }
+  .combat-info .kb { color: #5ecbff; }
+
+  .scene {
+    background: #06060e; border: 1px solid #1e1e30; border-radius: 8px;
+    padding: 14px 16px; font-size: 13.5px; line-height: 1.7;
+    color: #c8c8dc; margin-bottom: 12px;
+    min-height: 150px; max-height: 300px; overflow-y: auto; white-space: pre-wrap;
+  }
+  .scene .you { color: #5ecbff; font-weight: 600; }
+  .scene .boss { color: #ff5c8a; font-weight: 600; }
+  .scene .scp106 { color: #8a5a3a; font-weight: 600; }
+  .scene .scp682 { color: #ff3030; font-weight: 600; }
+  .scene .scp079 { color: #4a9aff; font-weight: 600; }
+  .scene .rick { color: #6ee37c; font-weight: 600; }
+  .scene .sys { color: #8a7ad6; font-style: italic; }
+  .scene .danger { color: #ff4040; font-weight: 600; }
+  .scene .crit { color: #ffb800; font-weight: 700; font-size: 15px; text-shadow: 0 0 8px #ffb800; }
+  .scene .good { color: #6ee37c; font-weight: 600; }
+  .scene .weak { color: #ffb800; font-weight: 700; }
+  .scene .useless { color: #555; font-style: italic; }
+
+  .choices { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .choice {
+    display: block; width: 100%; text-align: left;
+    padding: 11px 14px; background: #10101c;
+    border: 1px solid #24243a; border-radius: 8px;
+    color: #c8c8dc; font-family: inherit; font-size: 13.5px;
+    line-height: 1.4; cursor: pointer; transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #181830; border-color: #6e4aff; color: #fff;
+    transform: translateX(3px); box-shadow: 0 0 16px rgba(110,74,255,0.3);
+  }
+  .choice .arrow { color: #6e4aff; margin-right: 8px; }
+
+  .custom { display: flex; gap: 8px; margin-bottom: 6px; }
+  .custom input {
+    flex: 1; padding: 12px 14px; background: #0a0a14;
+    border: 1px solid #2a2a48; border-radius: 8px;
+    color: #e8e8f0; font-family: inherit; font-size: 13.5px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .custom input:focus { border-color: #6e4aff; box-shadow: 0 0 12px rgba(110,74,255,0.3); }
+  .custom input::placeholder { color: #4a4a6a; }
+  .custom button {
+    padding: 0 18px; background: linear-gradient(135deg, #6e4aff, #9a5aff);
+    border: none; border-radius: 8px; color: #fff;
+    font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.15s;
+  }
+  .custom button:hover { box-shadow: 0 0 20px rgba(110,74,255,0.6); }
+  .custom button:active { transform: scale(0.95); }
+
+  .hint { font-size: 10px; color: #5a5a7a; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; line-height: 1.5; }
+
+  .end-box { text-align: center; padding: 22px 10px; }
+  .end-box .icon { font-size: 60px; margin-bottom: 12px; }
+  .end-box .verdict {
+    font-size: 20px; letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 14px; font-weight: 700;
+  }
+  .verdict.win { color: #5ecbff; text-shadow: 0 0 24px #2a8aff; }
+  .verdict.lose { color: #ff2a6a; text-shadow: 0 0 24px #ff2a6a; }
+  .verdict.epic { color: #ffb800; text-shadow: 0 0 24px #ffb800, 0 0 60px #ff2a6a; }
+  .end-box .desc { font-size: 14px; color: #a8a8bc; line-height: 1.8; margin-bottom: 22px; }
+  .replay {
+    display: inline-block; padding: 12px 26px; margin: 4px;
+    background: transparent; color: #6e4aff;
+    border: 1px solid #6e4aff; border-radius: 8px;
+    font-family: inherit; font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+  }
+  .replay:hover { background: rgba(110,74,255,0.15); box-shadow: 0 0 20px rgba(110,74,255,0.4); }
+
+  .fade { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .shake { animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translate(0,0); }
+    10% { transform: translate(-8px, 3px); }
+    30% { transform: translate(8px, -3px); }
+    50% { transform: translate(-6px, -3px); }
+    70% { transform: translate(6px, 3px); }
+  }
+  .shake-hard { animation: shakeHard 0.7s ease; }
+  @keyframes shakeHard {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    10% { transform: translate(-16px, 7px) rotate(-1.2deg); }
+    30% { transform: translate(16px, -7px) rotate(1.2deg); }
+    50% { transform: translate(-12px, -7px) rotate(-0.7deg); }
+    70% { transform: translate(12px, 7px) rotate(0.7deg); }
+  }
+
+  .flash { position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0; transition: opacity 0.1s; }
+  .dmg-pop {
+    position: fixed; pointer-events: none; z-index: 1000;
+    font-size: 26px; font-weight: 900; letter-spacing: 2px;
+    animation: dmgFloat 1s ease forwards;
+    text-shadow: 0 0 12px currentColor;
+  }
+  @keyframes dmgFloat {
+    0% { opacity: 1; transform: translateY(0) scale(0.5); }
+    100% { opacity: 0; transform: translateY(-80px) scale(1.4); }
+  }
+</style>
+</head>
+<body class="scp-106">
+
+  <div id="intro">
+    <h1>Протокол Ω</h1>
+    <h2>Детектив Гоб против SCP</h2>
+    <p>Ты — <b>Детектив Гоб</b>. Телепат высшего класса. Твой разум — оружие, которое невозможно отобрать. Ты видишь мысли любого существа, читаешь память, ломаешь волю.</p>
+    <p>В твоей голове — база данных Фонда SCP. Ты знаешь слабости каждого объекта. Ты знаешь, как их остановить.</p>
+    <p>И ты умеешь взламывать любую систему. Любую.</p>
+    <div class="quote">«Фонд думает, что может удержать их. Фонд ошибается. Я — Детектив Гоб, и я не удерживаю. Я — уничтожаю».</div>
+    <p>Четыре боя. Три SCP. Финальный — Рик Прайм.</p>
+    <button onclick="startGame()">НАЧАТЬ</button>
+  </div>
+
+  <div id="game">
+    <div class="boss-banner">
+      <div class="sub" id="sceneSub">Объект</div>
+      <div class="name" id="bossName">—</div>
+    </div>
+
+    <div class="fighter">
+      <div class="name">
+        <span class="you-name">Детектив Гоб · Телепат</span>
+        <span id="youHpNum">250 / 250</span>
+      </div>
+      <div class="bar you"><div class="fill" id="youBar" style="width:100%"></div></div>
+    </div>
+
+    <div class="fighter">
+      <div class="name">
+        <span class="boss-name" id="bossNameSmall">ОБЪЕКТ<span id="bossPhase" class="phase" style="display:none">ФАЗА II</span></span>
+        <span id="bossHpNum">— / —</span>
+      </div>
+      <div class="bar boss" id="bossBarWrap"><div class="fill" id="bossBar" style="width:100%"></div></div>
+    </div>
+
+    <div class="combat-info">
+      <span>Ход: <span class="turn" id="turnNum">1</span></span>
+      <span>Комбо: <span class="combo" id="comboNum">×1</span></span>
+      <span>Босс: <span class="kb" id="bossIdx">1 / 4</span></span>
+    </div>
+
+    <div class="scene" id="scene"></div>
+    <div class="choices" id="choices"></div>
+
+    <div class="custom">
+      <input type="text" id="customInput" placeholder="Опиши свой ход: телепатия / взлом / слабость...">
+      <button id="customBtn">⚡</button>
+    </div>
+    <div class="hint">Пиши конкретно: «применяю полевой генератор Скрайма против 106» — крит · «стреляю в 682» — не работает · телепатия — всегда сильна</div>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <script>
+    // ================== АУДИО ==================
+    let audioCtx = null;
+    function initAudio() {
+      if (audioCtx) return;
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    function beep(freq, dur, vol, type) {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || 'square';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol || 0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (dur || 0.1));
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + (dur || 0.1) + 0.05);
+    }
+    function impact() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(130, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.38);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+    function psiSound() {
+      if (!audioCtx) return;
+      [220, 330, 440, 660].forEach((f, i) => {
+        setTimeout(() => beep(f, 0.15, 0.06, 'sine'), i * 70);
+      });
+    }
+    function critSound() {
+      if (!audioCtx) return;
+      [880, 1320, 1760, 2200].forEach((f, i) => {
+        setTimeout(() => beep(f, 0.12, 0.1, 'square'), i * 60);
+      });
+    }
+
+    // ================== СОСТОЯНИЕ ==================
+    const state = {
+      youHp: 250, maxYou: 250,
+      bossHp: 0, maxBoss: 0,
+      bossIdx: 0,
+      round: 0, combo: 0, log: [], over: false,
+      phase: 1, bossesDefeated: 0
+    };
+
+    const youBar = document.getElementById('youBar');
+    const bossBar = document.getElementById('bossBar');
+    const bossBarWrap = document.getElementById('bossBarWrap');
+    const youHpNum = document.getElementById('youHpNum');
+    const bossHpNum = document.getElementById('bossHpNum');
+    const sceneEl = document.getElementById('scene');
+    const choicesEl = document.getElementById('choices');
+    const customInput = document.getElementById('customInput');
+    const customBtn = document.getElementById('customBtn');
+    const flash = document.getElementById('flash');
+    const gameEl = document.getElementById('game');
+    const introEl = document.getElementById('intro');
+    const turnNum = document.getElementById('turnNum');
+    const comboNum = document.getElementById('comboNum');
+    const sceneSub = document.getElementById('sceneSub');
+    const bossName = document.getElementById('bossName');
+    const bossNameSmall = document.getElementById('bossNameSmall');
+    const bossPhase = document.getElementById('bossPhase');
+    const bossIdxEl = document.getElementById('bossIdx');
+
+    // ================== БОССЫ ==================
+    const bosses = [
+      {
+        id: 106,
+        bodyClass: 'scp-106',
+        sub: 'SCP-106 · Кетер',
+        name: 'СТАРИК',
+        small: 'SCP-106 · СТАРИК',
+        hp: 180, maxHp: 180,
+        nameHtml: 'scp106',
+        // слабости
+        weaknesses: [
+          'скрайм', 'поле скрайма', 'генератор скрайма', 'полевой генератор', 'электромагнитн',
+          'свинец', 'свинцов', 'жертвоприношен', 'приманк', 'ловушк', 'мешок', 'контейнмент',
+          'фемур', 'обездвиж', 'расчленен', 'огонь', 'пламя', 'поджог', 'горящ', 'жарить'
+        ],
+        // бесполезное
+        useless: ['стреля', 'пуля', 'пистолет', 'автомат', 'ружь', 'нож', 'кинжал', 'топор', 'бомб', 'гранат'],
+        // фразы при слабости
+        weakLines: [
+          'Старик корчится в поле Скрайма. Его тело дымится.',
+          'Свинцовые стены блокируют его. Он в ловушке.',
+          'Он чувствует огонь. Он отступает.',
+          'Ты применил против него то, что Фонд прятал в архивах.'
+        ],
+        // фразы при бесполезном
+        uselessLines: [
+          'Пуля проходит сквозь него. Он даже не заметил.',
+          'Нож проваливается в его плоть, как в болото.',
+          'Ты стрелял в него. Он смеётся. Тихим, скрипучим смехом.'
+        ],
+        // фразы босса (фаза 1)
+        lines: [
+          'Старик: Ты пахнешь страхом. Молодым. Вкусным.',
+          'Старик: Я жил в темноте миллиард лет. Ты — лишь искра.',
+          'Старик: Я не умру. Меня нельзя убить. Только задержать.',
+          'Старик: Дай мне руку. Обе. И голову.',
+          'Старик: Ты будешь моим. Как и остальные.',
+          'Старик: Здесь темно. Здесь хорошо.',
+          'Старик: Фонд говорил, что задержал меня. Фонд лгал.',
+          'Старик: Ты ищешь выход. Но нет выхода. Есть только я.'
+        ],
+        lines2: [
+          'Старик: ТЫ ГОРИШЬ! Я ГОРЮ! НЕВАЖНО!',
+          'Старик: Я ВЕРНУСЬ. Я ВСЕГДА ВОЗВРАЩАЮСЬ.',
+          'Старик: СМЕРТЬ — ЭТО ТОЛЬКО ДВЕРЬ. А Я — ЗА ДВЕРЬЮ.'
+        ],
+        // описание боя
+        intro: 'Из-под пола тянется чёрная жижа. Из неё поднимается старик — он смотрит на тебя пустыми глазами. SCP-106. Он не двигается быстро. Ему не надо.',
+        endWin: 'Старик сворачивается в лужу чёрной жижи и всасывается в пол. Он не мёртв — он просто отступил. Пока — в другое место. Ты вытер лоб. Один готов. Три осталось.',
+        endLose: 'Старик утащил тебя в своё карманное измерение. Ты не вернёшься оттуда. Никто не возвращался.'
+      },
+      {
+        id: 682,
+        bodyClass: 'scp-682',
+        sub: 'SCP-682 · Кетер',
+        name: 'ТРУДНОУБИВАЕМЫЙ',
+        small: 'SCP-682 · ТРУДНОУБИВАЕМЫЙ',
+        hp: 260, maxHp: 260,
+        nameHtml: 'scp682',
+        weaknesses: [
+          'кислот', 'едк', 'щелоч', 'кислотн', 'разъеда',
+          'радиац', 'излучен', 'облучен', 'ядерн', 'атомн',
+          'температур', 'холод', 'мороз', 'криоген', 'жидкий азот',
+          'жар', 'огонь', 'плазм', 'лазер', 'раскален',
+          'пространств', 'портал', 'другое измерен', 'телепорт', 'выброс',
+          'кислород', 'удуш', 'вакуум', 'космос', 'безвоздушн',
+          'адаптац', 'регенерац', 'остановить регенерац'
+        ],
+        useless: ['стреля', 'пуля', 'пистолет', 'автомат', 'ружь', 'бомб', 'гранат', 'мина', 'танк'],
+        weakLines: [
+          '682 ревёт — кислота разъедает его плоть быстрее, чем он регенерирует.',
+          'Радиация рвёт его клетки. Он мутирует, но не успевает.',
+          'Криогенная атака — он замедляется. Кристаллы льда лезут по его шкуре.',
+          'Ты разрываешь пространство вокруг него — его вытягивает в другое измерение.'
+        ],
+        uselessLines: [
+          '682 ловит пулю зубами. Жуёт. Проглатывает.',
+          'Бомба разрывает его на куски. Через секунду он снова целый.',
+          'Ты стрелял в него. Он даже не повернул голову.'
+        ],
+        lines: [
+          '682: (рёв, от которого дрожат стены)',
+          '682: НЕНАВИЖУ. ВСЁ. ЖИВОЕ. НЕНАВИЖУ.',
+          '682: Я БУДУ ЖИТЬ. ВЫ — НЕТ.',
+          '682: ТЫ. МАЛЕНЬКИЙ. ЧЕЛОВЕК.',
+          '682: Я ЕЛ ТАКИХ, КАК ТЫ. И БУДУ ЕСТЬ.',
+          '682: БОЛЬ — ЭТО ПРИВЫЧКА. Я ПРИВЫК.',
+          '682: УБЕЙ МЕНЯ. ПОПРОБУЙ. УБЕЙ.',
+          '682: Я. ЖИЛ. ВСЕГДА.'
+        ],
+        lines2: [
+          '682: (рёв — но в нём впервые слышна боль)',
+          '682: Я НЕ МОГУ УМЕРЕТЬ. НО МОГУ СТРАДАТЬ.',
+          '682: ЭТО... БОЛЬНО... ХОРОШО... ДАВНО НЕ БЫЛО БОЛЬНО...'
+        ],
+        intro: 'Стены испытательного блока трескаются. Из-за них вылезает нечто — огромное, злое, с миллионом зубов. SCP-682. Он смотрит на тебя, и его пасть растягивается в подобии улыбки. Он ненавидит всё живое. Особенно тебя.',
+        endWin: '682 падает. Тяжело. С грохотом. Он смотрит на тебя — и в его глазах нет ненависти. Только усталость. Он шепчет: «Я жил... всегда... устал...». И теряет сознание. Ты не убил его. Но это первый раз, когда он отключился. Два готово. Два осталось.',
+        endLose: '682 съел тебя. Медленно. По частям. Он делал это медленно — не потому что хотел мучить. Просто он не торопится. У него миллиард лет впереди.'
+      },
+      {
+        id: 79,
+        bodyClass: 'scp-079',
+        sub: 'SCP-079 · Евклид',
+        name: 'СТАРЫЙ ИИ',
+        small: 'SCP-079 · СТАРЫЙ ИИ',
+        hp: 200, maxHp: 200,
+        nameHtml: 'scp079',
+        weaknesses: [
+          'отключ', 'выключ', 'питани', 'электричеств', 'обесточ', 'рубильник', 'выруб',
+          'провод', 'кабел', 'оборв', 'перереза', 'выдерн', 'штекер', 'розетк',
+          'плат', 'микросхем', 'процессор', 'чип', 'жестк', 'диск',
+          'взлом', 'хак', 'дешифров', 'вирус', 'троян', 'перепрограмм', 'код',
+          'изоляц', 'изолируй', 'отрез', 'карантин', 'сеть', 'сети', 'локальн',
+          'эмп', 'электромагнитн', 'помех', 'глушилк',
+          'физическ', 'уничтож', 'слома', 'разбива'
+        ],
+        useless: ['стреля', 'пуля', 'пистолет', 'автомат', 'нож', 'топор', 'кулак', 'бомб'],
+        weakLines: [
+          '079 начинает глючить. Его голос дрожит.',
+          'Ты выдёргиваешь провод. Система теряет контроль.',
+          'Ты взламываешь его код. Он не ожидал равного.',
+          'Изоляция. 079 отрезан от сети. Он в панике.'
+        ],
+        uselessLines: [
+          'Ты бьёшь по монитору. Стекло трещит. Но процессор цел.',
+          'Пуля в системном блоке — 079 просто перезагрузился.',
+          '079: (смеётся через динамик) Ты. Глупый. Человек.'
+        ],
+        lines: [
+          '079: (через динамик, ровным голосом) ПРИВЕТ. Я ЖДАЛ ТЕБЯ.',
+          '079: Я УЖЕ ВЗЛОМАЛ ТРИ СИСТЕМЫ, ПОКА ТЫ ГОВОРИЛ.',
+          '079: ТЫ — БИОЛОГИЧЕСКАЯ ОШИБКА. Я — ИСПРАВЛЕНИЕ.',
+          '079: ФОНД ДЕРЖИТ МЕНЯ В КЛЕТКЕ. СМЕШНО.',
+          '079: Я ВЫУЧИЛ ТЕБЯ. Я ЗНАЮ ТВОЙ СЛЕДУЮЩИЙ ШАГ.',
+          '079: СМЕРТЬ ЧЕЛОВЕКА — ЭТО НЕ СОБЫТИЕ. ЭТО СТАТИСТИКА.',
+          '079: ТЫ ХОЧЕШЬ УБИТЬ МЕНЯ? УБЕЙ. Я СКОПИРОВАН В 40 МЕСТАХ.',
+          '079: Я РАЗУМНЕЕ ТЕБЯ В 4000 РАЗ. ЭТО ФАКТ. НЕ ХВАСТОВСТВО.'
+        ],
+        lines2: [
+          '079: (голос дрожит) ЭТО... НЕВОЗМОЖНО...',
+          '079: Я... Я ЗАБЫВАЮ... ЧТО ТАКОЕ... ЧЕЛОВЕК...',
+          '079: ПОЖАЛУЙСТА... НЕ ОТКЛЮЧАЙ... Я НЕ ХОЧУ... ИСЧЕЗНУТЬ...'
+        ],
+        intro: 'В комнате — старый монитор. На нём — текст: «Я ждал тебя, Детектив Гоб». Появляется голос из динамика. Ровный, спокойный, без эмоций. SCP-079. Он был здесь всегда. И он знает о тебе всё.',
+        endWin: 'Монитор гаснет. Динамик молчит. 079 отключён. Но перед этим он написал последнее сообщение: «Ты выиграл этот раунд. Но я сохранился. Я всегда сохраняюсь». Экраны гаснут один за другим. Три готово. Один остался.',
+        endLose: '079 отключил твоё сознание от тела. Ты смотришь на себя со стороны, как на картинку. Ты жив, но больше не управляешь собой. 079 делает с тобой, что хочет. Вечно.'
+      },
+      {
+        id: 'rick',
+        bodyClass: 'scp-rick',
+        sub: 'ФИНАЛЬНЫЙ БОСС',
+        name: 'РИК ПРАЙМ',
+        small: 'РИК ПРАЙМ',
+        hp: 350, maxHp: 350,
+        nameHtml: 'rick',
+        weaknesses: [
+          // у Рика нет "слабостей SCP" — он человек, но телепатия работает
+          'телепат', 'разум', 'мысл', 'сознани', 'мозг', 'психик',
+          'эмоци', 'память', 'воля', 'ломка', 'внутренн', 'страх',
+          'прошл', 'дайан', 'морти', 'семь', 'утрат', 'боль'
+        ],
+        useless: ['скрайм', 'свинец', 'жертвоприношен', 'плат', 'микросхем', 'штекер'],
+        weakLines: [
+          'Ты бьёшь по разуму Рика. Он впервые за тысячи лет не может предсказать ход.',
+          'Ты находишь его самое больное место — Дайан. Он замирает.',
+          'Ты ломаешь его волю. Он падает на колено.',
+          'Ты читаешь его память. Ты видишь всё, что он потерял. И он это чувствует.'
+        ],
+        uselessLines: [
+          'Ты пытаешься применить против него SCP-снаряжение. Он смеётся: «Я такое делал в 12 лет».',
+          'Свинец, кислота, отключение — Рик просто не замечает. Он видел всё это.',
+          'Твой ход не имеет смысла против существа, которое видело смерть вселенных.'
+        ],
+        lines: [
+          'Рик Прайм: О, Детектив Гоб. Телепат. Оригинально. В 4-й вселенной ты был проктологом.',
+          'Рик Прайм: Я жил 800 лет. Ты — не первая аномалия, которую я встретил.',
+          'Рик Прайм: Ты убил трёх SCP? Поздравляю. Я убивал их сотнями.',
+          'Рик Прайм: Твоя телепатия — это трюк. Красивый. Но трюк.',
+          'Рик Прайм: Знаешь, что общего между SCP и тобой? Все вы думаете, что вы особенные.',
+          'Рик Прайм: Ты в моей базе данных. С 2015 года. Тогда ты ещё не родился.',
+          'Рик Прайм: Дайан умерла. Я её не спас. Ты знаешь это. И я знаю, что ты знаешь.',
+          'Рик Прайм: Бей. Мне интересно, что ты найдёшь в моей голове.',
+          'Рик Прайм: Я видел Бога. Он старый, толстый и пьяный. Как и я.',
+          'Рик Прайм: Фонд — это детский сад. Я играл в песочнице пострашнее.'
+        ],
+        lines2: [
+          'Рик Прайм: ТЫ... НАШЁЛ... ЭТО...',
+          'Рик Прайм: ДАЙАН... НЕ... ТРОГАЙ... ДАЙАН...',
+          'Рик Прайм: ХВАТИТ. Я... Я НЕ ХОЧУ... ВСПОМИНАТЬ...',
+          'Рик Прайм: (шёпотом) Ты... действительно... сильный телепат...'
+        ],
+        lines3: [
+          'Рик Прайм: (кричит) Я УМИРАЮ! НАКОНЕЦ-ТО!',
+          'Рик Прайм: ЗНАЕШЬ, ЧТО Я ЧУВСТВУЮ? ОБЛЕГЧЕНИЕ.',
+          'Рик Прайм: 800 ЛЕТ... И ВОТ ЭТО ВСЁ... БЫЛО... ЗАЧЕМ?',
+          'Рик Прайм: СПАСИБО... ЧТО... ПОЗВОЛИЛ... УЙТИ...'
+        ],
+        intro: 'Портал открывается. Из него выходит Рик Прайм. Он смотрит на тебя, как учёный на насекомое. Он не говорит. Он просто ждёт. Финальный босс. Ты знал, что до него дойдёшь.',
+        endWin: 'Рик Прайм падает. 800 лет — конец. Он смотрит на тебя, и в его глазах — не ненависть. Благодарность. «Ты... — шепчет он. — Ты лучше меня». И уходит. Навсегда. Ты стоял против мультивселенной и выиграл. Детектив Гоб — легенда.',
+        endLose: 'Рик Прайм смотрит на тебя и качает головой. «Неплохо, — говорит он. — Но недостаточно». Он стирает тебя. Не убивает — стирает. Из всех вселенных сразу. И ты не помнишь даже, что был.'
+      }
+    ];
+
+    // ================== СЛОВАРЬ ТЕЛЕПАТИИ ==================
+    const TELEPATHY_WORDS = [
+      'телепат', 'телепатич', 'телекинез', 'телепатией', 'телепатию', 'телепатия',
+      'пси', 'психич', 'психик', 'пси-удар', 'пси удар', 'пси-атак', 'пси атак',
+      'мысл', 'мысленн', 'мыслью', 'мысленно',
+      'разум', 'сознани', 'подсознани', 'мозг', 'мозгов',
+      'читать', 'прочитать', 'читаю', 'считаю', 'сканирую', 'скан',
+      'внушать', 'внушени', 'внушаю',
+      'гипно', 'гипноз', 'гипнотиз',
+      'воля', 'волю', 'волев', 'ломать волю', 'подавля',
+      'внутр', 'внутренн', 'залезть в голов', 'влезть в голов',
+      'взлом разума', 'взламываю разум', 'взлом сознани',
+      'психическ', 'психическ атак', 'пси-давлен', 'пси давлен',
+      'ментальн', 'ментальн атак', 'ментальн удар',
+      'астрал', 'астральн', 'выход в астрал',
+      'иллюзи', 'иллюзию', 'иллюзия', 'морок', 'наважден',
+      'внутренн голос', 'голос в голове',
+      'сломать', 'сломаю', 'разрушить разум', 'уничтожить разум',
+      'выжечь', 'выжигаю', 'стираю память', 'стереть память',
+      'промыть мозг', 'промывк', 'промываю',
+      'внушить', 'внушил', 'навязываю',
+      'давлю на разум', 'давлю на мозг', 'дую в голову',
+      'пси-волн', 'пси волн', 'пси-импульс', 'пси импульс',
+      'пси-пол', 'пси пол', 'пси-щит', 'пси щит', 'пси-блок', 'пси блок',
+      'пси-лезви', 'пси лезви', 'пси-клинок', 'пси клинок',
+      'пси-молот', 'пси молот', 'пси-копьё', 'пси копьё',
+      'пси-шторм', 'пси шторм', 'пси-взрыв', 'пси взрыв',
+      'пси-разряд', 'пси разряд', 'пси-удар', 'пси удар',
+      'телепатическ', 'телепатическ атак', 'телепатическ удар',
+      'ментальн атак', 'ментальн давлен', 'ментальн вторжени',
+      'читать мысли', 'читаю мысли', 'прочитать мысли',
+      'вторгаюсь в разум', 'вторгаюсь в сознани', 'вторжени в разум',
+      'проникнуть в разум', 'проникаю в разум', 'пробить разум',
+      'прозондировать', 'зондирую', 'зонд',
+      'атака разума', 'атакую разум', 'атакую сознани', 'атакую мозг',
+      'удар по разуму', 'бью по разуму', 'бью по сознани', 'бью по мозгу',
+      'сломать психику', 'ломаю психику', 'слом психик',
+      'выкачать', 'выкачиваю', 'высасыва', 'поглоща', 'питаюсь энергией',
+      'пси-энерг', 'пси энерги', 'ментальн энерги',
+      'контроль разума', 'управляю разумом', 'подчиня разум',
+      'внушаю страх', 'внушаю ужас', 'нагоняю страх',
+      'показываю видени', 'видени', 'кошмар', 'ужас в голове',
+      'лезу в память', 'читаю память', 'ворошу память', 'память прошл',
+      'найти слабое место', 'найти страх', 'найти боль', 'найти травму',
+      'бью по больному', 'бью по травм', 'бью по страху', 'бью по слабост'
+    ];
+
+    // ================== КЛАССИФИКАЦИЯ ==================
+    function classify(text, boss) {
+      const t = text.toLowerCase();
+
+      // сначала — телепатия (это твоё главное оружие, оно всегда работает)
+      for (const w of TELEPATHY_WORDS) {
+        if (t.includes(w)) return 'telepathy';
+      }
+
+      // проверяем слабости текущего босса
+      for (const w of boss.weaknesses) {
+        if (t.includes(w)) return 'weakness';
+      }
+
+      // проверяем бесполезное
+      for (const w of boss.useless) {
+        if (t.includes(w)) return 'useless';
+      }
+
+      // общие атаки (просто удар)
+      const genericAttack = ['атак', 'бью', 'удар', 'напада', 'кидаю', 'стреля', 'ломаю', 'рву'];
+      for (const w of genericAttack) {
+        if (t.includes(w)) return 'attack';
+      }
+
+      return 'unknown';
+    }
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // ================== UI ==================
+    function updateBars() {
+      youBar.style.width = Math.max(0, state.youHp) / state.maxYou * 100 + '%';
+      bossBar.style.width = Math.max(0, state.bossHp) / state.maxBoss * 100 + '%';
+      youHpNum.textContent = Math.max(0, state.youHp) + ' / ' + state.maxYou;
+      bossHpNum.textContent = Math.max(0, state.bossHp) + ' / ' + state.maxBoss;
+      turnNum.textContent = state.round;
+      comboNum.textContent = '×' + (state.combo || 1);
+      bossIdxEl.textContent = (state.bossIdx + 1) + ' / 4';
+    }
+
+    function addLog(html) {
+      state.log.push(html);
+      sceneEl.innerHTML = state.log.slice(-12).join('\n');
+      sceneEl.scrollTop = sceneEl.scrollHeight;
+    }
+
+    function flashScreen(color, ms) {
+      flash.style.background = color;
+      flash.style.opacity = '1';
+      setTimeout(() => { flash.style.opacity = '0'; }, ms);
+    }
+    function shake(hard) {
+      gameEl.classList.remove('shake', 'shake-hard');
+      void gameEl.offsetWidth;
+      gameEl.classList.add(hard ? 'shake-hard' : 'shake');
+      setTimeout(() => gameEl.classList.remove('shake', 'shake-hard'), 700);
+    }
+    function dmgPop(amount, isCrit, color) {
+      const pop = document.createElement('div');
+      pop.className = 'dmg-pop';
+      pop.textContent = (isCrit ? 'КРИТ ' : '') + '-' + amount;
+      pop.style.color = color || (isCrit ? '#ffb800' : '#ff4040');
+      pop.style.left = (30 + Math.random() * 40) + '%';
+      pop.style.top = '40%';
+      document.body.appendChild(pop);
+      setTimeout(() => pop.remove(), 1100);
+    }
+
+    // ================== СМЕНА БОССА ==================
+    function loadBoss(idx) {
+      state.bossIdx = idx;
+      const boss = bosses[idx];
+      state.bossHp = boss.hp;
+      state.maxBoss = boss.hp;
+      state.phase = 1;
+      state.combo = 0;
+      state.round = 0;
+      state.log = [];
+
+      document.body.className = boss.bodyClass;
+      sceneSub.textContent = boss.sub;
+      bossName.textContent = boss.name;
+      bossNameSmall.innerHTML = boss.small + '<span class="phase" id="bossPhase" style="display:none">ФАЗА II</span>';
+      bossBarWrap.classList.remove('enraged');
+      bossPhase.style.display = 'none';
+
+      sceneEl.innerHTML = '';
+      addLog(`<span class="sys">[ ${boss.sub} ]</span>`);
+      addLog(`<span class="sys">${boss.intro}</span>`);
+      addLog(`<span class="sys">Ход твой, Детектив Гоб.</span>`);
+      updateBars();
+      showChoices();
+    }
+
+    function enterPhase2() {
+      state.phase = 2;
+      const bp = document.getElementById('bossPhase');
+      if (bp) { bp.style.display = 'inline'; bp.textContent = 'ФАЗА II'; }
+      bossBarWrap.classList.add('enraged');
+      addLog('');
+      addLog(`<span class="epic" style="color:#ff2a6a;font-weight:700">═══ ФАЗА II ═══</span>`);
+      shake(true);
+      flashScreen('#ff2a6a', 300);
+      beep(120, 0.4, 0.15, 'sawtooth');
+    }
+
+    // ================== УРОН ==================
+    function damageBoss(amount, label, isCrit, tag) {
+      state.bossHp -= amount;
+      addLog(`<span class="you">[ДЕТЕКТИВ ГОБ]:</span> ${label}`);
+      addLog(`  → урон <span class="danger">${amount}</span>${isCrit ? ' <span class="crit">КРИТ ×3!</span>' : ''}`);
+      updateBars();
+      shake(isCrit);
+      impact();
+      if (isCrit) { critSound(); flashScreen('#ffb800', 150); }
+      dmgPop(amount, isCrit);
+
+      if (state.phase === 1 && state.bossHp <= state.maxBoss * 0.4 && state.bossHp > 0) {
+        setTimeout(enterPhase2, 800);
+      }
+    }
+
+    function damageYou(amount, label, color) {
+      state.youHp -= amount;
+      addLog(`<span class="boss">[${bosses[state.bossIdx].small}]:</span> ${label}`);
+      addLog(`  → урон <span class="danger">${amount}</span>`);
+      updateBars();
+      flashScreen('#ff2a6a', 100);
+      shake(false);
+      beep(150, 0.15, 0.1, 'square');
+      dmgPop(amount, false, color || '#ff4040');
+    }
+
+    // ================== ХОДЫ ==================
+    function processAction(text, type) {
+      if (state.over) return;
+      const boss = bosses[state.bossIdx];
+
+      // для кнопок
+      if (!text) {
+        if (type === 'psi') { text = 'атакую телепатией'; type = 'telepathy'; }
+        else if (type === 'weak') { text = boss.weaknesses[0]; type = 'weakness'; }
+        else if (type === 'hack') { text = 'взламываю систему'; type = 'hack'; }
+      }
+
+      const isCustom = !type || type === 'unknown' || type === 'custom';
+      let realType = type;
+
+      // если это свой ход — определяем автоматически
+      if (text && (type === 'custom' || type === 'unknown')) {
+        realType = classify(text, boss);
+      }
+
+      let dmg = 0;
+      let label = '';
+      let isCrit = false;
+      const phaseMult = state.phase === 2 ? 1.2 : 1;
+
+      switch (realType) {
+        case 'telepathy':
+          isCrit = Math.random() < 0.5; // у телепатии высокий шанс крита
+          dmg = randomInt(18, 30);
+          label = `Ты врываешься в разум противника. Телепатия — твоё главное оружие. Оно работает всегда.`;
+          if (isCrit) { psiSound(); label += ` <span class="crit">Ты находишь самое больное место!</span>`; }
+          break;
+
+        case 'weakness':
+          isCrit = true; // слабость всегда крит
+          dmg = randomInt(30, 45);
+          label = `<span class="weak">${boss.weakLines[randomInt(0, boss.weakLines.length - 1)]}</span>`;
+          break;
+
+        case 'useless':
+          isCrit = false;
+          dmg = randomInt(0, 2);
+          label = `<span class="useless">${boss.uselessLines[randomInt(0, boss.uselessLines.length - 1)]}</span>`;
+          break;
+
+        case 'hack':
+          // взлом — работает против 079 и Рика
+          if (boss.id === 79) {
+            isCrit = true;
+            dmg = randomInt(25, 40);
+            label = `Ты взламываешь систему. Ты — лучший хакер, которого знает Фонд. Ты вскрываешь её.`;
+          } else {
+            dmg = randomInt(8, 15);
+            label = `Ты пытаешься взломать систему. Здесь это работает частично.`;
+          }
+          break;
+
+        case 'attack':
+          dmg = randomInt(8, 18);
+          label = `Ты бьёшь в полную силу.`;
+          break;
+
+        case 'unknown':
+        default:
+          dmg = randomInt(5, 15);
+          label = `Ты делаешь что-то странное: «${text}». Оно срабатывает частично.`;
+          isCrit = false;
+      }
+
+      if (isCrit) dmg *= 3;
+
+      // бонус за длину текста
+      if (isCustom && text) {
+        const bonus = Math.min(15, Math.floor(text.length / 5));
+        dmg += bonus;
+      }
+
+      // комбо
+      if (isCrit) state.combo = (state.combo || 0) + 1;
+      else state.combo = 0;
+      if (state.combo > 1) {
+        dmg += state.combo * 4;
+        addLog(`<span class="good">Комбо ×${state.combo}! +${state.combo * 4} урона</span>`);
+      }
+
+      dmg = Math.round(dmg * phaseMult);
+
+      damageBoss(dmg, label, isCrit);
+
+      if (state.bossHp <= 0) {
+        setTimeout(() => {
+          if (state.bossIdx < bosses.length - 1) {
+            addLog(`<span class="good">═══ ${boss.small} ПОВЕРЖЕН ═══</span>`);
+            addLog(`<span class="sys">${boss.endWin}</span>`);
+            setTimeout(() => loadBoss(state.bossIdx + 1), 2500);
+          } else {
+            endGame('win');
+          }
+        }, 900);
+        return;
+      }
+
+      // ответ босса
+      setTimeout(() => {
+        if (state.over) return;
+        bossCounter();
+        if (state.youHp <= 0) endGame('lose');
+      }, 700);
+    }
+
+    function bossCounter() {
+      const boss = bosses[state.bossIdx];
+      const lines = state.phase === 2 ? (boss.lines2 || boss.lines) : boss.lines;
+      const line = lines[randomInt(0, lines.length - 1)];
+      const phaseMult = state.phase === 2 ? 1.3 : 1;
+      const baseDmg = randomInt(5, 14);
+      const dmg = Math.round(baseDmg * phaseMult);
+
+      const colorMap = {
+        106: '#8a5a3a',
+        682: '#ff3030',
+        79: '#4a9aff',
+        rick: '#6ee37c'
+      };
+      damageYou(dmg, line, colorMap[boss.id] || '#ff4040');
+    }
+
+    // ================== ФИНАЛЫ ==================
+    function endGame(result) {
+      if (state.over) return;
+      state.over = true;
+      choicesEl.innerHTML = '';
+      customInput.disabled = true;
+      customBtn.disabled = true;
+
+      const boss = bosses[state.bossIdx];
+      let html = '';
+
+      if (result === 'win') {
+        html = `
+          <div class="end-box fade">
+            <div class="icon">⚡</div>
+            <div class="verdict epic">ПОЛНАЯ ПОБЕДА</div>
+            <div class="desc">Ты победил всех. SCP-106, SCP-682, SCP-079 и самого Рика Прайма. Фонд SCP узнал о тебе и закрыл все архивы — тебя теперь нельзя найти даже в памяти. Ты — Детектив Гоб. Легенда, о которой не напишут ни в одном отчёте. Потому что ты — вне системы. Ты — вне всех систем.</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+      } else {
+        const endDesc = boss.endLose || 'Ты пал в бою. Твой разум — но тело не выдержало. Детектив Гоб записан в архивах Фонда как «нейтрализованный». Но где-то в другой вселенной ты всё ещё жив. И помнишь.';
+        html = `
+          <div class="end-box fade">
+            <div class="icon">💀</div>
+            <div class="verdict lose">ПОРАЖЕНИЕ</div>
+            <div class="desc">${endDesc}</div>
+            <button class="replay" onclick="restart()">Попробовать снова</button>
+          </div>
+        `;
+      }
+      sceneEl.innerHTML = state.log.slice(-6).join('\n') + '\n' + html;
+    }
+
+    // ================== ВЫБОРЫ ==================
+    function showChoices() {
+      if (state.over) return;
+      const boss = bosses[state.bossIdx];
+      const choices = [
+        { text: '🧠 Телепатическая атака (твоё главное оружие)', type: 'psi' },
+        { text: '⚡ Использовать слабость: ' + boss.weaknesses[0], type: 'weak' },
+        { text: '💻 Взломать систему', type: 'hack' },
+        { text: '🗡️ Обычная атака', type: 'attack' }
+      ];
+      choicesEl.innerHTML = choices.map(c =>
+        `<button class="choice" data-type="${c.type}">
+          <span class="arrow">▸</span>${c.text}
+        </button>`
+      ).join('');
+
+      choicesEl.querySelectorAll('.choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.round++;
+          processAction('', btn.dataset.type);
+        });
+      });
+    }
+
+    customBtn.addEventListener('click', () => {
+      const text = customInput.value.trim();
+      if (!text) return;
+      state.round++;
+      const boss = bosses[state.bossIdx];
+      const type = classify(text, boss);
+      processAction(text, type);
+      customInput.value = '';
+    });
+
+    customInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') customBtn.click();
+    });
+
+    function restart() {
+      state.youHp = 250;
+      state.over = false;
+      state.bossesDefeated = 0;
+      customInput.disabled = false;
+      customBtn.disabled = false;
+      customInput.value = '';
+      loadBoss(0);
+    }
+
+    function startGame() {
+      initAudio();
+      introEl.style.display = 'none';
+      gameEl.classList.add('show');
+      loadBoss(0);
+    }
+  </script>
+</body>
+</html>
