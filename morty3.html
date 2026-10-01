@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Рик и Морти: Судный вторник</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Comic Sans MS", "Chalkboard SE", "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at 20% 15%, #1a4d2e 0%, transparent 45%),
+      radial-gradient(circle at 80% 85%, #4d1a2d 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, #0a0e1a 0%, #000 80%);
+    background-attachment: fixed;
+    color: #e8f5e9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .game {
+    max-width: 540px;
+    width: 100%;
+    background: rgba(10, 15, 25, 0.9);
+    border: 2px solid #6ee37c;
+    border-radius: 18px;
+    padding: 22px 20px 18px;
+    box-shadow: 0 0 40px rgba(110, 227, 124, 0.25), 0 20px 60px rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #6ee37c;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #2a4a3a;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .hud .inv { color: #f7c948; font-size: 12px; text-transform: none; letter-spacing: 0; }
+  .hud .ep { color: #8a7ad6; }
+  .hud .swear { color: #ff5c5c; }
+  .scene-title {
+    font-size: 12px;
+    color: #6ee37c;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .scene-text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #d8e8dc;
+    margin-bottom: 20px;
+    min-height: 100px;
+    white-space: pre-wrap;
+  }
+  .scene-text .rick { color: #6ee37c; font-weight: 600; }
+  .scene-text .morty { color: #f7c948; font-weight: 600; }
+  .scene-text .you { color: #5eb3ff; font-weight: 600; }
+  .scene-text .sys { color: #8a7ad6; font-style: italic; }
+  .scene-text .danger { color: #ff5c5c; font-weight: 600; }
+  .scene-text .joke { color: #ff9f43; font-weight: 600; }
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 13px 15px;
+    background: #14202e;
+    border: 1px solid #1e3a4a;
+    border-radius: 10px;
+    color: #c8dcdc;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #1c2e40;
+    border-color: #6ee37c;
+    color: #e8f5e9;
+    transform: translateX(3px);
+  }
+  .choice .arrow { color: #6ee37c; margin-right: 8px; }
+  .choice .risk { color: #ff5c5c; }
+  .choice .smart { color: #6ee37c; }
+  .choice .dumb { color: #ff9f43; }
+  .end-screen {
+    text-align: center;
+    padding: 12px 0;
+  }
+  .end-screen .final { font-size: 42px; margin-bottom: 10px; }
+  .end-screen .verdict {
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .verdict.bad { color: #ff5c5c; }
+  .verdict.good { color: #6ee37c; }
+  .verdict.weird { color: #f7c948; }
+  .verdict.neutral { color: #8a7ad6; }
+  .end-screen .desc {
+    font-size: 14px;
+    color: #a8b8bc;
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+  .replay {
+    display: inline-block;
+    padding: 11px 22px;
+    background: #14202e;
+    color: #6ee37c;
+    border: 1px solid #6ee37c;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .replay:hover { background: #1c2e40; box-shadow: 0 0 20px rgba(110,227,124,0.3); }
+  .fade { animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+  <div class="game">
+    <div class="hud">
+      <div id="chapterLabel">Эпизод 1</div>
+      <div class="ep" id="epLabel">Сезон 3</div>
+      <div class="inv">🎒 <span id="invVal">пусто</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <script>
+    const state = { inv: [], steps: 0 };
+
+    const scenes = {
+
+      // ============================================================
+      // АКТ I — СУДНЫЙ ВТОРНИК
+      // ============================================================
+
+      start: {
+        chapter: 'Акт I · Снова вторник',
+        text: `<span class="sys">[ 03:47. Ты уже знал. Ты всегда знаешь. ]</span>
+
+Портал открывается прямо над кроватью — и из него <span class="danger">падает</span> Рик. Прямо тебе на ноги. С ним — Морти. Тоже падает. Тоже тебе на ноги. Ты орёшь.
+
+<span class="rick">РИК:</span> О, отлично. Ты не спишь. Значит, ты либо безумен, либо тебе <span class="joke">реально нечего делать</span> в жизни. Первое мне нравится больше.
+
+<span class="morty">МОРТИ:</span> Р-Рик, ты чуть не убил его порталом!
+<span class="rick">РИК:</span> Морти, я <span class="danger">не чуть</span>. Я ещё в процессе. Дай мне минут пять.
+
+Рик встаёт. Отряхивается. Достаёт фляжку. Пьёт. Смотрит на тебя, как на <span class="joke">случайно найденный носок</span>.
+
+<span class="rick">РИК:</span> Короче. У нас <span class="danger">пиздец</span>. Не как обычно. <span class="danger">Реальный</span>.`,
+        choices: [
+          { text: 'Спросить, что за пиздец на этот раз', next: 'whatFuck' },
+          { text: 'Спросить, где Морти потерял свою вторую кросовку', next: 'shoeJoke', dumb: true },
+          { text: 'Молча встать и налить себе чай', next: 'tea', smart: true }
+        ]
+      },
+
+      tea: {
+        chapter: 'Акт I · Кухня',
+        text: `Ты встаёшь. Идёшь на кухню. Ставишь чайник. Рик идёт за тобой — не потому что хочет, а потому что <span class="joke">ему всегда надо быть там, где кто-то делает что-то нормальное</span>.
+
+<span class="rick">РИК:</span> Серьёзно? Чай? Мы на пороге <span class="danger">конца всего</span>, а ты <span class="joke">завариваешь пакетик</span>?
+<span class="you">ТЫ:</span> Да.
+<span class="rick">РИК:</span> …уважаю.
+
+Он садится на табуретку. Достаёт фляжку. Нюхает. Морщится. Ставит обратно — но не убирает, держит рядом.
+
+<span class="morty">МОРТИ:</span> Р-Рик, объясни ему!
+<span class="rick">РИК:</span> Ладно. Слушай, <span class="joke">чайный человек</span>.`,
+        choices: [
+          { text: 'Слушать', next: 'whatFuck' }
+        ]
+      },
+
+      shoeJoke: {
+        chapter: 'Акт I · Вторник',
+        text: `<span class="morty">МОРТИ:</span> Э-это не кросовка. Это <span class="joke">тапочек</span>.
+<span class="rick">РИК:</span> Морти, это вообще <span class="danger">не тапочек</span>. Это кусок <span class="danger">чего-то</span>, что мы подобрали в измерении, где обувь — <span class="joke">это живое</span>. И оно, кстати, <span class="danger">дышит</span>.
+
+Морти смотрит на ногу. Там что-то <span class="danger">шевелится</span>. Морти орёт. Рик хлопает его по плечу.
+
+<span class="rick">РИК:</span> Успокойся. Оно <span class="joke">не кусает</span>. Ну, почти. Может куснуть один раз. Может два. Я не считал.
+<span class="morty">МОРТИ:</span> Р-Рик, ты <span class="danger">конченный</span>!
+<span class="rick">РИК:</span> Морти, я знаю. Ты каждый день это говоришь. Записывай что-то новое.`,
+        choices: [
+          { text: 'Спросить про пиздец', next: 'whatFuck' }
+        ]
+      },
+
+      whatFuck: {
+        chapter: 'Акт I · Плохие новости',
+        text: `<span class="rick">РИК:</span> Короче. Помнишь, мы стабилизировали гиперкуб у Кзарна? Трёхглазый, должен мне жену?
+<span class="you">ТЫ:</span> Помню.
+<span class="rick">РИК:</span> Так вот. Гиперкуб <span class="danger">снова сломался</span>. И не просто сломался. Он <span class="danger">открылся</span>. И оттуда <span class="danger">вылезло кое-что</span>. Кое-что, что я <span class="joke">лично</span> запер там в 1987-м.
+
+Пауза.
+
+<span class="morty">МОРТИ:</span> Ч-что ты там запер в 87-м?!
+<span class="rick">РИК:</span> <span class="joke">Морти</span>, я тебе не скажу. Я тебе <span class="danger">никогда</span> не скажу. И ты, напарник, тоже не спрашивай. Если я скажу — вы <span class="danger">оба</span> об этом пожалеете.
+
+Он делает большой глоток.`,
+        choices: [
+          { text: 'Спросить, что вылезло', next: 'whatCame' },
+          { text: 'Спросить, как туда попал гиперкуб', next: 'howCube' },
+          { text: 'Сказать, что ты не хочешь знать', next: 'dontWant', smart: true }
+        ]
+      },
+
+      dontWant: {
+        chapter: 'Акт I · Честность',
+        text: `Ты говоришь, что не хочешь знать. Рик смотрит на тебя. Долго. Потом кивает.
+
+<span class="rick">РИК:</span> Молодец. Ты <span class="joke">первый</span> за всё время, кто это сказал. Все остальные лезут. Морти лезет. Саммер лезет. Даже <span class="danger">Джерри</span> однажды полез. Джерри. Который боится <span class="joke">тостера</span>.
+
+<span class="morty">МОРТИ:</span> Э-это было <span class="danger">нормально</span> бояться того тостера, Рик. Он <span class="danger">говорил</span>.
+<span class="rick">РИК:</span> Морти, тостер, который говорит «убей меня» — это <span class="joke">не повод для паники</span>. Это повод для <span class="danger">любопытства</span>.
+
+Рик встаёт.
+
+<span class="rick">РИК:</span> Ладно. Хорошая новость — нам <span class="smart">не надо</span> ничего убивать. Плохая — надо <span class="danger">поговорить</span> с одной очень старой тварью. И она <span class="joke">не любит</span> разговоры.`,
+        choices: [
+          { text: 'Идти', next: 'goNow' }
+        ]
+      },
+
+      howCube: {
+        chapter: 'Акт I · Виноват',
+        text: `<span class="rick">РИК:</span> Гиперкуб туда попал <span class="danger">потому что я его туда засунул</span>, Морти. Мне было <span class="joke">девятнадцать</span>. Я был молодой. Глупый. У меня были волосы.
+<span class="morty">МОРТИ:</span> У тебя <span class="danger">сейчас</span> есть волосы!
+<span class="rick">РИК:</span> Морти, эти волосы — <span class="joke">это не мои волосы</span>. Это волосы, которые я <span class="danger">одолжил</span> у одного существа в другом измерении. И я ему <span class="danger">должен</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> Я всем должен, Морти. Я — <span class="joke">ходячий долг</span>. Если бы долги были деньгами, я бы давно был <span class="danger">беднее</span>, чем Джерри.`,
+        choices: [
+          { text: 'Спросить, что вылезло', next: 'whatCame' }
+        ]
+      },
+
+      whatCame: {
+        chapter: 'Акт I · Что вылезло',
+        text: `<span class="rick">РИК:</span> Из гиперкуба вылезла <span class="danger">штука</span>. Я не знаю, как её назвать. Она <span class="joke">выглядит как</span> нечто среднее между <span class="danger">налоговым инспектором</span> и <span class="danger">твоей совестью</span>. В том смысле, что от обеих <span class="joke">невозможно отвязаться</span>.
+
+<span class="morty">МОРТИ:</span> А что она <span class="danger">делает</span>?
+<span class="rick">РИК:</span> Она <span class="danger">задаёт вопросы</span>. Много. И если ты ответишь <span class="danger">неправильно</span> — она <span class="joke">забирает</span> у тебя что-нибудь. Не жизнь. Что-то <span class="danger">похуже</span>. Например, память о том, как ты в детстве <span class="joke">ел мороженое</span>. Или чувство, что ты <span class="danger">кому-то нужен</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> В общем, <span class="joke">весёлая тварь</span>.`,
+        choices: [
+          { text: 'Спросить, где она сейчас', next: 'whereNow' },
+          { text: 'Спросить, что она спросит у тебя', next: 'whatAsk' }
+        ]
+      },
+
+      whatAsk: {
+        chapter: 'Акт I · Вопросы',
+        text: `<span class="rick">РИК:</span> Она спросит <span class="joke">одно</span>. Одно и то же. Разным — разное. Тебе — твоё.
+
+<span class="morty">МОРТИ:</span> А мне что спросит?
+<span class="rick">РИК:</span> Морти, тебе она <span class="joke">даже не задаст вопрос</span>. Она посмотрит на тебя и скажет: «О, ты и так пустой». И уйдёт.
+<span class="morty">МОРТИ:</span> Э-это <span class="danger">обидно</span>!
+<span class="rick">РИК:</span> Морти, это <span class="joke">правда</span>. Учись различать.`,
+        choices: [
+          { text: 'Идти', next: 'goNow' }
+        ]
+      },
+
+      whereNow: {
+        chapter: 'Акт I · Где она',
+        text: `<span class="rick">РИК:</span> Она сейчас в <span class="danger">Нейтральной зоне</span>. Это место между измерениями, где <span class="joke">время идёт боком</span>, а гравитация — <span class="danger">по настроению</span>. Там живут те, кто <span class="joke">вышел из игры</span>. Полубывшие. Полуживые. И — <span class="danger">она</span>.
+
+<span class="morty">МОРТИ:</span> А мы туда <span class="joke">как</span>? Портал же не работает между измерениями!
+<span class="rick">РИК:</span> Работает, Морти. Просто надо <span class="danger">правильно</span> нажать.
+
+Он достаёт из кармана маленький <span class="joke">пульт</span> с одной красной кнопкой.
+
+<span class="rick">РИК:</span> Есть другой способ. Более <span class="danger">старый</span>. И <span class="joke">вонючий</span>. Я его не люблю. Но выбора нет.`,
+        choices: [
+          { text: 'Идти', next: 'goNow' }
+        ]
+      },
+
+      goNow: {
+        chapter: 'Акт I · Выход',
+        text: `Рик ведёт вас не к порталу. Он ведёт вас на <span class="danger">улицу</span>.
+
+Ты выходишь из подъезда. Ночь. Фонари. Пустая парковка.
+
+<span class="rick">РИК:</span> Смотри. <span class="joke">Вон там</span>.
+
+Ты смотришь. У мусорных баков стоит <span class="danger">телефонная будка</span>. Красная. Английская. Посреди российского двора. Как будто её кто-то <span class="joke">потерял</span>.
+
+<span class="rick">РИК:</span> Это не будка. Это <span class="danger">межпространственный переход</span>. Старый. Ещё с тех времён, когда порталы делали из <span class="joke">гвоздей и молитвы</span>.
+
+<span class="morty">МОРТИ:</span> А почему она <span class="danger">красная</span>?
+<span class="rick">РИК:</span> Потому что красный — цвет <span class="joke">опасности</span>, Морти. А ещё — потому что я её <span class="danger">покрасил</span>. Чтобы было веселее.`,
+        choices: [
+          { text: 'Войти в будку', next: 'booth' },
+          { text: 'Спросить, работает ли она вообще', next: 'boothWorks' },
+          { text: 'Спросить, что там снаружи', next: 'boothOutside' }
+        ]
+      },
+
+      boothWorks: {
+        chapter: 'Акт I · Будка',
+        text: `<span class="rick">РИК:</span> Работает. Ну, как <span class="joke">работает</span>. Она <span class="danger">не всегда</span> забирает тебя туда, куда ты хочешь. Иногда — куда ты <span class="danger">боишься</span>. Иногда — куда ты <span class="danger">заслужил</span>. Разница бывает <span class="joke">печальной</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, может, не надо?!
+<span class="rick">РИК:</span> Морти, <span class="joke">никогда</span> не говори «может не надо». Это первое, что говорит человек, когда <span class="danger">точно надо</span>.
+
+Он открывает дверь будки. Внутри — <span class="danger">не будка</span>. Внутри — <span class="danger">другая реальность</span>.`,
+        choices: [
+          { text: 'Войти', next: 'booth' }
+        ]
+      },
+
+      boothOutside: {
+        chapter: 'Акт I · Снаружи',
+        text: `<span class="rick">РИК:</span> Снаружи — <span class="joke">Нейтральная зона</span>. Там <span class="danger">нет дня</span>. Там нет ночи. Там вообще нет ничего, что можно <span class="joke">назвать словом «есть»</span>. Там просто — <span class="danger">есть</span>. И это, Морти, <span class="joke">самое стрёмное</span>, что можно сказать про место.
+
+<span class="morty">МОРТИ:</span> Я <span class="danger">не хочу</span> туда.
+<span class="rick">РИК:</span> Морти, никто не хочет. Но мы <span class="joke">идём</span>. Потому что иначе — <span class="danger">конец</span>. Потому что иначе — вселенная.
+
+Он смотрит на тебя.
+
+<span class="rick">РИК:</span> А ты? Ты хочешь?`,
+        choices: [
+          { text: 'Идти', next: 'booth' },
+          { text: 'Спросить, что будет, если отказаться', next: 'refuseAsk' }
+        ]
+      },
+
+      refuseAsk: {
+        chapter: 'Акт I · Отказ',
+        text: `<span class="rick">РИК:</span> Если ты откажешься — я <span class="danger">пойду один</span>. И, скорее всего, <span class="joke">умру</span>. И тогда тварь выйдет <span class="danger">сама</span>. И тогда умрёт <span class="danger">Земля</span>. И тогда, напарник, <span class="joke">ты тоже умрёшь</span>. Просто чуть позже.
+
+Пауза.
+
+<span class="rick">РИК:</span> Так что выбирай. <span class="danger">Иди со мной</span> или сиди дома и жди, пока всё <span class="joke">закончится</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, ты <span class="danger">давишь</span>!
+<span class="rick">РИК:</span> Морти, <span class="joke">я всегда давлю</span>. Это моя работа.`,
+        choices: [
+          { text: 'Идти', next: 'booth', smart: true }
+        ]
+      },
+
+      booth: {
+        chapter: 'Акт I · Переход',
+        text: `Вы входите в будку. Дверь закрывается. Свет гаснет. На секунду — <span class="danger">тишина</span>. Потом — звук. Как будто <span class="joke">кто-то рвёт бумагу</span> очень медленно.
+
+Пол уходит из-под ног. Ты падаешь. Морти — орёт. Рик — не орёт. Рик ругается.
+
+<span class="rick">РИК:</span> <span class="danger">Твою мать</span>, я <span class="joke">забыл</span>, как эта штука работает!
+
+Свет.`,
+        choices: [
+          { text: 'Открыть глаза', next: 'neutralZone' }
+        ]
+      },
+
+      // ============================================================
+      // АКТ II — НЕЙТРАЛЬНАЯ ЗОНА
+      // ============================================================
+
+      neutralZone: {
+        chapter: 'Акт II · Нейтральная зона',
+        text: `Ты открываешь глаза. Вокруг — <span class="sys">серое</span>. Не серое, как небо в дождь. Серое, как <span class="joke">пустая комната без стен</span>. Нет пола. Нет потолка. Нет «низа». Но ты стоишь.
+
+<span class="rick">РИК:</span> Добро пожаловать в <span class="danger">Нейтральную зону</span>. Здесь никто не умирает. И никто не живёт. Здесь <span class="joke">все в процессе</span>.
+
+Вдалеке — <span class="danger">тень</span>. Не идёт. Не стоит. Просто <span class="joke">есть</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, там <span class="danger">кто-то</span>!
+<span class="rick">РИК:</span> Морти, там <span class="joke">все</span>. Это Нейтральная зона. Здесь каждый — <span class="danger">кто-то</span>. И никто — никто.`,
+        choices: [
+          { text: 'Идти к тени', next: 'shadow' },
+          { text: 'Спросить, кто живёт в этой зоне', next: 'whoLives' },
+          { text: 'Проверить, можно ли тут пить', next: 'canDrink', dumb: true }
+        ]
+      },
+
+      canDrink: {
+        chapter: 'Акт II · Ошибка',
+        text: `Ты спрашиваешь, можно ли тут пить. Рик смотрит на тебя <span class="joke">долго</span>.
+
+<span class="rick">РИК:</span> Пить. В <span class="danger">Нейтральной зоне</span>. Ты <span class="joke">реально</span> это спросил.
+<span class="you">ТЫ:</span> Ну, я не знаю. Тут серое всё.
+<span class="rick">РИК:</span> Тут серое <span class="danger">потому что тут нет ничего</span>. Тут не то что пить — тут <span class="joke">дышать нельзя</span>. Мы дышим только потому, что я <span class="danger">обманул</span> законы физики своей фляжкой.
+
+Он делает глоток. Протягивает фляжку Морти. Морти отказывается.
+
+<span class="rick">РИК:</span> Морти, ты <span class="joke">зря</span>. Это единственный нормальный напиток в радиусе <span class="danger">двенадцати измерений</span>.`,
+        choices: [
+          { text: 'Идти к тени', next: 'shadow' }
+        ]
+      },
+
+      whoLives: {
+        chapter: 'Акт II · Кто тут живёт',
+        text: `<span class="rick">РИК:</span> Тут живут <span class="danger">бывшие</span>. Бывшие боги. Бывшие императоры. Бывшие <span class="joke">люди</span>. Все, кто <span class="danger">вышел из игры</span>, но не смог уйти до конца.
+
+<span class="morty">МОРТИ:</span> А мы тут <span class="danger">надолго</span>?
+<span class="rick">РИК:</span> Морти, мы тут на <span class="joke">пять минут</span>. Если дольше — начнём забывать. Сначала имена. Потом <span class="danger">лица</span>. Потом — зачем пришли. Через час ты будешь <span class="joke">бывшим Морти</span>. И, честно говоря, <span class="danger">хуже не станет</span>.
+
+<span class="morty">МОРТИ:</span> Э-это <span class="joke">обидно</span>, Рик!
+<span class="rick">РИК:</span> Морти, правда всегда <span class="danger">обидна</span>. Поэтому я её <span class="joke">не говорю</span> обычно. Только по праздникам.`,
+        choices: [
+          { text: 'Идти к тени', next: 'shadow' }
+        ]
+      },
+
+      shadow: {
+        chapter: 'Акт II · Тень',
+        text: `Вы подходите к тени. Тень <span class="danger">поворачивается</span>. У неё нет лица. У неё нет тела. Просто — <span class="joke">тень</span>. Но ты чувствуешь, что она <span class="danger">смотрит</span>.
+
+<span class="rick">РИК:</span> Привет, старая. Это я. Рик.
+
+Тень молчит. Долго.
+
+<span class="joke">ТЕНЬ:</span> Ты <span class="danger">опоздал</span> на тридцать восемь лет, Рик.
+<span class="rick">РИК:</span> Я знаю.
+<span class="joke">ТЕНЬ:</span> Ты <span class="danger">привёл</span> ещё двоих. Как всегда.
+<span class="rick">РИК:</span> Я знаю.
+<span class="joke">ТЕНЬ:</span> Ты <span class="danger">знаешь</span> всё. И всё равно <span class="joke">делаешь</span>.
+
+Пауза.
+
+<span class="joke">ТЕНЬ:</span> Хорошо. Спрашивай.`,
+        choices: [
+          { text: 'Пусть Рик говорит', next: 'rickTalks', smart: true },
+          { text: 'Спросить тень, что она такое', next: 'askShadow' },
+          { text: 'Спросить, что она сделает с вами', next: 'askShadowFuture' }
+        ]
+      },
+
+      askShadow: {
+        chapter: 'Акт II · Вопрос',
+        text: `Ты спрашиваешь тень, что она такое.
+
+Тень <span class="danger">молчит</span>. Потом — отвечает. Голосом, который звучит <span class="joke">как сто голосов</span> одновременно. Детских. Взрослых. Старых. Мёртвых.
+
+<span class="joke">ТЕНЬ:</span> Я — <span class="danger">то</span>, что осталось, когда ты <span class="joke">забыл</span>, кем был. Я — не призрак. Я — <span class="danger">остаток</span>.
+
+<span class="morty">МОРТИ:</span> Р-Рик, это <span class="danger">жутко</span>.
+<span class="rick">РИК:</span> Морти, это <span class="joke">честно</span>. Это разные вещи.`,
+        choices: [
+          { text: 'Пусть Рик говорит', next: 'rickTalks' }
+        ]
+      },
+
+      askShadowFuture: {
+        chapter: 'Акт II · Вопрос',
+        text: `Ты спрашиваешь, что тень сделает с вами.
+
+Тень <span class="danger">смеётся</span>. Смех — как <span class="joke">стекло</span>, которое треснуло. Красиво. Страшно.
+
+<span class="joke">ТЕНЬ:</span> С вами? <span class="danger">Ничего</span>. С вами всё сделает <span class="joke">жизнь</span>. Я — просто <span class="danger">напоминание</span>.
+
+<span class="rick">РИК:</span> Она права, Морти. Она <span class="joke">всегда</span> права. Это её главная <span class="danger">мерзкая</span> черта.`,
+        choices: [
+          { text: 'Пусть Рик говорит', next: 'rickTalks' }
+        ]
+      },
+
+      rickTalks: {
+        chapter: 'Акт II · Разговор',
+        text: `<span class="rick">РИК:</span> Старая. Ты <span class="danger">знаешь</span>, зачем я пришёл.
+<span class="joke">ТЕНЬ:</span> Знаю. Ты пришёл <span class="danger">закрыть</span> то, что открыл.
+<span class="rick">РИК:</span> Да.
+<span class="joke">ТЕНЬ:</span> И ты <span class="danger">знаешь</span> цену.
+<span class="rick">РИК:</span> Знаю.
+<span class="joke">ТЕНЬ:</span> Тогда <span class="danger">скажи</span> её вслух. Чтобы они <span class="joke">слышали</span>.
+
+Рик молчит. Долго. Он смотрит на тебя. Потом на Морти. Потом — куда-то в серое.
+
+<span class="rick">РИК:</span> Цена — <span class="danger">моя память</span>. О ней. Обо <span class="joke">всём</span>, что было. Я забуду <span class="danger">всё</span>.`,
+        choices: [
+          { text: 'Спросить, о чём именно', next: 'aboutWhat' },
+          { text: 'Спросить, есть ли другой способ', next: 'otherWay' },
+          { text: 'Молчать', next: 'silentR' }
+        ]
+      },
+
+      otherWay: {
+        chapter: 'Акт II · Другой способ',
+        text: `<span class="joke">ТЕНЬ:</span> Есть. Отдать <span class="danger">двоих</span> вместо одного. Тогда Рик <span class="joke">сохранит</span> память.
+<span class="rick">РИК:</span> Нет.
+<span class="joke">ТЕНЬ:</span> Тогда <span class="danger">умри</span>. Один. И забудь.
+<span class="rick">РИК:</span> Да.
+
+<span class="morty">МОРТИ:</span> Р-Рик, <span class="danger">нет</span>! Ты не можешь!
+<span class="rick">РИК:</span> Морти, я <span class="joke">могу</span>. И я <span class="danger">сделаю</span>. Не потому что я герой. А потому что если я забуду <span class="joke">одну вещь</span> — то забуду <span class="danger">всё</span>. А если я забуду всё — то <span class="joke">кто тогда я</span>?
+
+Пауза.
+
+<span class="rick">РИК:</span> Я не боюсь умереть, Морти. Я боюсь <span class="danger">стать никем</span>.`,
+        choices: [
+          { text: 'Спросить, что он забудет', next: 'aboutWhat' }
+        ]
+      },
+
+      silentR: {
+        chapter: 'Акт II · Тишина',
+        text: `Ты молчишь. Тень тоже. Морти — тоже. Все молчат. Долго. Очень долго.
+
+Потом Рик говорит.
+
+<span class="rick">РИК:</span> Ладно. Я готов.
+
+Тень <span class="danger">кивает</span>. Медленно. Как будто делает одолжение.
+
+<span class="joke">ТЕНЬ:</span> Тогда <span class="danger">отдай</span>. Отдай мне то, что ты <span class="joke">помнишь</span> о ней. Обо всех. Обо мне. Отдай и — иди.`,
+        choices: [
+          { text: 'Смотреть', next: 'endMemory' }
+        ]
+      },
+
+      aboutWhat: {
+        chapter: 'Акт II · Что он забудет',
+        text: `Ты спрашиваешь, что именно Рик забудет.
+
+<span class="rick">РИК:</span> Я забуду <span class="danger">всё</span>, что было. Всё, что я сделал. Всё, кого я <span class="joke">любил</span>. Тех, кого <span class="danger">потерял</span>. Всё, что привело меня <span class="danger">сюда</span>.
+
+Он смотрит на тебя. Ты видишь, что он <span class="joke">не шутит</span>. Впервые за всё время — не шутит.
+
+<span class="rick">РИК:</span> Я забуду <span class="danger">её</span>. Женщину, из-за которой я стал тем, кем стал. Дайан. Ты её <span class="joke">не знал</span>. И не узнаешь. И это — <span class="danger">правильно</span>.
+
+Пауза.
+
+<span class="rick">РИК:</span> И знаешь, что самое <span class="joke">смешное</span>? Я уже <span class="danger">почти забыл</span>. Просто от старости. Или от <span class="joke">фляжки</span>. Неважно.
+
+Он отворачивается.`,
+        choices: [
+          { text: 'Смотреть', next: 'endMemory' },
+          { text: 'Остановить его', next: 'stopHim' }
+        ]
+      },
+
+      stopHim: {
+        chapter: 'Акт II · Стоп',
+        text: `Ты хватаешь Рика за руку.
+
+<span class="you">ТЫ:</span> Стой.
+
+Он оборачивается. Смотрит на твою руку. Потом на тебя. Он <span class="joke">злой</span>. Но не на тебя. На себя.
+
+<span class="rick">РИК:</span> Отпусти, напарник.
+<span class="you">ТЫ:</span> Есть другой путь.
+<span class="rick">РИК:</span> Нету.
+<span class="you">ТЫ:</span> Есть. Мы <span class="joke">все трое</span> отдадим по куску. Не всю память. А часть.
+<span class="rick">РИК:</span> Ты <span class="danger">серьёзно</span>?
+
+Пауза. Тень <span class="danger">смотрит</span>. Ждёт.`,
+        choices: [
+          { text: 'Давить', next: 'endTogether', smart: true },
+          { text: 'Отступить', next: 'endMemory' }
+        ]
+      },
+
+      // ============================================================
+      // ФИНАЛЫ
+      // ============================================================
+
+      endMemory: {
+        end: true,
+        verdict: 'bad',
+        icon: '🕳️',
+        title: 'ПАМЯТЬ ОТДАНА',
+        desc: 'Тень забирает память Рика. Медленно. Как будто <span class="joke">вытягивает нить</span>. Рик стоит. Не двигается. Не орёт. Только смотрит — и в его глазах гаснет что-то, чего у него больше не будет. Потом он улыбается. Не своей улыбкой. Пустой. И говорит: «Привет, я Рик. А ты кто?» Морти плачет. Ты — не плачешь. Ты запоминаешь. За двоих.'
+      },
+
+      endTogether: {
+        end: true,
+        verdict: 'good',
+        icon: '🤝',
+        title: 'ВТРОЁМ',
+        desc: 'Тень соглашается. Не сразу. Она смотрит на вас. Долго. Проверяет. Потом — кивает. Каждый отдаёт часть. Ты — детство. Морти — лето у дедушки. Рик — последний раз, когда ему было хорошо с кем-то, кроме себя. Тень забирает. Но не всё. Рик помнит её имя. Помнит лицо. Помнит, зачем он всё это начал. И этого — достаточно. Вы выходите из будки на рассвете. Рик молчит. Потом говорит: «Напарник. Ты мне нравишься. Не как человек. Как <span class="joke">идея</span>». И открывает портал домой.'
+      }
+    };
+
+    // ---------- движок ----------
+    const content = document.getElementById('content');
+    const chapterLabel = document.getElementById('chapterLabel');
+    const invVal = document.getElementById('invVal');
+
+    function renderInv() {
+      invVal.textContent = state.inv.length ? state.inv.join(', ') : 'пусто';
+    }
+
+    function renderScene(id) {
+      const s = scenes[id];
+      if (!s) return;
+
+      if (s.chapter) chapterLabel.textContent = s.chapter;
+
+      if (s.end) {
+        content.innerHTML = `
+          <div class="end-screen fade">
+            <div class="final">${s.icon}</div>
+            <div class="verdict ${s.verdict}">${s.title}</div>
+            <div class="desc">${s.desc}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.steps++;
+
+      let choicesHtml = s.choices.map((c) => {
+        const cls = c.risk ? 'risk' : c.smart ? 'smart' : c.dumb ? 'dumb' : '';
+        return `<button class="choice" onclick="choose('${c.next}', '${(c.pickup || '').replace(/'/g, "\\'")}')">
+          <span class="arrow">▸</span><span class="${cls}">${c.text}</span>
+        </button>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="fade">
+          <div class="scene-text">${s.text}</div>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+    }
+
+    function choose(next, pickup) {
+      if (pickup && !state.inv.includes(pickup)) {
+        state.inv.push(pickup);
+        renderInv();
+      }
+      renderScene(next);
+    }
+
+    function restart() {
+      state.inv = [];
+      state.steps = 0;
+      renderScene('start');
+      renderInv();
+    }
+
+    renderScene('start');
+    renderInv();
+  </script>
+</body>
+</html>
