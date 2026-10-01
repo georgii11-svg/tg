@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>.</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    color: #fff;
+    user-select: none;
+    cursor: none;
+  }
+
+  /* фаза 1 — чёрный экран с редкими вспышками */
+  #stage { position: fixed; inset: 0; }
+
+  #noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 3px),
+      radial-gradient(circle at 50% 50%, rgba(120,0,0,0.35) 0%, rgba(0,0,0,0.95) 60%);
+    animation: noiseShift 0.12s steps(1) infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes noiseShift {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(1px, -2px); }
+    75% { transform: translate(2px, 2px); }
+    100% { transform: translate(-1px, -1px); }
+  }
+
+  /* силуэт лица */
+  #face {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60vmin; height: 75vmin;
+    opacity: 0;
+    filter: contrast(1.4) brightness(0.7) blur(1px);
+    transition: opacity 0.2s;
+  }
+  #face svg { width: 100%; height: 100%; display: block; }
+  #face .eye {
+    fill: #ff1a1a;
+    filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 24px #ff0000);
+    animation: eyeFlicker 3s ease-in-out infinite;
+  }
+  @keyframes eyeFlicker {
+    0%, 100% { opacity: 0.85; }
+    45% { opacity: 0.85; }
+    47% { opacity: 0.15; }
+    49% { opacity: 0.9; }
+    62% { opacity: 0.9; }
+    64% { opacity: 0.2; }
+    66% { opacity: 0.85; }
+  }
+
+  /* текст по центру */
+  #msg {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: #ff2a2a;
+    text-shadow: 0 0 20px #ff0000, 0 0 40px #8b0000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 10;
+    line-height: 1.4;
+  }
+
+  /* кровавые потёки */
+  #blood {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s;
+    background:
+      radial-gradient(ellipse 30px 200px at 15% 0%, rgba(120,0,0,0.85) 0%, transparent 70%),
+      radial-gradient(ellipse 20px 350px at 42% 0%, rgba(90,0,0,0.75) 0%, transparent 70%),
+      radial-gradient(ellipse 40px 280px at 68% 0%, rgba(140,0,0,0.85) 0%, transparent 70%),
+      radial-gradient(ellipse 25px 150px at 88% 0%, rgba(100,0,0,0.8) 0%, transparent 70%);
+    filter: blur(1px);
+  }
+
+  /* красная вспышка */
+  #flash {
+    position: absolute;
+    inset: 0;
+    background: #ff0000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  /* финальная плашка */
+  #final {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #final.show { display: flex; opacity: 1; }
+  .card {
+    max-width: 380px;
+    width: 100%;
+    border: 1px solid #3a0000;
+    padding: 32px 22px;
+    background: rgba(30,0,0,0.35);
+    box-shadow: 0 0 60px rgba(255,0,0,0.25) inset, 0 0 40px rgba(255,0,0,0.15);
+  }
+  .card .icon {
+    font-size: 56px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 14px #ff0000);
+    animation: slowPulse 3s ease-in-out infinite;
+  }
+  @keyframes slowPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .card h1 {
+    color: #ff2a2a;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 18px;
+    text-transform: uppercase;
+    text-shadow: 0 0 14px #ff0000;
+  }
+  .card p {
+    color: #b0b0b0;
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+  .card .red { color: #ff2a2a; font-weight: 600; }
+  .card .stamp {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid #ff2a2a;
+    color: #ff2a2a;
+    padding: 8px 18px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    margin-top: 20px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="noise"></div>
+    <div id="blood"></div>
+
+    <div id="face">
+      <svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+        <!-- овал лица -->
+        <ellipse cx="100" cy="120" rx="72" ry="100" fill="#0a0a0a" stroke="#1a0000" stroke-width="1"/>
+        <!-- глазницы -->
+        <ellipse cx="72" cy="105" rx="15" ry="8" fill="#000"/>
+        <ellipse cx="128" cy="105" rx="15" ry="8" fill="#000"/>
+        <ellipse class="eye" cx="72" cy="105" rx="6" ry="5"/>
+        <ellipse class="eye" cx="128" cy="105" rx="6" ry="5"/>
+        <!-- тени под глазами -->
+        <path d="M 55 122 Q 72 132 90 122" stroke="#1a0000" stroke-width="2" fill="none"/>
+        <path d="M 110 122 Q 128 132 145 122" stroke="#1a0000" stroke-width="2" fill="none"/>
+        <!-- нос -->
+        <path d="M 100 120 L 96 145 Q 100 148 104 145 Z" fill="#000" opacity="0.5"/>
+        <!-- рот -->
+        <path d="M 78 172 Q 100 168 122 172 Q 100 182 78 172 Z" fill="#0d0000"/>
+        <path d="M 82 173 Q 100 176 118 173" stroke="#3a0000" stroke-width="1" fill="none"/>
+        <!-- линии-трещины -->
+        <path d="M 60 80 L 75 95" stroke="#1a0000" stroke-width="0.8"/>
+        <path d="M 140 80 L 125 95" stroke="#1a0000" stroke-width="0.8"/>
+        <path d="M 100 60 L 100 75" stroke="#1a0000" stroke-width="0.8"/>
+      </svg>
+    </div>
+
+    <div id="msg"></div>
+  </div>
+
+  <div id="flash"></div>
+
+  <div id="final">
+    <div class="card">
+      <div class="icon">👁️</div>
+      <h1>Я тебя вижу</h1>
+      <p>Ты только что открыл эту ссылку. Добровольно.</p>
+      <p>Значит, ты не боишься. Или не подумал.</p>
+      <p class="red">Данные, которые ты хотел получить чужими руками, теперь у меня. А данные обо мне — у тебя. Обмен состоялся.</p>
+      <span class="stamp">Игра началась</span>
+    </div>
+  </div>
+
+  <script>
+    const noise = document.getElementById('noise');
+    const face = document.getElementById('face');
+    const msg = document.getElementById('msg');
+    const blood = document.getElementById('blood');
+    const flash = document.getElementById('flash');
+    const final = document.getElementById('final');
+
+    // ---- Web Audio: шёпот, гул, стук ----
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AC();
+
+    function drone() {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 48;
+      gain.gain.value = 0.04;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+    }
+
+    function whisper() {
+      // шумовой шёпот через случайный фильтр
+      const dur = 1.4;
+      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1200;
+      filter.Q.value = 4;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.2);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+      src.connect(filter).connect(gain).connect(ctx.destination);
+      src.start();
+      src.stop(ctx.currentTime + dur);
+    }
+
+    function thud() {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(90, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    }
+
+    function scream() {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.4);
+      osc.frequency.linearRampToValueAtTime(300, ctx.currentTime + 0.8);
+      filter.type = 'bandpass';
+      filter.frequency.value = 900;
+      filter.Q.value = 2;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.1);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.9);
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 1);
+    }
+
+    // активация аудио по первому тапу (политика браузеров)
+    function startAudio() {
+      if (ctx.state === 'suspended') ctx.resume();
+      drone();
+      document.removeEventListener('touchstart', startAudio);
+      document.removeEventListener('click', startAudio);
+    }
+    document.addEventListener('touchstart', startAudio);
+    document.addEventListener('click', startAudio);
+
+    // ---- сценарий ----
+    function flashOnce(color, ms, cb) {
+      flash.style.background = color;
+      flash.style.opacity = '1';
+      setTimeout(() => { flash.style.opacity = '0'; cb && cb(); }, ms);
+    }
+
+    // 0.5 сек — тишина, потом первый стук
+    setTimeout(() => { thud(); noise.style.opacity = '1'; }, 500);
+
+    // 2 сек — первая вспышка + шёпот
+    setTimeout(() => {
+      flashOnce('#550000', 120);
+      whisper();
+    }, 2000);
+
+    // 4 сек — текст 1
+    setTimeout(() => {
+      msg.textContent = 'Я тебя вижу.';
+      msg.style.opacity = '1';
+      thud();
+    }, 4000);
+
+    // 6 сек — лицо появляется
+    setTimeout(() => {
+      face.style.opacity = '1';
+      whisper();
+    }, 6000);
+
+    // 7 сек — текст 2
+    setTimeout(() => {
+      msg.textContent = 'Не оглядывайся.';
+      scream();
+      flashOnce('#880000', 100);
+    }, 7000);
+
+    // 9 сек — текст 3
+    setTimeout(() => {
+      msg.textContent = 'Ты уже слишком близко.';
+      blood.style.opacity = '1';
+      thud();
+    }, 9000);
+
+    // 11 сек — глитч-вспышка красным
+    setTimeout(() => {
+      let n = 0;
+      const glitch = setInterval(() => {
+        flashOnce(n % 2 ? '#ff0000' : '#000', 80);
+        n++;
+        if (n > 8) {
+          clearInterval(glitch);
+          flashOnce('#ffffff', 60);
+        }
+      }, 90);
+      scream();
+    }, 11000);
+
+    // 14 сек — финал
+    setTimeout(() => {
+      final.classList.add('show');
+    }, 14000);
+  </script>
+</body>
+</html>
