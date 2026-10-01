@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Лагерь "Сосновый"</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: "Courier New", "Consolas", monospace;
+    color: #c8c8c8;
+    user-select: none;
+  }
+  #game {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* верхняя панель — состояние */
+  .hud {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #6a6a6a;
+    text-transform: uppercase;
+    border-bottom: 1px solid #151515;
+    background: #050505;
+    z-index: 10;
+    position: relative;
+  }
+  .hud .danger { color: #a03030; }
+  .hud .item { color: #8a8a50; }
+
+  /* главный экран */
+  .stage {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  /* виньетка + темнота */
+  .vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.9) 90%);
+    z-index: 2;
+  }
+
+  /* мерцающий свет */
+  .flicker {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(80, 60, 40, 0.04);
+    animation: flick 4s infinite;
+    z-index: 1;
+  }
+  @keyframes flick {
+    0%, 100% { opacity: 0.1; }
+    10% { opacity: 0.35; }
+    12% { opacity: 0.05; }
+    20% { opacity: 0.3; }
+    55% { opacity: 0.15; }
+    58% { opacity: 0.45; }
+    60% { opacity: 0.1; }
+  }
+
+  /* шум */
+  .noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 2px);
+    animation: noiseShift 0.15s steps(2) infinite;
+    z-index: 3;
+  }
+  @keyframes noiseShift {
+    0% { transform: translate(0,0); }
+    50% { transform: translate(-1px, 1px); }
+    100% { transform: translate(1px, -1px); }
+  }
+
+  /* картинка сцены — абстрактный силуэт */
+  .scene-art {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .scene-art svg { width: 100%; height: 100%; }
+  .scene-art .fade-art {
+    animation: artFade 1s ease;
+  }
+  @keyframes artFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* текст сцены */
+  .text-box {
+    position: relative;
+    z-index: 5;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .scene-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #5a5a5a;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .scene-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #b0b0b0;
+    margin-bottom: 18px;
+    white-space: pre-wrap;
+  }
+  .scene-text .whisper { color: #7a4a4a; font-style: italic; }
+  .scene-text .scream { color: #c04040; font-weight: 700; letter-spacing: 1px; }
+  .scene-text .calm { color: #8a9a8a; }
+  .scene-text .dark { color: #3a3a3a; }
+
+  .choices { display: flex; flex-direction: column; gap: 7px; }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(15, 15, 15, 0.85);
+    border: 1px solid #1e1e1e;
+    border-radius: 4px;
+    color: #999;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+  }
+  .choice:hover, .choice:active {
+    background: rgba(30, 20, 20, 0.9);
+    border-color: #5a3030;
+    color: #e0e0e0;
+    transform: translateX(3px);
+  }
+  .choice .arrow { color: #5a3030; margin-right: 10px; }
+
+  /* финал */
+  .end-box {
+    text-align: center;
+    padding: 20px 0;
+    position: relative;
+    z-index: 5;
+  }
+  .end-box .icon { font-size: 44px; margin-bottom: 12px; opacity: 0.85; }
+  .end-box .verdict {
+    font-size: 17px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+  .verdict.bad { color: #b03030; }
+  .verdict.good { color: #6a9a6a; }
+  .verdict.neutral { color: #7a7a8a; }
+  .verdict.worst { color: #8a1a1a; }
+  .end-box .desc {
+    font-size: 14px;
+    color: #8a8a8a;
+    line-height: 1.7;
+    margin-bottom: 22px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .replay {
+    display: inline-block;
+    padding: 10px 22px;
+    background: #0d0d0d;
+    color: #b0b0b0;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .replay:hover { background: #1a0f0f; border-color: #5a3030; color: #e0a0a0; }
+
+  .fade { animation: fadeIn 0.6s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* эффект вздрога */
+  .shake { animation: shake 0.5s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-4px, 2px); }
+    20% { transform: translate(4px, -2px); }
+    30% { transform: translate(-3px, -3px); }
+    40% { transform: translate(3px, 3px); }
+    50% { transform: translate(-5px, 0); }
+    60% { transform: translate(5px, 1px); }
+    70% { transform: translate(-2px, -2px); }
+    80% { transform: translate(2px, 2px); }
+    90% { transform: translate(-1px, 1px); }
+  }
+
+  /* вспышка */
+  .flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.08s;
+  }
+
+  /* фонарь-радиус */
+  .lantern {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    background: radial-gradient(circle at 50% 65%, rgba(255, 200, 120, 0.08) 0%, transparent 40%);
+    transition: opacity 0.5s;
+  }
+  .lantern.off { opacity: 0; }
+
+  /* невидимое лицо, появляющееся на секунду */
+  .ghost-face {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40vmin;
+    opacity: 0;
+    z-index: 6;
+    transition: opacity 0.1s;
+    pointer-events: none;
+  }
+  .ghost-face.show { opacity: 0.4; }
+  .ghost-face svg { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+  <div id="game">
+    <div class="hud">
+      <div id="chapterLabel">Лагерь «Сосновый»</div>
+      <div class="item" id="invLabel">🎒 фонарь</div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="flicker"></div>
+      <div class="noise"></div>
+      <div class="vignette"></div>
+      <div class="lantern" id="lantern"></div>
+
+      <div class="scene-art" id="sceneArt"></div>
+
+      <div class="ghost-face" id="ghostFace">
+        <svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="100" cy="120" rx="70" ry="95" fill="#1a1a1a"/>
+          <ellipse cx="72" cy="110" rx="14" ry="7" fill="#000"/>
+          <ellipse cx="128" cy="110" rx="14" ry="7" fill="#000"/>
+          <ellipse cx="72" cy="110" rx="4" ry="4" fill="#a02020"/>
+          <ellipse cx="128" cy="110" rx="4" ry="4" fill="#a02020"/>
+          <path d="M 78 170 Q 100 165 122 170 Q 100 180 78 170 Z" fill="#2a0a0a"/>
+        </svg>
+      </div>
+
+      <div class="text-box" id="content"></div>
+    </div>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <script>
+    // ---------- аудио ----------
+    let audioCtx = null;
+    let droneNode = null;
+
+    function initAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // низкий гул
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 42;
+        gain.gain.value = 0.035;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+        droneNode = osc;
+      } catch(e) {}
+    }
+
+    function playThud() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(28, audioCtx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playWhisper() {
+      if (!audioCtx) return;
+      const dur = 1.6;
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.5;
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1300;
+      filter.Q.value = 5;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.09, audioCtx.currentTime + 0.25);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
+      src.connect(filter).connect(gain).connect(audioCtx.destination);
+      src.start();
+      src.stop(audioCtx.currentTime + dur);
+    }
+
+    function playScream() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1400, audioCtx.currentTime + 0.35);
+      osc.frequency.linearRampToValueAtTime(200, audioCtx.currentTime + 0.9);
+      filter.type = 'bandpass';
+      filter.frequency.value = 800;
+      filter.Q.value = 2;
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.08);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+      osc.connect(filter).connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.1);
+    }
+
+    // ---------- сцены ----------
+    const scenes = {
+      start: {
+        chapter: 'Лагерь «Сосновый» · 23:40',
+        text: `Ты приехал сюда с друзьями. Ночью все разошлись по домикам. Ты остался один у костра. Огонь погас. Ты не заметил как.
+
+Вокруг — <span class="calm">тишина</span>. Слишком тишина. Ни сверчков, ни ветра. Только лес стоит стеной и смотрит.
+
+За твоей спиной — корпус №6. Там горит одно окно. На втором этаже.
+
+Ты один. У тебя — фонарь. И всё.`,
+        choices: [
+          { text: 'Пойти к корпусу №6', next: 'toBuilding' },
+          { text: 'Идти к домикам, где друзья', next: 'toCabins' },
+          { text: 'Остаться у костра и ждать утра', next: 'stayFire' }
+        ]
+      },
+
+      toBuilding: {
+        chapter: 'Корпус №6 · 23:52',
+        text: `Ты идёшь к корпусу. Трава <span class="dark">хрустит</span> под ногами, хотя сухо. Дверь приоткрыта. Внутри — темнота, только сбоку, из-за угла, доносится слабый свет.
+
+Фонарь в твоей руке дрожит. Или это рука.
+
+Ты входишь.`,
+        choices: [
+          { text: 'Подняться на второй этаж', next: 'stairs' },
+          { text: 'Осмотреть первый этаж', next: 'firstFloor' },
+          { text: 'Выйти и уйти', next: 'leaveBuilding', smart: true }
+        ]
+      },
+
+      firstFloor: {
+        chapter: 'Корпус №6 · Первый этаж',
+        text: `Коридор длинный. Стены — старая краска, местами слезла. Двери по бокам. Половина открыта, половина заперта.
+
+За одной из дверей слышно <span class="whisper">дыхание</span>. Медленное. Ровное. Как у спящего. Или как у того, кто притворяется спящим.
+
+Ты светишь фонарём на дверь. Номер 1-7.`,
+        choices: [
+          { text: 'Открыть дверь 1-7', next: 'door17', danger: true },
+          { text: 'Пройти мимо, к лестнице', next: 'stairs' },
+          { text: 'Проверить другие двери', next: 'otherDoors' }
+        ]
+      },
+
+      door17: {
+        chapter: 'Комната 1-7',
+        text: `Ты открываешь дверь. Свет фонаря входит первым.
+
+Внутри — пусто. Кровать, шкаф, стул. На стуле — <span class="whisper">кукла</span>. Сидит, как живая. Смотрит в стену.
+
+Дыхание прекратилось. Как только ты вошёл.`,
+        choices: [
+          { text: 'Взять куклу', next: 'takeDoll', danger: true },
+          { text: 'Выйти и закрыть дверь', next: 'firstFloor', smart: true },
+          { text: 'Осмотреть комнату', next: 'inspectRoom' }
+        ]
+      },
+
+      takeDoll: {
+        chapter: 'Комната 1-7',
+        text: `Ты берёшь куклу. Она <span class="scream">тёплая</span>. Как живая. Ты хочешь поставить её обратно, но пальцы не разжимаются. Или не хотят.
+
+Сзади, в коридоре, что-то <span class="scream">падает</span>. Тяжёлое.
+
+Ты оборачиваешься.`,
+        choices: [
+          { text: 'Бежать из комнаты', next: 'runHall', danger: true },
+          { text: 'Стоять и смотреть', next: 'endTaken' }
+        ],
+        pickup: 'кукла'
+      },
+
+      inspectRoom: {
+        chapter: 'Комната 1-7',
+        text: `Ты светишь по углам. Под кроватью — <span class="whisper">старые фотографии</span>. Дети. Лагерь. Лето. Все улыбаются. Кроме одного мальчика. Он стоит сбоку. Один. Смотрит в камеру. Улыбается — но неправильно.
+
+На фото — подпись: <span class="whisper">«Смена 1987»</span>. Ты вспоминаешь: этот корпус закрыли именно тогда.`,
+        choices: [
+          { text: 'Взять фотографии', next: 'takePhotos', pickup: 'фотографии' },
+          { text: 'Уйти', next: 'firstFloor' }
+        ]
+      },
+
+      takePhotos: {
+        chapter: 'Комната 1-7',
+        text: `Ты убираешь фотографии в карман. Свет фонаря <span class="scream">мигает</span>. Один раз. Два. Три. И гаснет.
+
+Ты один в темноте. В пустой комнате. Со старыми фотографиями в кармане.
+
+Где-то <span class="whisper">очень близко</span> — шаги.`,
+        choices: [
+          { text: 'Включить фонарь', next: 'lanternBack', smart: true },
+          { text: 'Стоять в темноте', next: 'endFrozen' }
+        ]
+      },
+
+      lanternBack: {
+        chapter: 'Комната 1-7',
+        text: `Ты щёлкаешь фонарём несколько раз — и он <span class="calm">включается</span>. Свет выхватывает комнату. Никого.
+
+Но на стене, напротив — <span class="scream">отпечаток ладони</span>. Свежий. Влажный. В темноте его не было.
+
+Ты выходишь. Быстро.`,
+        choices: [
+          { text: 'К лестнице на второй этаж', next: 'stairs' }
+        ]
+      },
+
+      otherDoors: {
+        chapter: 'Корпус №6 · Коридор',
+        text: `Ты идёшь по коридору. Двери 1-1, 1-2, 1-3 — все заперты. Но за каждой слышно <span class="whisper">одно и то же</span>. Дыхание. Как будто кто-то спит везде.
+
+Дверь 1-4 приоткрыта. За ней — свет.`,
+        choices: [
+          { text: 'Заглянуть в 1-4', next: 'door14' },
+          { text: 'Идти к лестнице', next: 'stairs' }
+        ]
+      },
+
+      door14: {
+        chapter: 'Комната 1-4',
+        text: `Внутри — стол. На столе — <span class="whisper">старый радиоприёмник</span>. Он работает. Помехи. Сквозь них — голос. Женский.
+
+<span class="whisper">«…если слышишь… не ходи на второй этаж… в шестом корпусе…»</span>
+
+Голос обрывается. Помехи стихают. Приёмник замолкает.`,
+        choices: [
+          { text: 'Попробовать настроить', next: 'tuneRadio' },
+          { text: 'Выйти', next: 'stairs' }
+        ]
+      },
+
+      tuneRadio: {
+        chapter: 'Комната 1-4',
+        text: `Ты крутишь ручку. Помехи. Снова голос.
+
+<span class="whisper">«…не выходи из леса… останься у костра… утром всё будет…»</span>
+
+Потом — другой голос. Мужской. Резко, будто прямо в микрофон:
+
+<span class="scream">«Не слушай её. Она тебя обманывает.»</span>
+
+Тишина. Приёмник гаснет сам.`,
+        choices: [
+          { text: 'Выйти к лестнице', next: 'stairs' }
+        ]
+      },
+
+      stairs: {
+        chapter: 'Корпус №6 · Лестница',
+        text: `Лестница на второй этаж. Ступени скрипят. Свет наверху — тусклый, жёлтый. Он дрожит, как пламя.
+
+Ты поднимаешься. Шаг. Другой. Третий.
+
+Наверху — <span class="whisper">дверь</span>. Приоткрыта. Из неё льётся свет. И звук. Как будто кто-то <span class="whisper">пишет</span> мелом по доске.`,
+        choices: [
+          { text: 'Открыть дверь', next: 'secondRoom', danger: true },
+          { text: 'Спуститься обратно', next: 'firstFloor' }
+        ]
+      },
+
+      secondRoom: {
+        chapter: 'Комната 2-3',
+        text: `Ты входишь. Комната маленькая. Доска у стены. На доске — <span class="scream">твоё имя</span>. Мел ещё крошится на пол. Кто-то только что писал.
+
+Стул стоит пустой. Но он ещё <span class="whisper">качается</span>.`,
+        choices: [
+          { text: 'Стереть своё имя', next: 'eraseName', smart: true },
+          { text: 'Осмотреть комнату', next: 'searchRoom2' },
+          { text: 'Выйти', next: 'stairs' }
+        ]
+      },
+
+      eraseName: {
+        chapter: 'Комната 2-3',
+        text: `Ты стираешь своё имя. Мел крошится. Доска чистая.
+
+Свет в комнате <span class="calm">гаснет</span>. Не мигает — просто гаснет. И ты слышишь голос. Прямо за спиной. Очень спокойный.
+
+<span class="scream">«Зачем. Я только начал.»</span>
+
+Ты не оборачиваешься.`,
+        choices: [
+          { text: 'Бежать вниз', next: 'runDown', danger: true }
+        ]
+      },
+
+      searchRoom2: {
+        chapter: 'Комната 2-3',
+        text: `Ты осматриваешь комнату. В шкафу — <span class="whisper">старые тетради</span>. Смена 1987. Детские рисунки. Лес, костёр, домики. И — чёрный силуэт среди деревьев. На каждом рисунке. У всех детей.
+
+Последняя тетрадь — пустая. Все страницы чистые. Кроме одной. Там написано: <span class="scream">«он выходит, когда свет гаснет»</span>.`,
+        choices: [
+          { text: 'Взять тетрадь', next: 'takeNotebook', pickup: 'тетрадь' },
+          { text: 'Уйти', next: 'stairs' }
+        ]
+      },
+
+      takeNotebook: {
+        chapter: 'Комната 2-3',
+        text: `Ты убираешь тетрадь в карман. За окном — <span class="scream">тишина</span>. Даже ветра нет.
+
+Но ты чувствуешь: за твоей спиной кто-то <span class="whisper">стоит</span>. Ты знаешь это. Тебе не нужно оборачиваться, чтобы понять.
+
+Ты оборачиваешься всё равно.`,
+        choices: [
+          { text: 'Смотреть', next: 'endTaken' },
+          { text: 'Закрыть глаза', next: 'endFrozen', smart: true }
+        ]
+      },
+
+      runHall: {
+        chapter: 'Корпус №6 · Коридор',
+        text: `Ты выбегаешь в коридор. Лампы мигают одна за другой. Ты бежишь к выходу.
+
+Что-то <span class="scream">бежит за тобой</span>. По потолку. Ты слышишь, как оно цепляется за балки. Ты не оборачиваешься.
+
+Дверь — вот она.`,
+        choices: [
+          { text: 'Выбежать', next: 'outBuilding', smart: true },
+          { text: 'Обернуться на пороге', next: 'endTaken' }
+        ]
+      },
+
+      runDown: {
+        chapter: 'Корпус №6 · Лестница',
+        text: `Ты бежишь вниз через две ступени. Позади — тишина. Но ты знаешь: оно идёт. Медленно. Уверенно.
+
+Ты выскакиваешь на улицу. Ночной воздух бьёт в лицо. Ты живой.`,
+        choices: [
+          { text: 'Уйти от корпуса', next: 'outBuilding' }
+        ]
+      },
+
+      outBuilding: {
+        chapter: 'Снаружи · 00:30',
+        text: `Ты стоишь на улице. Корпус №6 позади. В окне на втором этаже — <span class="whisper">свет погас</span>.
+
+Ты смотришь на лес. Там, между деревьями, что-то движется. Медленно. Не приближается. Просто <span class="whisper">смотрит</span>.
+
+Справа — дорога к домикам, где твои друзья. Слева — ворота лагеря. Прямо — лес.`,
+        choices: [
+          { text: 'Идти к домикам', next: 'toCabins' },
+          { text: 'Идти к воротам', next: 'gates', smart: true },
+          { text: 'Идти в лес', next: 'forest', danger: true }
+        ]
+      },
+
+      leaveBuilding: {
+        chapter: 'Снаружи · 23:55',
+        text: `Ты выходишь. Ночной воздух. Корпус №6 — позади, тёмный, запертый. Ты сделал правильный выбор. Или трусливый — с какой стороны посмотреть.
+
+Слева — домики с друзьями. Справа — ворота.`,
+        choices: [
+          { text: 'К друзьям', next: 'toCabins' },
+          { text: 'К воротам', next: 'gates', smart: true }
+        ]
+      },
+
+      toCabins: {
+        chapter: 'Домики · 00:50',
+        text: `Ты идёшь к домикам. Слышишь голоса — друзья ещё не спят. Смеются. Кто-то играет музыку на телефоне.
+
+Ты подходишь к их домику. Стучишь.
+
+Никто не открывает. Смех <span class="whisper">продолжается</span>. Ты стучишь снова. Тишина. Потом — голос. Твой собственный. Из-за двери.
+
+<span class="scream">«Я тут. Заходи.»</span>`,
+        choices: [
+          { text: 'Открыть дверь', next: 'cabinDoor', danger: true },
+          { text: 'Бежать', next: 'runAway', smart: true }
+        ]
+      },
+
+      cabinDoor: {
+        chapter: 'Домик друзей',
+        text: `Ты открываешь дверь. Внутри пусто. Ни друзей, ни вещей, ни кроватей. Только стол, на котором лежит <span class="whisper">телефон</span>. Твой. Экран горит.
+
+На экране — сообщение от тебя же. Отправлено минуту назад.
+
+<span class="scream">«Я застрял в лесу. Помогите.»</span>
+
+Ты не отправлял это.`,
+        choices: [
+          { text: 'Удалить сообщение', next: 'deleteMsg', smart: true },
+          { text: 'Взять телефон и уходить', next: 'takePhone', pickup: 'телефон' }
+        ]
+      },
+
+      deleteMsg: {
+        chapter: 'Домик друзей',
+        text: `Ты удаляешь сообщение. Экран гаснет. Домик <span class="calm">исчезает</span>. Не разваливается — просто перестаёт быть. Ты стоишь в лесу. Один. В темноте.
+
+Светает. Ты выходишь к воротам лагеря сам.`,
+        choices: [
+          { text: 'Выйти', next: 'endEscape', good: true }
+        ]
+      },
+
+      takePhone: {
+        chapter: 'Домик друзей',
+        text: `Ты берёшь телефон. Экран светится. Кто-то пишет тебе. Ты открываешь.
+
+Это <span class="scream">твоё собственное лицо</span>. На фото. Ты стоишь в темноте леса. Сзади — кто-то. Ты оборачиваешься.`,
+        choices: [
+          { text: 'Обернуться', next: 'endTaken' },
+          { text: 'Выключить телефон', next: 'endEscape', smart: true }
+        ]
+      },
+
+      runAway: {
+        chapter: 'Лес · 01:15',
+        text: `Ты бежишь. Не по дороге. Куда попало. Ветки бьют по лицу. Где-то позади — голоса. Твои друзья. Или не они.
+
+Ты выбегаешь на поляну. Здесь — <span class="whisper">старая вышка</span>. Полуразрушенная. Но на ней — свет.`,
+        choices: [
+          { text: 'Залезть на вышку', next: 'tower', smart: true },
+          { text: 'Бежать дальше в лес', next: 'forest', danger: true }
+        ]
+      },
+
+      forest: {
+        chapter: 'Лес',
+        text: `Ты идёшь в лес. Деревья стоят плотно, как стены. Дороги нет. Ты не знаешь, куда идёшь.
+
+Через десять минут ты выходишь на ту же поляну, что была раньше. С вышкой. Ты не сворачивал. Ты просто <span class="scream">шёл прямо</span>.
+
+Лес не выпускает.`,
+        choices: [
+          { text: 'Залезть на вышку', next: 'tower' },
+          { text: 'Сесть и ждать утра', next: 'endLost' }
+        ]
+      },
+
+      tower: {
+        chapter: 'Вышка',
+        text: `Ты забираешься на вышку. Металл скрипит. Ты поднимаешься на площадку. Отсюда видно весь лес.
+
+Внизу, среди деревьев — <span class="scream">силуэты</span>. Много. Они стоят неподвижно. И смотрят вверх. На тебя.
+
+Один из них отделяется. Идёт к вышке. Медленно.`,
+        choices: [
+          { text: 'Сидеть и не двигаться', next: 'endLost' },
+          { text: 'Спуститься и бежать к воротам', next: 'runToGates', danger: true }
+        ]
+      },
+
+      runToGates: {
+        chapter: 'Лес · К воротам',
+        text: `Ты спускаешься и бежишь. Силуэты позади. Не догоняют. Но и не отстают. Просто <span class="whisper">идут</span>.
+
+Впереди — ворота лагеря. И за ними — дорога. Асфальт. Свет от редких фонарей.`,
+        choices: [
+          { text: 'Выбежать за ворота', next: 'endEscape', good: true },
+          { text: 'Оглянуться', next: 'endTaken' }
+        ]
+      },
+
+      gates: {
+        chapter: 'Ворота · 01:00',
+        text: `Ты идёшь к воротам. Они заперты. Цепь, замок. Через забор — не перелезть: колючая проволока, старая, но всё ещё острая.
+
+У сторожки — свет. Внутри кто-то есть. Ты подходишь.`,
+        choices: [
+          { text: 'Постучать в сторожку', next: 'booth' },
+          { text: 'Попробовать перелезть', next: 'climbFence', danger: true }
+        ]
+      },
+
+      booth: {
+        chapter: 'Сторожка',
+        text: `Ты стучишь. Дверь открывается сама. Внутри — стол, чайник, старый телевизор. По телевизору — <span class="whisper">помехи</span>. На стуле — куртка. Свежая, ещё тёплая. Хозяина нет.
+
+На столе — <span class="whisper">ключи</span>. От ворот. Один.`,
+        choices: [
+          { text: 'Взять ключ', next: 'openGates', pickup: 'ключ' },
+          { text: 'Осмотреть комнату', next: 'boothInspect' }
+        ]
+      },
+
+      boothInspect: {
+        chapter: 'Сторожка',
+        text: `Ты осматриваешь комнату. Ящик стола открыт. Внутри — журнал. Записи дежурств. Последняя запись — <span class="scream">1987 год</span>. Оборвана на середине предложения: «смена закрыта из-за…»
+
+Дальше нет. Но на стене — <span class="whisper">фотография</span>. Мужчина. Смотритель. Стоит у корпуса №6. Улыбается. Сзади него, в окне, — детский силуэт. Смотрит в камеру.`,
+        choices: [
+          { text: 'Взять ключ и уходить', next: 'openGates', pickup: 'ключ' }
+        ]
+      },
+
+      climbFence: {
+        chapter: 'Ворота',
+        text: `Ты лезешь через забор. Проволока цепляет куртку. Ты рвёшь её, но лезешь. Одна рука уже на той стороне.
+
+За твоей спиной — <span class="scream">шаги</span>. Быстрые. Ты оборачиваешься.`,
+        choices: [
+          { text: 'Прыгнуть вниз', next: 'endEscape', good: true },
+          { text: 'Замереть на заборе', next: 'endTaken' }
+        ]
+      },
+
+      openGates: {
+        chapter: 'Ворота · Открыты',
+        text: `Ты отпираешь замок. Цепь падает. Ты открываешь ворота. За ними — <span class="calm">дорога</span>. Асфальт. Свет от фонарей вдалеке. Город.
+
+Ты выходишь. И — оборачиваешься. Лагерь «Сосновый» стоит позади. Тёмный. Пустой. Никаких силуэтов. Никакого движения.
+
+Только в окне корпуса №6 — <span class="whisper">свет</span>. Снова.`,
+        choices: [
+          { text: 'Уйти', next: 'endEscape', good: true },
+          { text: 'Вернуться в лагерь', next: 'returnCamp', danger: true }
+        ]
+      },
+
+      returnCamp: {
+        chapter: 'Возвращение',
+        text: `Ты возвращаешься. Ворота закрываются сами за тобой. Ты идёшь к корпусу №6. В окне — свет.
+
+Ты входишь. Идёшь по коридору. Никого. Идёшь на второй этаж. В комнату 2-3. Доска чистая. Стул на месте. Никого.
+
+Только на стуле — <span class="scream">фотография</span>. Ты. Ты сегодня ночью. Стоишь у ворот. Смотришь в камеру. Улыбаешься.`,
+        choices: [
+          { text: 'Перевернуть фотографию', next: 'endLoop' },
+          { text: 'Выйти', next: 'endLoop' }
+        ]
+      },
+
+      stayFire: {
+        chapter: 'Костёр · 00:00',
+        text: `Ты садишься у костра. Огонь уже погас, но угли ещё тёплые. Ты смотришь на лес. Лес смотрит на тебя.
+
+Ты сидишь час. Два. Ничего не происходит.
+
+Потом, сквозь деревья, к костру выходит <span class="whisper">фигура</span>. Маленькая. Детская. Мальчик лет десяти. Босой. В старой пионерской форме.
+
+Он садится напротив. Смотрит на угли. Молчит.`,
+        choices: [
+          { text: 'Заговорить с ним', next: 'boyTalk' },
+          { text: 'Молчать и сидеть', next: 'endLost' },
+          { text: 'Уйти', next: 'toCabins' }
+        ]
+      },
+
+      boyTalk: {
+        chapter: 'Костёр',
+        text: `<span class="whisper">МАЛЬЧИК:</span> Ты не первый. И не последний.
+
+Он смотрит на тебя. Глаза у него <span class="scream">чёрные</span>. Не зрачки — всё чёрное. Как дыра.
+
+<span class="whisper">МАЛЬЧИК:</span> Мы тут с 87-го. Нас девять. Мы не уходим. Мы просто… <span class="whisper">ждём</span>.
+Ты: Чего?
+<span class="whisper">МАЛЬЧИК:</span> Пока кто-то останется. Насовсем. Тогда мы уйдём.`,
+        choices: [
+          { text: 'Встать и уйти к воротам', next: 'gates', smart: true },
+          { text: 'Сказать, что останешься', next: 'endTaken' },
+          { text: 'Спросить, что было в 87-м', next: 'boyStory' }
+        ]
+      },
+
+      boyStory: {
+        chapter: 'Костёр',
+        text: `<span class="whisper">МАЛЬЧИК:</span> Смена закрылась внезапно. Сказали — несчастный случай. Но мы знаем — нас <span class="scream">закрыли</span>. Всех. В корпусе. Ночью. Двери снаружи.
+
+Он замолкает.
+
+<span class="whisper">МАЛЬЧИК:</span> Кто-то из взрослых не хотел, чтобы мы выросли. Или ещё что-то. Мы не поняли. Нас просто… не стало. Потом.
+
+Он смотрит на тебя.
+
+<span class="whisper">МАЛЬЧИК:</span> Теперь ты знаешь. Это уже что-то.`,
+        choices: [
+          { text: 'Поблагодарить и уйти', next: 'gates', smart: true },
+          { text: 'Остаться с ним', next: 'endTaken' }
+        ]
+      },
+
+      // ---------- концовки ----------
+      endEscape: {
+        end: true,
+        verdict: 'good',
+        icon: '🌅',
+        title: 'ТЫ ВЫБРАЛСЯ',
+        desc: 'Ты выходишь на дорогу. Утро. Ты идёшь до первого автобуса. Друзья звонят — ты не берёшь. Через неделю ты узнаёшь: лагерь «Сосновый» закрыли окончательно ещё в 1987 году. Никто из твоих друзей туда не приезжал. Но ты помнишь их голоса. И ту фотографию, где ты стоишь у ворот и улыбаешься.'
+      },
+
+      endTaken: {
+        end: true,
+        verdict: 'worst',
+        icon: '🕯️',
+        title: 'ТЕБЯ НЕТ',
+        desc: 'Оно забирает тебя тихо. Без крика. Ты просто перестаёшь быть. Твои друзья утром просыпаются и не помнят, что ты приезжал. Никто не помнит. Только на старой фотографии в комнате 2-3 — новый силуэт среди деревьев. Десятый. Ты теперь тоже ждёшь. Ждёшь того, кто останется насовсем. Он придёт. Рано или поздно.'
+      },
+
+      endFrozen: {
+        end: true,
+        verdict: 'bad',
+        icon: '🧊',
+        title: 'ЗАМЕР',
+        desc: 'Ты закрываешь глаза и стоишь. Секунды. Минуты. Часы. Когда ты открываешь их — утро. Ты в той же комнате. Но у двери — твоя куртка, твои кроссовки, твой рюкзак. Всё, что было на тебе. Ты не помнишь, как разделся. И не помнишь, где ты сам. Только знаешь — тебе здесь спокойно. И ты больше не хочешь уходить.'
+      },
+
+      endLost: {
+        end: true,
+        verdict: 'neutral',
+        icon: '🌲',
+        title: 'ОСТАЛСЯ В ЛЕСУ',
+        desc: 'Ты остаёшься. Не умираешь — просто остаёшься. Утром лес выпускает тебя. Ты выходишь на дорогу. Автобус. Дом. Но что-то изменилось. Ты больше не боишься темноты. И иногда, ночью, ты слышишь, как кто-то маленький садится рядом и молчит. Ты не гонишь его. Он не мешает. Вам спокойно вдвоём.'
+      },
+
+      endLoop: {
+        end: true,
+        verdict: 'worst',
+        icon: '🔁',
+        title: 'ПЕТЛЯ',
+        desc: 'Ты переворачиваешь фотографию. На обороте — дата. Сегодняшняя. Ты смотришь на неё долго. Потом кладёшь обратно. Выходишь из корпуса. Идёшь к воротам. Выходишь на дорогу. Утро. Всё как было. Через неделю — ты снова приезжаешь в лагерь «Сосновый». Ты не помнишь, зачем. Ты просто знаешь: надо приехать. И ты приезжаешь. И всё начинается снова.'
+      }
+    };
+
+    // ---------- движок ----------
+    const content = document.getElementById('content');
+    const chapterLabel = document.getElementById('chapterLabel');
+    const invLabel = document.getElementById('invLabel');
+    const flash = document.getElementById('flash');
+    const ghostFace = document.getElementById('ghostFace');
+    const stage = document.getElementById('stage');
+    const lantern = document.getElementById('lantern');
+
+    const state = { inv: ['фонарь'], steps: 0 };
+
+    function renderInv() {
+      invLabel.textContent = '🎒 ' + (state.inv.length ? state.inv.join(', ') : 'пусто');
+    }
+
+    function doFlash(color, ms) {
+      flash.style.background = color;
+      flash.style.opacity = '1';
+      setTimeout(() => { flash.style.opacity = '0'; }, ms);
+    }
+
+    function doShake() {
+      stage.classList.add('shake');
+      setTimeout(() => stage.classList.remove('shake'), 500);
+    }
+
+    function showGhost(ms) {
+      ghostFace.classList.add('show');
+      setTimeout(() => ghostFace.classList.remove('show'), ms);
+    }
+
+    function renderScene(id) {
+      const s = scenes[id];
+      if (!s) return;
+
+      if (s.chapter) chapterLabel.textContent = s.chapter;
+
+      if (s.end) {
+        content.innerHTML = `
+          <div class="end-box fade">
+            <div class="icon">${s.icon}</div>
+            <div class="verdict ${s.verdict}">${s.title}</div>
+            <div class="desc">${s.desc}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        return;
+      }
+
+      state.steps++;
+
+      // эффекты при входе в сцену
+      if (id === 'stairs') { setTimeout(() => { doShake(); playThud(); }, 300); }
+      if (id === 'secondRoom') { setTimeout(() => { showGhost(700); playWhisper(); }, 500); }
+      if (id === 'runHall') { setTimeout(() => { doShake(); playScream(); }, 200); }
+      if (id === 'takeDoll') { setTimeout(() => { doShake(); playThud(); }, 200); }
+      if (id === 'takeNotebook') { setTimeout(() => { showGhost(500); playWhisper(); }, 300); }
+      if (id === 'cabinDoor') { setTimeout(() => { doFlash('#5a0000', 100); playWhisper(); }, 200); }
+      if (id === 'takePhone') { setTimeout(() => { showGhost(600); playScream(); }, 200); }
+      if (id === 'tower') { setTimeout(() => { playWhisper(); }, 400); }
+      if (id === 'boyTalk') { setTimeout(() => { showGhost(400); playWhisper(); }, 300); }
+      if (id === 'openGates') { setTimeout(() => { doFlash('#ffffff', 60); }, 300); }
+
+      const available = s.choices.filter(c => !c.need || state.inv.includes(c.need));
+
+      let choicesHtml = available.map((c) => {
+        return `<button class="choice" onclick="choose('${c.next}', '${(c.pickup || '').replace(/'/g, "\\'")}')">
+          <span class="arrow">▸</span>${c.text}
+        </button>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="fade">
+          <div class="scene-title">${s.chapter || ''}</div>
+          <div class="scene-text">${s.text}</div>
+          <div class="choices">${choicesHtml}</div>
+        </div>
+      `;
+
+      // авто-скролл наверх
+      content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function choose(next, pickup) {
+      if (pickup && !state.inv.includes(pickup)) {
+        state.inv.push(pickup);
+        renderInv();
+      }
+      renderScene(next);
+    }
+
+    function restart() {
+      state.inv = ['фонарь'];
+      state.steps = 0;
+      renderScene('start');
+      renderInv();
+    }
+
+    // запуск аудио по первому касанию
+    document.addEventListener('touchstart', initAudio, { once: true });
+    document.addEventListener('click', initAudio, { once: true });
+
+    renderScene('start');
+    renderInv();
+  </script>
+</body>
+</html>
