@@ -38,23 +38,46 @@
     50% { transform: translateY(-14px) rotate(3deg); }
   }
   h1 {
-    font-size: 24px; font-weight: 700; margin-bottom: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
     background: linear-gradient(90deg, #ff2a6a, #ff8aa8, #ffb800);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     letter-spacing: 0.5px;
   }
-  .sub { font-size: 14px; color: #8a8aa0; margin-bottom: 36px; max-width: 320px; line-height: 1.6; }
+  .sub {
+    font-size: 14px;
+    color: #8a8aa0;
+    margin-bottom: 36px;
+    max-width: 320px;
+    line-height: 1.6;
+  }
   .btn {
-    padding: 20px 52px; font-size: 20px; font-weight: 800; color: #fff;
+    padding: 20px 52px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
     background: linear-gradient(135deg, #ff2a6a, #ff5c8a);
-    border: none; border-radius: 60px; cursor: pointer; font-family: inherit;
-    letter-spacing: 2px; text-transform: uppercase;
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 2px;
+    text-transform: uppercase;
     box-shadow: 0 8px 0 #a01040, 0 14px 40px rgba(255, 42, 106, 0.5);
     transition: all 0.1s ease;
     animation: pulseBtn 1.8s ease-in-out infinite;
   }
-  @keyframes pulseBtn { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
-  .btn:active { transform: translateY(6px) scale(1.02); box-shadow: 0 2px 0 #a01040, 0 6px 20px rgba(255, 42, 106, 0.4); }
+  @keyframes pulseBtn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .btn:active {
+    transform: translateY(6px) scale(1.02);
+    box-shadow: 0 2px 0 #a01040, 0 6px 20px rgba(255, 42, 106, 0.4);
+  }
 
   #fakScreen {
     display: none;
@@ -66,52 +89,71 @@
   }
   #fakScreen.show { display: block; }
 
-  .fak-symbol {
+  .dick {
     position: absolute;
     user-select: none;
     pointer-events: none;
     will-change: transform;
-    line-height: 1;
+    line-height: 0;
   }
 
-  .fak-symbol.out { animation: flyOut 1.2s ease-out forwards; }
+  .dick.out { animation: flyOut 1.2s ease-out forwards; }
   @keyframes flyOut {
     0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
     15% { opacity: 1; }
     100% { transform: translate(var(--tx), var(--ty)) scale(var(--sc)) rotate(var(--rot)); opacity: 0; }
   }
 
-  .fak-symbol.fall { animation: fallDown linear forwards; }
+  .dick.fall { animation: fallDown linear forwards; }
   @keyframes fallDown {
-    0% { transform: translateY(-140px) rotate(0deg); opacity: 0; }
+    0% { transform: translateY(-160px) rotate(0deg); opacity: 0; }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
   }
 
-  .fak-symbol.pulse { animation: bigPulse 0.6s ease-out forwards; }
+  .dick.pulse { animation: bigPulse 0.7s ease-out forwards; }
   @keyframes bigPulse {
     0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
     40% { opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(6); opacity: 0; }
   }
 
   #stopBtn {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-    z-index: 300; padding: 14px 36px; background: #1a1a26;
-    border: 2px solid #ff2a6a; border-radius: 12px; color: #ff5c8a;
-    font-family: inherit; font-size: 14px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    padding: 14px 36px;
+    background: #1a1a26;
+    border: 2px solid #ff2a6a;
+    border-radius: 12px;
+    color: #ff5c8a;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
     box-shadow: 0 0 30px rgba(255, 42, 106, 0.5);
   }
   #stopBtn:active { transform: translateX(-50%) scale(0.95); }
 
   .flash {
-    position: fixed; inset: 0; background: #ff2a6a; opacity: 0;
-    pointer-events: none; z-index: 250;
+    position: fixed;
+    inset: 0;
+    background: #ff2a6a;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 250;
     animation: flashPulse 0.3s ease;
   }
-  @keyframes flashPulse { 0% { opacity: 0; } 30% { opacity: 0.5; } 100% { opacity: 0; } }
+  @keyframes flashPulse {
+    0% { opacity: 0; }
+    30% { opacity: 0.5; }
+    100% { opacity: 0; }
+  }
 
   body.shaking { animation: bodyShake 0.08s infinite; }
   @keyframes bodyShake {
@@ -122,15 +164,18 @@
     100% { transform: translate(2px, 2px); }
   }
 
-  #fakCenter {
-    position: fixed; top: 50%; left: 50%;
+  #centerDick {
+    position: fixed;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 200; pointer-events: none;
+    z-index: 200;
+    pointer-events: none;
     animation: centerGrow 0.4s ease-out;
   }
   @keyframes centerGrow {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    60% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   }
 </style>
@@ -154,50 +199,37 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
 
-    // ================= SVG кривого хуя =================
-    // нарисован максимально неуклюже: дрожащие линии, разные толщины, кривые
-    const DICK_SVG = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">
-        <g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <!-- яйца (2 кривых овала снизу) -->
-          <path d="M 60 250 C 40 250, 35 280, 50 295 C 65 310, 90 300, 90 280 C 92 265, 80 250, 60 250 Z" stroke-width="5"/>
-          <path d="M 140 250 C 160 248, 168 275, 155 293 C 140 310, 112 305, 110 283 C 108 267, 122 250, 140 250 Z" stroke-width="6"/>
-
-          <!-- ствол — кривая, изогнутая, толщина плавает -->
-          <path d="M 85 250 C 80 220, 78 195, 82 170 C 87 145, 95 130, 105 110 C 113 92, 118 78, 116 60 C 114 45, 122 36, 132 38 C 142 40, 148 52, 145 68 C 142 88, 133 105, 122 122 C 111 140, 103 158, 100 180 C 96 205, 100 230, 105 252" stroke-width="7"/>
-
-          <!-- головка — кривая шляпка, поплыла в сторону -->
-          <path d="M 112 62 C 100 52, 90 40, 100 28 C 110 16, 130 14, 145 22 C 158 30, 162 46, 152 60 C 144 72, 128 75, 116 68" stroke-width="6"/>
-
-          <!-- уретра — маленькая кривая линия, съехала -->
-          <path d="M 128 30 C 132 36, 134 42, 132 48" stroke-width="3" stroke-dasharray="3 4"/>
-
-          <!-- случайные волоски (палка-палка) -->
-          <path d="M 70 260 L 62 268" stroke-width="4"/>
-          <path d="M 145 262 L 154 270" stroke-width="4"/>
-          <path d="M 78 272 L 72 280" stroke-width="3"/>
-          <path d="M 152 276 L 158 284" stroke-width="3"/>
-
-          <!-- обводка-потёк (мокрый след) -->
-          <path d="M 130 40 C 138 50, 142 62, 138 72" stroke-width="2" opacity="0.5"/>
-        </g>
-      </svg>
-    `;
+    // SVG кривого хуя — нарочно неаккуратный
+    const DICK_SVG =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 340" preserveAspectRatio="xMidYMid meet" width="100%" height="100%">' +
+        '<g stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M 62 262 C 42 262, 36 292, 52 308 C 68 322, 94 312, 94 290 C 96 273, 82 262, 62 262 Z" stroke-width="5"/>' +
+          '<path d="M 142 260 C 162 258, 170 288, 156 306 C 140 324, 112 318, 110 294 C 108 278, 122 260, 142 260 Z" stroke-width="6"/>' +
+          '<path d="M 88 262 C 82 230, 78 202, 84 176 C 90 150, 98 132, 108 112 C 116 92, 120 78, 118 60 C 116 44, 124 34, 134 37 C 145 40, 151 52, 148 68 C 145 90, 135 108, 124 126 C 112 144, 104 162, 101 184 C 97 208, 102 234, 108 262" stroke-width="7"/>' +
+          '<path d="M 114 62 C 101 52, 91 40, 101 27 C 112 14, 132 12, 147 21 C 161 30, 164 47, 154 61 C 145 74, 129 77, 117 69" stroke-width="6"/>' +
+          '<path d="M 130 30 C 134 36, 136 42, 134 48" stroke-width="3" stroke-dasharray="3 4"/>' +
+          '<path d="M 72 272 L 63 280" stroke-width="4"/>' +
+          '<path d="M 147 274 L 156 282" stroke-width="4"/>' +
+          '<path d="M 80 286 L 73 294" stroke-width="3"/>' +
+          '<path d="M 154 288 L 160 296" stroke-width="3"/>' +
+        '</g>' +
+      '</svg>';
 
     function makeDick(sizePx, color) {
-      const div = document.createElement('div');
-      div.style.width = sizePx + 'px';
-      div.style.height = (sizePx * 1.6) + 'px';
-      div.style.color = color;
-      div.style.filter = `drop-shadow(0 0 8px ${color}) drop-shadow(0 0 16px ${color})`;
-      div.innerHTML = DICK_SVG;
-      return div;
+      const wrap = document.createElement('div');
+      wrap.className = 'dick';
+      wrap.style.width = sizePx + 'px';
+      wrap.style.height = Math.round(sizePx * 1.7) + 'px';
+      wrap.style.color = color;
+      wrap.style.filter = 'drop-shadow(0 0 8px ' + color + ') drop-shadow(0 0 16px ' + color + ')';
+      wrap.innerHTML = DICK_SVG;
+      return wrap;
     }
 
-    const COLORS = ['#ff2a6a', '#ff5c8a', '#ffb800', '#ff0040', '#ff8aa8', '#ffd700', '#fff', '#ff5050'];
+    const COLORS = ['#ff2a6a', '#ff5c8a', '#ffb800', '#ff0040', '#ff8aa8', '#ffd700', '#ffffff', '#ff5050'];
     function randomColor() { return COLORS[Math.floor(Math.random() * COLORS.length)]; }
 
-    // аудио
+    // звук
     let audioCtx = null;
     function initAudio() {
       if (audioCtx) return;
@@ -214,14 +246,17 @@
       gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
       const filter = audioCtx.createBiquadFilter();
-      filter.type = 'bandpass'; filter.frequency.value = 900; filter.Q.value = 1.5;
+      filter.type = 'bandpass';
+      filter.frequency.value = 900;
+      filter.Q.value = 1.5;
       src.connect(filter).connect(gain).connect(audioCtx.destination);
-      src.start(); src.stop(audioCtx.currentTime + dur);
+      src.start();
+      src.stop(audioCtx.currentTime + dur);
     }
     function beepFast() {
       if (!audioCtx) return;
       for (let i = 0; i < 6; i++) {
-        setTimeout(() => {
+        setTimeout(function() {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           osc.type = 'square';
@@ -229,7 +264,8 @@
           gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
           osc.connect(gain).connect(audioCtx.destination);
-          osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
         }, i * 90);
       }
     }
@@ -239,46 +275,41 @@
 
     function spawnOut() {
       const el = makeDick(40 + Math.random() * 80, randomColor());
-      el.className = 'fak-symbol out';
+      el.classList.add('out');
       el.style.left = '50%';
       el.style.top = '50%';
-
       const angle = Math.random() * Math.PI * 2;
       const dist = 200 + Math.random() * 400;
       const tx = Math.cos(angle) * dist;
       const ty = Math.sin(angle) * dist;
       const sc = 0.8 + Math.random() * 1.5;
       const rot = -360 + Math.random() * 720;
-
       el.style.setProperty('--tx', tx + 'px');
       el.style.setProperty('--ty', ty + 'px');
       el.style.setProperty('--sc', sc);
       el.style.setProperty('--rot', rot + 'deg');
-
       fakScreen.appendChild(el);
-      setTimeout(() => el.remove(), 1400);
+      setTimeout(function() { el.remove(); }, 1400);
     }
 
     function spawnFall() {
-      const size = 40 + Math.random() * 90;
-      const el = makeDick(size, randomColor());
-      el.className = 'fak-symbol fall';
+      const el = makeDick(40 + Math.random() * 90, randomColor());
+      el.classList.add('fall');
       el.style.left = (Math.random() * 100) + '%';
-      el.style.top = '-140px';
+      el.style.top = '-160px';
       const dur = 1.5 + Math.random() * 2.5;
       el.style.animationDuration = dur + 's';
       fakScreen.appendChild(el);
-      setTimeout(() => el.remove(), dur * 1000 + 300);
+      setTimeout(function() { el.remove(); }, dur * 1000 + 300);
     }
 
     function spawnPulse() {
-      const size = 80 + Math.random() * 60;
-      const el = makeDick(size, randomColor());
-      el.className = 'fak-symbol pulse';
+      const el = makeDick(80 + Math.random() * 60, randomColor());
+      el.classList.add('pulse');
       el.style.left = '50%';
       el.style.top = '50%';
       fakScreen.appendChild(el);
-      setTimeout(() => el.remove(), 700);
+      setTimeout(function() { el.remove(); }, 800);
     }
 
     function startFak() {
@@ -290,23 +321,23 @@
       const f = document.createElement('div');
       f.className = 'flash';
       document.body.appendChild(f);
-      setTimeout(() => f.remove(), 400);
+      setTimeout(function() { f.remove(); }, 400);
 
       noiseBurst(0.5);
       beepFast();
 
-      // по центру большой кривой хуй
-      const center = makeDick(200, '#ff2a6a');
-      center.id = 'fakCenter';
+      // по центру большой хуй
+      const center = makeDick(220, '#ff2a6a');
+      center.id = 'centerDick';
       fakScreen.appendChild(center);
 
-      spawnInterval = setInterval(() => {
+      spawnInterval = setInterval(function() {
         spawnOut();
         if (Math.random() < 0.7) spawnFall();
         if (Math.random() < 0.35) spawnPulse();
       }, 90);
 
-      audioInterval = setInterval(() => {
+      audioInterval = setInterval(function() {
         noiseBurst(0.25);
         beepFast();
       }, 700);
@@ -317,18 +348,19 @@
     function stopFak() {
       clearInterval(spawnInterval);
       clearInterval(audioInterval);
-      spawnInterval = audioInterval = null;
+      spawnInterval = null;
+      audioInterval = null;
       document.body.classList.remove('shaking');
 
-      const all = fakScreen.querySelectorAll('.fak-symbol, #fakCenter');
-      all.forEach(el => el.remove());
+      const all = fakScreen.querySelectorAll('.dick, #centerDick');
+      all.forEach(function(el) { el.remove(); });
 
       fakScreen.classList.remove('show');
       start.style.display = 'flex';
     }
 
     startBtn.addEventListener('click', startFak);
-    stopBtn.addEventListener('click', (e) => { e.stopPropagation(); stopFak(); });
+    stopBtn.addEventListener('click', function(e) { e.stopPropagation(); stopFak(); });
   </script>
 </body>
 </html>
