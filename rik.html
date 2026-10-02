@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Рик против тебя · Ролевой бой</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Courier New", "Consolas", monospace;
+    background: radial-gradient(circle at 20% 10%, #0d3a2a 0%, transparent 40%),
+                radial-gradient(circle at 80% 90%, #3a1a0d 0%, transparent 45%), #000;
+    background-attachment: fixed;
+    color: #d8d8e0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 10px; min-height: 100vh; overflow-x: hidden;
+  }
+
+  .game {
+    max-width: 600px; width: 100%;
+    background: rgba(8, 8, 18, 0.92);
+    border: 1px solid #6ee37c;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 0 50px rgba(110, 227, 124, 0.2), 0 20px 60px rgba(0,0,0,0.7);
+  }
+
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: #6ee37c; padding-bottom: 12px;
+    border-bottom: 1px dashed #1e3a2a; margin-bottom: 16px; gap: 10px; flex-wrap: wrap;
+  }
+  .hud .hp-you { color: #5ecbff; }
+  .hud .hp-rick { color: #ff5c8a; }
+  .hud .turn { color: #8a7ad6; }
+  .hud .state { color: #f7c948; }
+
+  .scene-title {
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: #8a7ad6; margin-bottom: 10px;
+  }
+
+  .scene {
+    font-size: 14.5px; line-height: 1.75; color: #c8c8dc;
+    margin-bottom: 18px; white-space: pre-wrap;
+  }
+  .scene .rick { color: #6ee37c; font-weight: 700; }
+  .scene .you { color: #5ecbff; font-weight: 700; }
+  .scene .sys { color: #8a7ad6; font-style: italic; }
+  .scene .danger { color: #ff4040; font-weight: 600; }
+  .scene .action { color: #b8b8d0; font-style: italic; }
+  .scene .good { color: #6ee37c; font-weight: 600; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .choice {
+    display: block; width: 100%; text-align: left;
+    padding: 13px 16px; background: #0e1018;
+    border: 1px solid #24243a; border-radius: 10px;
+    color: #c8c8dc; font-family: inherit; font-size: 14px;
+    line-height: 1.5; cursor: pointer; transition: all 0.15s ease;
+  }
+  .choice:hover, .choice:active {
+    background: #182028; border-color: #6ee37c; color: #fff;
+    transform: translateX(3px); box-shadow: 0 0 18px rgba(110,227,124,0.25);
+  }
+  .choice .arrow { color: #6ee37c; margin-right: 10px; }
+
+  .custom { display: flex; gap: 8px; margin-bottom: 8px; }
+  .custom input {
+    flex: 1; padding: 13px 15px; background: #0a0a14;
+    border: 1px solid #2a2a48; border-radius: 10px;
+    color: #e8e8f0; font-family: inherit; font-size: 13.5px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .custom input:focus { border-color: #6ee37c; box-shadow: 0 0 14px rgba(110,227,124,0.3); }
+  .custom input::placeholder { color: #4a4a6a; }
+  .custom button {
+    padding: 0 20px; background: linear-gradient(135deg, #6e4aff, #6ee37c);
+    border: none; border-radius: 10px; color: #0a0a14;
+    font-family: inherit; font-size: 17px; cursor: pointer; font-weight: 700;
+    transition: all 0.15s;
+  }
+  .custom button:hover { box-shadow: 0 0 24px rgba(110,227,124,0.6); }
+  .custom button:active { transform: scale(0.95); }
+
+  .hint { font-size: 10.5px; color: #5a5a7a; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; line-height: 1.55; }
+
+  .fade { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .shake { animation: shake 0.35s ease; }
+  @keyframes shake {
+    0%,100% { transform: translate(0,0); }
+    10% { transform: translate(-8px,3px); }
+    30% { transform: translate(8px,-3px); }
+    50% { transform: translate(-6px,-3px); }
+    70% { transform: translate(6px,3px); }
+  }
+  .shake-hard { animation: shakeHard 0.7s ease; }
+  @keyframes shakeHard {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    10% { transform: translate(-14px,6px) rotate(-1deg); }
+    30% { transform: translate(14px,-6px) rotate(1deg); }
+    50% { transform: translate(-10px,-6px) rotate(-0.6deg); }
+    70% { transform: translate(10px,6px) rotate(0.6deg); }
+  }
+
+  .flash {
+    position: fixed; inset: 0; pointer-events: none; z-index: 999;
+    opacity: 0; transition: opacity 0.12s;
+  }
+
+  .end-box { text-align: center; padding: 22px 10px; }
+  .end-box .icon { font-size: 60px; margin-bottom: 12px; }
+  .end-box .verdict {
+    font-size: 20px; letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 14px; font-weight: 700;
+  }
+  .verdict.win { color: #5ecbff; text-shadow: 0 0 24px #2a8aff; }
+  .verdict.lose { color: #ff2a6a; text-shadow: 0 0 24px #ff2a6a; }
+  .verdict.epic { color: #f7c948; text-shadow: 0 0 24px #f7c948, 0 0 60px #ff2a6a; animation: rage 1s infinite; }
+  @keyframes rage { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+  .end-box .desc { font-size: 14px; color: #a8a8bc; line-height: 1.85; margin-bottom: 22px; }
+  .replay {
+    display: inline-block; padding: 12px 26px;
+    background: transparent; color: #6ee37c;
+    border: 1px solid #6ee37c; border-radius: 10px;
+    font-family: inherit; font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+  }
+  .replay:hover { background: rgba(110,227,124,0.15); box-shadow: 0 0 20px rgba(110,227,124,0.4); }
+
+  /* индикатор инвентаря/статусов */
+  .status {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+    font-size: 10px; letter-spacing: 1px;
+  }
+  .status .badge {
+    padding: 4px 8px; border-radius: 4px;
+    background: #0e1018; border: 1px solid #24243a; color: #4a4a6a;
+    text-transform: uppercase;
+  }
+  .status .badge.on {
+    background: rgba(110,227,124,0.12); border-color: #6ee37c; color: #6ee37c;
+    box-shadow: 0 0 8px rgba(110,227,124,0.35);
+  }
+  .status .badge.danger {
+    background: rgba(255, 64, 64, 0.12); border-color: #ff4040; color: #ff4040;
+  }
+</style>
+</head>
+<body>
+
+  <div class="game" id="game">
+
+    <div class="hud">
+      <span class="hp-you">Ты: <span id="youHp">100</span>%</span>
+      <span class="hp-rick">Рик: <span id="rickHp">100</span>%</span>
+      <span class="turn">Ход <span id="turnNum">1</span></span>
+      <span class="state" id="stateLabel">в бою</span>
+    </div>
+
+    <div class="status" id="statusBar">
+      <span class="badge" data-flag="hasPortalGun">Портальная пушка</span>
+      <span class="badge" data-flag="mindLink">Связь с разумом</span>
+      <span class="badge" data-flag="bleeding">Кровотечение</span>
+      <span class="badge" data-flag="onToaster">На тостере</span>
+      <span class="badge" data-flag="worldBlenders">Мир блендеров</span>
+      <span class="badge" data-flag="rickUnderControl">Рик под контролем</span>
+    </div>
+
+    <div class="scene-title" id="sceneTitle">Сцена 1</div>
+    <div class="scene" id="scene"></div>
+    <div class="choices" id="choices"></div>
+
+    <div class="custom">
+      <input type="text" id="customInput" placeholder="Опиши, что ты делаешь...">
+      <button id="customBtn">⚡</button>
+    </div>
+    <div class="hint">Пиши свободно: «телепортируюсь», «хватаю пушку», «беру его под контроль», «отпрыгиваю в сторону» · игра распознаёт действия</div>
+
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <script>
+    // ================== СОСТОЯНИЕ ==================
+    const state = {
+      youHp: 100,
+      rickHp: 100,
+      turn: 1,
+      log: [],
+      flags: {
+        hasPortalGun: false,
+        mindLink: false,
+        bleeding: false,
+        onToaster: false,
+        worldBlenders: false,
+        rickUnderControl: false
+      },
+      currentScene: 'start',
+      over: false
+    };
+
+    const youHpEl = document.getElementById('youHp');
+    const rickHpEl = document.getElementById('rickHp');
+    const turnNumEl = document.getElementById('turnNum');
+    const stateLabelEl = document.getElementById('stateLabel');
+    const sceneEl = document.getElementById('scene');
+    const sceneTitleEl = document.getElementById('sceneTitle');
+    const choicesEl = document.getElementById('choices');
+    const customInput = document.getElementById('customInput');
+    const customBtn = document.getElementById('customBtn');
+    const flash = document.getElementById('flash');
+    const gameEl = document.getElementById('game');
+    const statusBar = document.getElementById('statusBar');
+
+    // ================== СЦЕНЫ ==================
+    // Каждая сцена: title, text, choices (кнопки) с ключами → next.
+    // У некоторых сцен есть onEnter — что происходит при входе.
+
+    const scenes = {
+      start: {
+        title: 'Сцена 1 · Кухня',
+        text: `<span class="sys">[ Ты на своей кухне. Свет мигает. Кофе ещё горячий. ]</span>
+
+Прямо в воздухе разворачивается <span class="danger">зелёный портал</span>. Из него, шатаясь, выходит Рик — с фляжкой в руке, в тапочках, с портальной пушкой на поясе.
+
+<span class="rick">РИК:</span> О, отлично. Ты дома. Неважно, кто ты. Важно, что я <span class="danger">не в настроении</span>.
+
+Он щёлкает кнопкой на поясе. Из портала за его спиной высовывается щупальце с лампочками и тихо гудит.`,
+        choices: [
+          { text: 'Спросить, чего он хочет', next: 'askRick' },
+          { text: 'Резко броситься в атаку', next: 'attackFirst' },
+          { text: 'Оставаться спокойным и наблюдать', next: 'watchRick' }
+        ]
+      },
+
+      askRick: {
+        title: 'Сцена 2 · Разговор',
+        text: `<span class="you">Ты:</span> Чего ты хочешь?
+
+<span class="rick">РИК:</span> Хочу. Много чего. Хочу, чтобы Морти не трогал мою лабораторию. Хочу, чтобы Джерри исчез. Хочу, чтобы ты перестал задавать <span class="danger">глупые вопросы</span>.
+
+Он делает шаг к тебе. Под его ногами открывается едва заметная рябь — портал готовится.
+
+<span class="rick">РИК:</span> Знаешь, что я делаю с теми, кто задаёт глупые вопросы?
+
+Он не ждёт ответа. Он <span class="danger">щёлкает пальцами</span>.`,
+        choices: [
+          { text: 'Отпрыгнуть в сторону', next: 'portalFloor' },
+          { text: 'Успеть схватить его за руку', next: 'grabRick' },
+          { text: 'Активировать щит (если есть)', next: 'portalFloor' }
+        ]
+      },
+
+      watchRick: {
+        title: 'Сцена 2 · Наблюдение',
+        text: `Ты стоишь на месте. Рик смотрит на тебя внимательно. Он ждёт реакции.
+
+<span class="rick">РИК:</span> Хм. Не паникуешь. Это уже интереснее, чем 90% тех, кто тут стоял.
+
+Он делает глоток из фляжки, вытирает рот рукавом.
+
+<span class="rick">РИК:</span> Но мне всё равно <span class="danger">скучно</span>.
+
+Он поднимает портальную пушку и целится тебе под ноги.`,
+        choices: [
+          { text: 'Успеть схватить пушку', next: 'grabGun' },
+          { text: 'Прыгнуть в портал первым', next: 'intoBlenderWorld' },
+          { text: 'Стоять и смотреть, что будет', next: 'portalFloor' }
+        ]
+      },
+
+      attackFirst: {
+        title: 'Сцена 2 · Удар',
+        text: `Ты бросаешься вперёд. Кулак летит в лицо Рика.
+
+Но он <span class="danger">уже не там</span>. Он стоит в полуметре в стороне — как будто телепортировался. Ты пролетаешь сквозь пустоту и врезаешься в шкаф.
+
+<span class="rick">РИК:</span> Медленно. Очень медленно. Ты думал, что я не увижу твой замах за <span class="danger">полторы секунды</span>?
+
+Он щёлкает — под тобой разворачивается портал.`,
+        choices: [
+          { text: 'Успеть зацепиться за край шкафа', next: 'grabShelf' },
+          { text: 'Прыгнуть в портал — посмотрим, что там', next: 'intoBlenderWorld' },
+          { text: 'Телепортироваться самому (если умеешь)', next: 'selfTeleport' }
+        ]
+      },
+
+      grabShelf: {
+        title: 'Сцена 3 · Край шкафа',
+        text: `Ты хватаешься за край шкафа. Ноги уже <span class="danger">внутри портала</span>. Ты чувствуешь, как снизу тянет жаром — оттуда, из мира блендеров.
+
+<span class="rick">РИК:</span> Ого. Цепкий. <span class="sys">(смотрит с интересом)</span>
+
+Он не торопится. Он наливает себе кофе из твоей чашки.
+
+<span class="rick">РИК:</span> Продержишься долго — я тебя выпущу. Может быть. Пятьдесят на пятьдесят. Скорее нет.`,
+        choices: [
+          { text: 'Подтянуться и вылезти', next: 'outOfPortal' },
+          { text: 'Отпустить руки и упасть в портал', next: 'intoBlenderWorld' },
+          { text: 'Крикнуть Рику, что сдаёшься', next: 'surrender' }
+        ]
+      },
+
+      grabGun: {
+        title: 'Сцена 3 · Захват',
+        text: `Ты бросаешься вперёд и <span class="good">хватаешь портальную пушку</span> — прямо за ствол. Рик не ожидал. Он дёргает рукой, но ты держишь крепко.
+
+<span class="rick">РИК:</span> Отпусти. Это моё. Ты не знаешь, как оно работает.
+
+Он пытается вырвать пушку. Ты чувствуешь, как корпус нагревается — пушка <span class="danger">перегревается</span>.`,
+        choices: [
+          { text: 'Стрелять из пушки в Рика', next: 'shootRick' },
+          { text: 'Открыть портал в мир блендеров и бросить туда Рика', next: 'throwRick' },
+          { text: 'Развернуть пушку и выстрелить в потолок', next: 'shootCeiling' }
+        ]
+      },
+
+      grabRick: {
+        title: 'Сцена 3 · Рука',
+        text: `Ты хватаешь Рика за руку. Он замирает. На секунду — всего на секунду — его лицо становится <span class="danger">серьёзным</span>.
+
+<span class="rick">РИК:</span> Ох. Ты правда думаешь, что удержишь меня?
+
+Он не вырывается. Он просто <span class="danger">щёлкает пальцами второй руки</span>. Под вами обоими разворачивается портал. Вы <span class="danger">оба</span> падаете.`,
+        choices: [
+          { text: 'Держаться за Рика — упадём вместе', next: 'intoBlenderWorld' },
+          { text: 'Отпустить и отпрыгнуть в сторону', next: 'outOfPortal' },
+          { text: 'Использовать его фляжку как якорь', next: 'blenderWithRick' }
+        ]
+      },
+
+      portalFloor: {
+        title: 'Сцена 3 · Портал под ногами',
+        text: `Портал разворачивается <span class="danger">прямо под твоими ногами</span>. Ты проваливаешься.
+
+Летишь. Секунду. Две. Десять.
+
+Вокруг — <span class="danger">оранжевое небо</span>. Внизу — гигантские блендеры размером с дом. Они жужжат и перемалывают скалы. Один блендер смотрит на тебя с интересом.
+
+Ты успеваешь ухватиться за <span class="good">летающий тостер</span>. Он держит. Пока что.
+
+<span class="rick">РИК:</span> <span class="sys">(голос доносится откуда-то сверху, из портала)</span> Кричи, если хочешь. Мне отсюда хорошо слышно.`,
+        choices: [
+          { text: 'Осмотреться — может, тут есть выход', next: 'toasterLook' },
+          { text: 'Попробовать открыть свой портал', next: 'selfPortal' },
+          { text: 'Взломать управление тостером — пусть летит', next: 'hackToaster' },
+          { text: 'Телепатически связаться с Риком', next: 'mindLinkRick' }
+        ],
+        onEnter: function() {
+          state.flags.worldBlenders = true;
+          state.flags.onToaster = true;
+          updateStatus();
+        }
+      },
+
+      toasterLook: {
+        title: 'Сцена 4 · Внутри мира блендеров',
+        text: `Ты осматриваешься. Мир блендеров — это <span class="danger">гигантская кухня</span> размером с планету. Блендеры снуют повсюду. Между ними — обломки прошлых жертв: куски металла, порванная одежда, чей-то ботинок.
+
+Вдалеке — <span class="good">светящаяся арка</span>. Она похожа на дверь. За ней — что-то другое.
+
+<span class="rick">РИК:</span> <span class="sys">(из портала)</span> Не ходи к арке. Это ловушка. Хотя, знаешь, мне всё равно. Иди.`,
+        choices: [
+          { text: 'Лететь к арке', next: 'archEnding' },
+          { text: 'Развернуть тостер и лететь вверх, к порталу Рика', next: 'flyUp' },
+          { text: 'Спрыгнуть с тостера на блендер — попробовать его объехать', next: 'rideBlender' }
+        ]
+      },
+
+      selfPortal: {
+        title: 'Сцена 4 · Свой портал',
+        text: `Ты пытаешься <span class="good">открыть портал</span> сам. У тебя нет пушки — но у тебя есть <span class="you">разум и телепатия</span>. Ты концентрируешься. Мир вокруг дрожит.
+
+В воздухе — <span class="danger">трещина</span>. Она маленькая, но она есть. Через неё видно твою кухню. Рик сидит на табуретке и пьёт кофе.
+
+<span class="rick">РИК:</span> <span class="sys">(замечает трещину)</span> Ох. Ты умеешь <span class="danger">рвать пространство</span>? Это уже интересно.`,
+        choices: [
+          { text: 'Расширить трещину и вылезти', next: 'escapeSuccess' },
+          { text: 'Швырнуть трещину в Рика — пусть почувствует', next: 'tearRick' },
+          { text: 'Прыгнуть в трещину, но появиться за спиной Рика', next: 'behindRick' }
+        ]
+      },
+
+      hackToaster: {
+        title: 'Сцена 4 · Взлом',
+        text: `Ты кладёшь ладонь на корпус тостера. Ты чувствуешь его схемы, его <span class="good">механизмы</span>. Ты — хакер. Ты умеешь взламывать любое устройство.
+
+Тостер <span class="good">подчиняется</span>. Он разворачивается и летит вверх — прямо к порталу, из которого ты выпал. Внутри портала видно Рика, он смотрит на тебя с удивлением.
+
+<span class="rick">РИК:</span> Как ты...? Это же <span class="danger">тостер из мира блендеров</span>. У него нет процессора.`,
+        choices: [
+          { text: 'Влететь в портал и выпасть на Рика', next: 'crashIntoRick' },
+          { text: 'Взломать портал изнутри — пусть схлопнется', next: 'collapsePortal' },
+          { text: 'Сделать тостер оружием — направить его в блендер, чтобы устроить обвал', next: 'blenderChaos' }
+        ]
+      },
+
+      mindLinkRick: {
+        title: 'Сцена 4 · Связь',
+        text: `Ты закрываешь глаза. Ты ищешь его разум. Находишь легко — он <span class="good">звенит</span>, как колокол, из любого измерения. Ты входишь.
+
+Ты видишь его мысли: он <span class="danger">скучает</span>. Он не хочет тебя убивать. Ему просто нечего делать. Он одинок. Он этого не признаёт даже себе.
+
+<span class="rick">РИК:</span> <span class="sys">(резко, в твоей голове)</span> Какого чёрта ты делаешь в моей голове?! Убери свои пальцы из моей психики!
+
+Но он не закрывается. Он <span class="good">позволяет</span> тебе остаться. Ему интересно.`,
+        choices: [
+          { text: 'Ударить его по самому больному — по Дайан', next: 'hitDian' },
+          { text: 'Успокоить его — сказать, что ты не враг', next: 'calmRick' },
+          { text: 'Захватить контроль над его телом — пока он не сопротивляется', next: 'controlRick' }
+        ]
+      },
+
+      hitDian: {
+        title: 'Сцена 5 · Удар в слабое место',
+        text: `Ты находишь в его памяти <span class="danger">её</span>. Дайан. Её лицо. Её смех. Её последний день. Ты усиливаешь это воспоминание в тысячу раз.
+
+Рик <span class="danger">кричит</span>. Не вслух — внутри. Он падает на колени там, на кухне. Фляжка выпадает из его руки. Пушка тоже.
+
+<span class="rick">РИК:</span> <span class="sys">(шёпотом, в твоей голове)</span> Не... не смей трогать её... Не смей...`,
+        choices: [
+          { text: 'Добить его — пусть сломается', next: 'breakRick' },
+          { text: 'Отпустить — ты не хочешь его убивать', next: 'releaseRick' },
+          { text: 'Схватить его пушку, пока он на коленях', next: 'grabGunFromFloor' }
+        ]
+      },
+
+      calmRick: {
+        title: 'Сцена 5 · Разговор',
+        text: `Ты говоришь ему — <span class="you">спокойно, внутри его головы</span>: «Я не враг. Я не собираюсь тебя убивать».
+
+Рик замирает. Он не привык к этому. Обычно враги кричат, стреляют, угрожают. Никто никогда не говорил ему «я не враг».
+
+<span class="rick">РИК:</span> <span class="sys">(медленно)</span> Ты... ты странный. Ты знаешь об этом? Странный. Мне это не нравится. И нравится.
+
+Он смотрит на тебя — уже не как на добычу. Он <span class="good">думает</span>.`,
+        choices: [
+          { text: 'Предложить ему поговорить по-настоящему', next: 'talkEnding' },
+          { text: 'Использовать паузу — вылезти из мира блендеров', next: 'escapeSuccess' },
+          { text: 'Предложить ему выбор: он уходит — ты не трогаешь его', next: 'rickLeaves' }
+        ]
+      },
+
+      controlRick: {
+        title: 'Сцена 5 · Захват',
+        text: `Ты не разговариваешь. Ты <span class="danger">действуешь</span>. Ты проникаешь глубоко — туда, где Рик не держит защиты. Ты находишь моторные центры. Ты берёшь их под контроль.
+
+Рик <span class="danger">замирает</span>. Его тело — твоё. Он смотрит на свои руки, которые больше не слушают его.
+
+<span class="rick">РИК:</span> <span class="sys">(изнутри, яростно)</span> ОТПУСТИ! ОТПУСТИ МЕНЯ! ЭТО НЕЧЕСТНО! ЭТО... ЭТО...
+
+Он в панике. Он не боится смерти. Он боится потерять контроль над собой.`,
+        choices: [
+          { text: 'Заставить его открыть портал и выбросить себя на кухню', next: 'escapeSuccess' },
+          { text: 'Оставить его в таком состоянии — пусть почувствует', next: 'controlEnding' },
+          { text: 'Выпустить — ты не монстр', next: 'releaseRick' }
+        ]
+      },
+
+      grabGunFromFloor: {
+        title: 'Сцена 5 · Пушка',
+        text: `Пока Рик на коленях — ты <span class="good">хватаешь его пушку</span>. Она у тебя. Ты чувствуешь её вес, её жар.
+
+Ты разворачиваешь пушку. Рик смотрит на тебя снизу. Он всё ещё сломан — но что-то в его глазах <span class="danger">меняется</span>. Он уже не смеётся. Он уважает.
+
+<span class="rick">РИК:</span> <span class="sys">(тихо)</span> Ты выиграл. Ты... знаешь, ты правда выиграл.`,
+        choices: [
+          { text: 'Выстрелить в него из его же пушки', next: 'shootRickWin' },
+          { text: 'Открыть портал и вернуться домой', next: 'escapeSuccess' },
+          { text: 'Оставить ему пушку и уйти', next: 'mercyEnding' }
+        ]
+      },
+
+      intoBlenderWorld: {
+        title: 'Сцена 3 · Падение в мир блендеров',
+        text: `Ты <span class="danger">прыгаешь сам</span>. Свободное падение. Ветер свистит в ушах. Оранжевое небо становится всё ближе.
+
+Ты падаешь в мир блендеров — и на секунду теряешь сознание.
+
+Очнулся. Ты лежишь на <span class="danger">огромной кухонной плите</span>. Вокруг — блендеры. Один заметил тебя. Он <span class="danger">идёт к тебе</span>, жужжа.`,
+        choices: [
+          { text: 'Бежать к ближайшему укрытию', next: 'runFromBlender' },
+          { text: 'Взломать блендер — пусть станет твоим', next: 'hackToaster' },
+          { text: 'Телепатически подчинить его — он живой', next: 'mindBlender' }
+        ],
+        onEnter: function() {
+          state.flags.worldBlenders = true;
+          updateStatus();
+        }
+      },
+
+      selfTeleport: {
+        title: 'Сцена 3 · Свой телепорт',
+        text: `Ты концентрируешься. Ты умеешь <span class="good">рвать пространство</span>. Ты создаёшь свой портал прямо у себя под ногами — но он ведёт не вниз, а <span class="good">в сторону</span>. Ты выходишь из зоны, куда падал.
+
+Рик смотрит на это с удивлением.
+
+<span class="rick">РИК:</span> Хм. Ты умеешь то, чего я не ожидал. Уже <span class="good">лучше</span>, чем средний противник.`,
+        choices: [
+          { text: 'Атаковать его — момент удачный', next: 'attackRick2' },
+          { text: 'Схватить его фляжку', next: 'grabFlask' },
+          { text: 'Открыть трещину прямо в его разум', next: 'mindLinkRick' }
+        ]
+      },
+
+      // ---- концовки ветки портала ----
+      outOfPortal: {
+        title: 'Сцена 4 · Вылез',
+        text: `Ты <span class="good">подтягиваешься</span> и вылезаешь обратно. Ноги ещё в портале, но корпус уже на кухне. Рик смотрит на тебя с уважением.
+
+<span class="rick">РИК:</span> Слушай, я впечатлён. Серьёзно. Никто не вылезал из мира блендеров. Обычно они там остаются. Ты... ты странный.
+
+Он убирает пушку на пояс. Порталы под тобой схлопываются сами.
+
+<span class="rick">РИК:</span> Ладно. Давай так. Ты живой, я живой. Ничья. Но помни: если снова встретимся — я не буду добрым.`,
+        choices: [
+          { text: 'Согласиться на ничью', next: 'truceEnding' },
+          { text: 'Всё равно атаковать — ты хочешь победы', next: 'attackRick2' },
+          { text: 'Захватить его разум — он уже расслабился', next: 'controlRick' }
+        ]
+      },
+
+      escapeSuccess: {
+        title: 'Сцена 5 · Победа',
+        text: `Ты <span class="good">выходишь из мира блендеров</span>. Ты снова на кухне. Рик сидит напротив тебя на табуретке. Он не двигается.
+
+Он смотрит на тебя долго.
+
+<span class="rick">РИК:</span> Ты... знаешь, ты второй за всю мою жизнь, кто сумел меня удивить. Первый был... неважно.
+
+Он встаёт. Убирает пушку.
+
+<span class="rick">РИК:</span> Я ухожу. Не потому что проиграл. Потому что устал. В следующий раз будет другой разговор.`,
+        choices: [
+          { text: 'Отпустить его', next: 'mercyEnding' },
+          { text: 'Добить его — пока он безоружен', next: 'breakRick' }
+        ]
+      },
+
+      // ---- что-то заглушки-концовки ----
+      escapeEndingPlaceholder: { title: '', text: '', choices: [] }
+    };
+
+    // ================== UI ==================
+    function updateStatus() {
+      const badges = statusBar.querySelectorAll('.badge');
+      badges.forEach(b => {
+        const flag = b.dataset.flag;
+        if (state.flags[flag]) {
+          b.classList.add('on');
+          if (flag === 'bleeding') {
+            b.classList.remove('on');
+            b.classList.add('danger');
+          }
+        } else {
+          b.classList.remove('on');
+          b.classList.remove('danger');
+        }
+      });
+    }
+
+    function updateHud() {
+      youHpEl.textContent = Math.max(0, state.youHp);
+      rickHpEl.textContent = Math.max(0, state.rickHp);
+      turnNumEl.textContent = state.turn;
+    }
+
+    function addLine(html) {
+      state.log.push(html);
+    }
+
+    function renderScene(sceneKey) {
+      const s = scenes[sceneKey];
+      if (!s) return;
+      state.currentScene = sceneKey;
+      sceneTitleEl.textContent = s.title;
+
+      // собираем текст: общий лог + текущая сцена
+      let html = s.text;
+      sceneEl.innerHTML = html;
+      sceneEl.scrollTop = sceneEl.scrollHeight;
+
+      // варианты
+      if (s.choices && s.choices.length) {
+        choicesEl.innerHTML = s.choices.map((c, i) =>
+          `<button class="choice" data-next="${c.next}" data-text="${c.text.replace(/"/g, '&quot;')}">
+            <span class="arrow">▸</span>${c.text}
+          </button>`
+        ).join('');
+
+        choicesEl.querySelectorAll('.choice').forEach(btn => {
+          btn.addEventListener('click', () => {
+            state.turn++;
+            updateHud();
+            goTo(btn.dataset.next, btn.dataset.text);
+          });
+        });
+      } else {
+        choicesEl.innerHTML = '';
+      }
+
+      // onEnter
+      if (s.onEnter) s.onEnter();
+      updateStatus();
+    }
+
+    function goTo(key, chosenText) {
+      if (chosenText) {
+        const prev = sceneEl.innerHTML;
+        sceneEl.innerHTML = prev + `\n\n<span class="you">▸ Ты:</span> <span class="action">${chosenText}</span>`;
+      }
+      setTimeout(() => renderScene(key), 250);
+    }
+
+    // ================== СВОБОДНЫЙ ВВОД ==================
+    // Распознаёт намерение игрока и ведёт в подходящую сцену.
+
+    function classify(text) {
+      const t = text.toLowerCase();
+
+      // телепорт / портал / пространство
+      if (/(телепорт|портал|трещин|разрыв|простран|скачок|прыг|уйти|убега|ускользн|выйти)/.test(t)) {
+        return 'portal';
+      }
+      // контроль / подчинение / разум
+      if (/(контрол|подчин|захват|управл|взять под|внуш|подчинить|заставить|слом|телепат|разум|мысл|сознани)/.test(t)) {
+        return 'mind';
+      }
+      // пушка / оружие / схватить
+      if (/(пушк|портальн пушк|схватить|выхват|отобрать|забрать|оружи|ствол)/.test(t)) {
+        return 'grab';
+      }
+      // взлом / хакнуть / подчинить устройство
+      if (/(взлам|хакн|хак|взлом|подчин устройств|перепрограмм|тостер|блендер|механизм)/.test(t)) {
+        return 'hack';
+      }
+      // удар / атака
+      if (/(удар|бью|атак|пинаю|ломаю|рву|бью по|кулаком|ногой)/.test(t)) {
+        return 'attack';
+      }
+      // успокоить / поговорить / не враг
+      if (/(успоко|поговор|разговор|не враг|мир|подруж|сдаюсь|предлож)/.test(t)) {
+        return 'calm';
+      }
+      // фляжка / взять что-то
+      if (/(фляжк|бутылк|кофе|чашк|взять|поднять|с пола)/.test(t)) {
+        return 'flask';
+      }
+
+      return 'unknown';
+    }
+
+    // Универсальный обработчик свободного ввода.
+    // Ведёт в разные сцены в зависимости от текущего контекста.
+    function handleFreeInput(text) {
+      const intent = classify(text);
+      const cur = state.currentScene;
+
+      state.turn++;
+      updateHud();
+      addLine(`<span class="you">▸ Ты:</span> <span class="action">${text}</span>`);
+
+      // контекстно-зависимая маршрутизация
+      // если мы на кухне (start/askRick/watchRick/attackFirst)
+      const isKitchen = ['start', 'askRick', 'watchRick', 'attackFirst', 'grabShelf', 'grabGun', 'grabRick', 'portalFloor', 'intoBlenderWorld', 'selfTeleport', 'outOfPortal', 'hitDian', 'calmRick', 'grabGunFromFloor'].includes(cur);
+
+      // если в мире блендеров (toasterLook/selfPortal/hackToaster и т.д.)
+      const isBlenderWorld = ['toasterLook', 'selfPortal', 'hackToaster', 'mindLinkRick', 'runFromBlender', 'rideBlender', 'flyUp'].includes(cur);
+
+      // В мире блендеров
+      if (isBlenderWorld) {
+        if (intent === 'portal') return goTo('selfPortal', text);
+        if (intent === 'hack') return goTo('hackToaster', text);
+        if (intent === 'mind') return goTo('mindLinkRick', text);
+        if (intent === 'attack') return goTo('runFromBlender', text);
+        return goTo('toasterLook', text);
+      }
+
+      // На кухне
+      if (intent === 'mind') return goTo('mindLinkRick', text);
+      if (intent === 'grab') return goTo('grabGun', text);
+      if (intent === 'hack') return goTo('hackToaster', text);
+      if (intent === 'portal') return goTo('selfTeleport', text);
+      if (intent === 'attack') {
+        // если мы на кухне и ещё не было схватки — начинаем с первой атаки
+        if (cur === 'start') return goTo('attackFirst', text);
+        return goTo('attackRick2', text);
+      }
+      if (intent === 'calm') return goTo('calmRick', text);
+      if (intent === 'flask') return goTo('grabFlask', text);
+
+      // если не понял — обычная реакция
+      goTo('unknownFree', text);
+    }
+
+    // ================== КОНЦОВКИ ==================
+    // их надо добавить как сцены с флагом end
+
+    // ... дальше — все концовки
+    function endScene(title, verdict, desc) {
+      sceneTitleEl.textContent = title;
+      sceneEl.innerHTML = `
+        <div class="end-box fade">
+          <div class="icon">${verdict === 'win' ? '🏆' : verdict === 'lose' ? '💀' : '🌀'}</div>
+          <div class="verdict ${verdict}">${verdict === 'win' ? 'ПОБЕДА' : verdict === 'lose' ? 'ПОРАЖЕНИЕ' : 'КОНЦОВКА'}</div>
+          <div class="desc">${desc}</div>
+          <button class="replay" onclick="restart()">Начать заново</button>
+        </div>
+      `;
+      choicesEl.innerHTML = '';
+      state.over = true;
+    }
+
+    function restart() {
+      state.youHp = 100;
+      state.rickHp = 100;
+      state.turn = 1;
+      state.log = [];
+      state.over = false;
+      state.flags = {
+        hasPortalGun: false,
+        mindLink: false,
+        bleeding: false,
+        onToaster: false,
+        worldBlenders: false,
+        rickUnderControl: false
+      };
+      updateHud();
+      updateStatus();
+      renderScene('start');
+    }
+
+    // ================== ИНИЦИАЛИЗАЦИЯ ==================
+    // Дополняем сцены-заглушки и концовки
+    Object.assign(scenes, {
+
+      // ==== заглушка для непонятого ввода ====
+      unknownFree: {
+        title: 'Сцена · Неожиданный ход',
+        text: `<span class="sys">Ты делаешь что-то необычное. Рик смотрит на тебя с недоумением.</span>
+
+<span class="rick">РИК:</span> Что... что ты только что сделал? Я не понял. Ты сам понял?
+
+Он делает шаг назад. Он не атакует — он <span class="good">оценивает</span>.
+
+<span class="rick">РИК:</span> Ладно. Считаю это твоим ходом. Ходи ещё раз — но уже понятнее.`,
+        choices: [
+          { text: 'Попробовать снова', next: 'start' }
+        ]
+      },
+
+      // ==== доп. сцены, на которые ссылаются ветки ====
+      shootRick: {
+        title: 'Сцена · Выстрел',
+        text: `Ты жмёшь на спуск. Из пушки вылетает <span class="danger">зелёный луч</span> — и разворачивается портал прямо в груди Рика. Он не успевает увернуться. Портал проходит через него — и на секунду от него остаётся <span class="danger">половина</span>. Вторая половина улетает куда-то в другое измерение.
+
+<span class="rick">РИК:</span> <span class="danger">Твою мать!</span> Ты меня <span class="danger">разрезал пополам</span>!
+
+Он собирается обратно — медленно, кровь закипает в воздухе. Он зол. Он правда зол.`,
+        choices: [
+          { text: 'Добить его, пока он собирается', next: 'breakRick' },
+          { text: 'Отступить и наблюдать', next: 'selfTeleport' }
+        ]
+      },
+
+      shootCeiling: {
+        title: 'Сцена · Потолок',
+        text: `Ты разворачиваешь пушку и стреляешь в потолок. Там разворачивается <span class="danger">огромный портал</span>. Из него начинают падать вещи: чьи-то ботинки, бутылки, зонт, велосипед. Всё это сыплется на Рика.
+
+Он уворачивается от велосипеда, отскакивает от бутылок.
+
+<span class="rick">РИК:</span> Прекрати! Ты мне <span class="danger">мебель сломаешь</span>!`,
+        choices: [
+          { text: 'Схватить его за руку, пока он уворачивается', next: 'grabRick' },
+          { text: 'Прыгнуть в этот же портал', next: 'intoBlenderWorld' }
+        ]
+      },
+
+      throwRick: {
+        title: 'Сцена · В мир блендеров его',
+        text: `Ты разворачиваешь портал — теперь <span class="good">под ногами Рика</span>. Он не успевает. Он падает — и летит в мир блендеров.
+
+<span class="rick">РИК:</span> <span class="danger">ЭТО НЕЧЕСТНО! Я ЖЕ НЕ ТАК ДЕЛАЛ!</span>
+
+Он летит. Ты стоишь на краю портала и смотришь, как он уменьшается. Внизу — гигантские блендеры. Один из них смотрит на него с <span class="danger">интересом</span>.`,
+        choices: [
+          { text: 'Закрыть портал — пусть остаётся там', next: 'controlEnding' },
+          { text: 'Через 10 секунд вытащить его — ты не убийца', next: 'mercyEnding' }
+        ]
+      },
+
+      blenderWithRick: {
+        title: 'Сцена · Вместе',
+        text: `Ты <span class="danger">падаешь вместе с Риком</span>. Летите вдвоём. Он орёт матом, ты держишься за его фляжку.
+
+<span class="rick">РИК:</span> ОТПУСТИ ФЛЯЖКУ! ЭТО ПОСЛЕДНЯЯ! ОНА МНЕ ДОРОГА КАК ПАМЯТЬ!
+
+Вы приземляетесь на <span class="good">летающий остров</span> — между блендерами. Рик встаёт и смотрит на тебя.
+
+<span class="rick">РИК:</span> Ты... ты реально идиот. Но мне это нравится.`,
+        choices: [
+          { text: 'Отдать ему фляжку и предложить мир', next: 'calmRick' },
+          { text: 'Использовать фляжку как оружие', next: 'attackRick2' }
+        ]
+      },
+
+      archEnding: {
+        title: 'Сцена · Арка',
+        text: `Ты летишь к арке. За ней — <span class="danger">другая вселенная</span>. Мир, где всё сделано из макарон. Буквально всё: дома, деревья, люди, солнце.
+
+Ты входишь. Арка закрывается за тобой. Ты больше не в мире блендеров. Ты в мире макарон.`,
+        choices: [
+          { text: 'Осмотреться', next: 'macaroniEnding' }
+        ]
+      },
+
+      flyUp: {
+        title: 'Сцена · Вверх',
+        text: `Ты разворачиваешь тостер и летишь вверх — к порталу, из которого выпал. Портал всё ещё открыт. Ты поднимаешься к нему.
+
+Рик смотрит на тебя через портал. Он не закрывает его.
+
+<span class="rick">РИК:</span> А ты не сдаёшься. Хорошо. Поднимайся. Посмотрим, что будет дальше.`,
+        choices: [
+          { text: 'Влететь в портал', next: 'crashIntoRick' }
+        ]
+      },
+
+      rideBlender: {
+        title: 'Сцена · На блендере',
+        text: `Ты спрыгиваешь с тостера на блендер. Он не ожидал. Он дрожит, но ты держишься. Ты направляешь его — как мотоцикл — между другими блендерами.
+
+Это <span class="good">работает</span>. Ты мчишься по миру блендеров на живом блендере, поднимая облака пыли.
+
+<span class="rick">РИК:</span> <span class="sys">(издалека)</span> ЧТО ЗА ЧЁРТ!`,
+        choices: [
+          { text: 'Мчаться к ближайшему порталу', next: 'crashIntoRick' }
+        ]
+      },
+
+      escapeSuccessAlt: {
+        title: '',
+        text: '',
+        choices: []
+      },
+
+      runFromBlender: {
+        title: 'Сцена · Побег',
+        text: `Ты бежишь. Блендер сзади <span class="danger">приближается</span>. Ты успеваешь нырнуть за огромную кастрюлю. Блендер проезжает мимо, жужжа.
+
+Ты переводишь дыхание. Ты в мире блендеров. Кухня размером с планету. Здесь нужно найти выход.`,
+        choices: [
+          { text: 'Идти к арке', next: 'archEnding' },
+          { text: 'Лезть на тостер', next: 'hackToaster' }
+        ]
+      },
+
+      mindBlender: {
+        title: 'Сцена · Разум блендера',
+        text: `Ты входишь в сознание блендера. Он... <span class="good">живой</span>. Он думает. Он боится. Он просто хочет мешать салаты и не воевать. Ты внушаешь ему, что ты — его друг.
+
+Блендер замирает. Потом медленно катится к тебе. Он <span class="good">подчинён</span>.`,
+        choices: [
+          { text: 'Использовать его как транспорт', next: 'rideBlender' },
+          { text: 'Приказать ему привести тебя к выходу', next: 'flyUp' }
+        ]
+      },
+
+      attackRick2: {
+        title: 'Сцена · Атака',
+        text: `Ты атакуешь. Рик уже готов — он выставляет портальную пушку как щит. Твой кулак входит в портал и выходит с другой стороны, ударяя тебя самого по спине.
+
+<span class="rick">РИК:</span> Классика. Ты не первый, кто так делает.`,
+        choices: [
+          { text: 'Ударить левой рукой вместо правой', next: 'hitDian' },
+          { text: 'Пнуть его по колену — неожиданно', next: 'hitDian' },
+          { text: 'Отступить', next: 'portalFloor' }
+        ]
+      },
+
+      grabFlask: {
+        title: 'Сцена · Фляжка',
+        text: `Ты хватаешь его фляжку. Рик замирает. Он смотрит на неё, потом на тебя.
+
+<span class="rick">РИК:</span> Положи. На место. Немедленно.
+
+Это его единственное настоящее сокровище. Ты это чувствуешь. Это даёт тебе <span class="good">преимущество</span>.`,
+        choices: [
+          { text: 'Использовать фляжку как заложника', next: 'hitDian' },
+          { text: 'Отдать обратно — честная игра', next: 'calmRick' },
+          { text: 'Выпить её содержимое', next: 'drinkFlask' }
+        ]
+      },
+
+      drinkFlask: {
+        title: 'Сцена · Глоток',
+        text: `Ты делаешь глоток из фляжки. Горло обжигает. Мир вокруг <span class="danger">крутится</span>. Ты видишь вещи, которых нет. Ты видишь Морти, который машет рукой. Ты видишь Дайан. Ты видишь Рика в молодости.
+
+Это не алкоголь. Это <span class="danger">нечто большее</span>.
+
+<span class="rick">РИК:</span> Дурак. Ты выпил мою настойку. Теперь ты видишь <span class="danger">правду о себе</span>.`,
+        choices: [
+          { text: 'Принять видения', next: 'visionsEnding' },
+          { text: 'Выбросить фляжку и атаковать', next: 'attackRick2' }
+        ]
+      },
+
+      tearRick: {
+        title: 'Сцена · Трещина',
+        text: `Ты швыряешь трещину в Рика. Она вонзается ему в плечо — и он <span class="danger">чувствует</span>. Это не портал. Это разрыв пространства. Это больно.
+
+<span class="rick">РИК:</span> Ай! Ты... ты рвёшь пространство голыми руками! Это же <span class="danger">техника уровня Совета</span>!`,
+        choices: [
+          { text: 'Расширить трещину — пусть уходит целиком', next: 'breakRick' },
+          { text: 'Закрыть трещину — не хочешь убивать', next: 'calmRick' }
+        ]
+      },
+
+      behindRick: {
+        title: 'Сцена · За спиной',
+        text: `Ты выходишь из трещины прямо за спиной Рика. Он оборачивается — но поздно. Ты бьёшь.
+
+Рик отшатывается, держась за плечо. Он смотрит на тебя уже по-другому.
+
+<span class="rick">РИК:</span> Ох. Ты умеешь появляться там, где не надо. Это меня нервирует.`,
+        choices: [
+          { text: 'Схватить его сзади и прижать к стене', next: 'grabRick' },
+          { text: 'Отойти и дать ему шанс', next: 'calmRick' }
+        ]
+      },
+
+      crashIntoRick: {
+        title: 'Сцена · Столкновение',
+        text: `Ты влетаешь в портал — и <span class="good">падаешь прямо на Рика</span>. Вы оба валитесь на пол кухни. Пушка отлетает в сторону. Фляжка отлетает. Стол опрокидывается.
+
+Вы лежите на полу. Рик под тобой. Он смотрит на тебя снизу, ошарашенный.
+
+<span class="rick">РИК:</span> Ты... ты <span class="danger">меня свалил</span>. Меня. Никто меня не сваливал со времён... неважно.`,
+        choices: [
+          { text: 'Схватить его пушку — она рядом', next: 'grabGunFromFloor' },
+          { text: 'Отпустить его — ты не хочешь убивать', next: 'calmRick' }
+        ]
+      },
+
+      collapsePortal: {
+        title: 'Сцена · Схлопывание',
+        text: `Ты разворачиваешь взломанный тостер к порталу и <span class="danger">схлопываешь</span> его изнутри. Портал сжимается. Рик вскрикивает — его правая рука, которая была наполовину в портале, отрезается.
+
+Нет. Не отрезается. Исчезает. Совсем. Руки у Рика больше нет.
+
+<span class="rick">РИК:</span> <span class="danger">ТЫ ОТРЕЗАЛ МНЕ РУКУ!</span> Ты... ты вообще нормальный?!`,
+        choices: [
+          { text: 'Добить его', next: 'breakRick' },
+          { text: 'Сожалеть и предложить помощь', next: 'mercyEnding' }
+        ]
+      },
+
+      blenderChaos: {
+        title: 'Сцена · Обвал',
+        text: `Ты направляешь тостер в блендер — и устраиваешь <span class="danger">цепную реакцию</span>. Блендеры сталкиваются друг с другом. Мир блендеров рушится. Один из блендеров проламывает стену и открывает <span class="good">портал</span>.
+
+Ты успеваешь нырнуть в него. Ты выпадаешь на кухню. Рик стоит рядом, в шоке смотрит на рушащийся портал.
+
+<span class="rick">РИК:</span> Ты разрушил <span class="danger">целый мир</span>. Целый мир блендеров. Ты знаешь, сколько там было созданий?`,
+        choices: [
+          { text: 'Атаковать его, пока он в шоке', next: 'attackRick2' },
+          { text: 'Извиниться', next: 'calmRick' }
+        ]
+      },
+
+      breakRick: {
+        title: 'Сцена · Ты сломал его',
+        text: `Ты добиваешь Рика. Он падает. Он смотрит на тебя с <span class="danger">ненавистью</span>. Он не умирает — он не может умереть. Но он <span class="danger">сломлен</span>.
+
+Он лежит на полу кухни, и его глаза пустые. Он больше не Рик.
+
+<span class="rick">РИК:</span> <span class="sys">(тихо)</span> Ты... ты не лучше меня. Ты <span class="danger">хуже</span>.`,
+        choices: [
+          { text: 'Уйти', next: 'breakEnding' }
+        ]
+      },
+
+      releaseRick: {
+        title: 'Сцена · Отпускаешь',
+        text: `Ты <span class="good">отпускаешь</span> его. Убираешь руки из его разума. Рик падает на пол, тяжело дыша. Он смотрит на тебя — уже без ненависти.
+
+<span class="rick">РИК:</span> Ты... ты мог меня сломать. Но не сломал. Почему?
+
+Он не ждёт ответа. Он просто встаёт и отряхивается.`,
+        choices: [
+          { text: 'Сказать, что ты не монстр', next: 'talkEnding' },
+          { text: 'Молча уйти', next: 'mercyEnding' }
+        ]
+      },
+
+      rickLeaves: {
+        title: 'Сцена · Он уходит',
+        text: `Ты предлагаешь ему уйти. Рик долго смотрит на тебя. Он не привык к такому.
+
+<span class="rick">РИК:</span> Ты странный. Реально странный. Знаешь, что я обычно делаю с такими, как ты?
+
+Он не отвечает. Он поднимает портальную пушку и открывает портал.
+
+<span class="rick">РИК:</span> Я их отпускаю. Потому что они не представляют угрозы. Но ты... ты правда странный. Может, ещё встретимся.`,
+        choices: [
+          { text: 'Попрощаться', next: 'mercyEnding' }
+        ]
+      },
+
+      mercyEnding: {
+        title: 'Концовка · Милосердие',
+        text: `Ты остаёшься один на кухне. Кофе остыл. Свет больше не мигает. Портал закрылся за Риком.
+
+Ты выжил. Ты не выиграл — но и не проиграл. Ты сделал то, что не делал никто: <span class="good">победил Рика, не убив его</span>.
+
+Он этого никогда не забудет.`,
+        choices: []
+      },
+
+      talkEnding: {
+        title: 'Концовка · Разговор',
+        text: `Вы говорите. Долго. О Морти. О Дайан. О вселенных, которые он видел. О том, почему он такой.
+
+Рик рассказывает тебе то, что не рассказывал никому. И уходит. Ты не знаешь, увидишь ли его снова. Но ты знаешь — ты <span class="good">понял его</span>.
+
+Это редкая победа.`,
+        choices: []
+      },
+
+      controlEnding: {
+        title: 'Концовка · Контроль',
+        text: `Рик остаётся в мире блендеров. Он орёт, проклинает, но не может выбраться — ты закрыл портал. Может быть, он выберется через час. Может быть, через год. Может быть, никогда.
+
+Ты стоишь на кухне. Ты выиграл. Но ты чувствуешь <span class="danger">пустоту</span>.
+
+Ты знаешь, что сделал что-то страшное. Ты не знаешь, было ли это правильным.`,
+        choices: []
+      },
+
+      shootRickWin: {
+        title: 'Концовка · Выстрел в победителя',
+        text: `Ты стреляешь в Рика из его же пушки. Он падает. Он лежит на полу кухни и смотрит в потолок.
+
+<span class="rick">РИК:</span> <span class="sys">(тихо)</span> Спасибо. Я давно хотел уйти. Ты... ты сделал мне одолжение.
+
+Он закрывает глаза. Это не смерть. Это сон. Первый сон за 40 лет.`,
+        choices: []
+      },
+
+      breakEnding: {
+        title: 'Концовка · Сломленный',
+        text: `Ты уходишь. Рик остаётся лежать на кухне — сломленный, пустой. Он смотрит в потолок и молчит.
+
+Ты победил. Ты выиграл. Ты стал сильнее. Но ты оставил позади себя <span class="danger">нечто</span>, что было живым.
+
+Ты не знаешь, правильно ли поступил.`,
+        choices: []
+      },
+
+      truceEnding: {
+        title: 'Концовка · Ничья',
+        text: `Вы расходитесь. Никто не победил. Никто не проиграл. Рик уходит в свой портал. Ты остаёшься на своей кухне.
+
+Ты знаешь, что снова встретитесь. Вы оба это знаете. И оба этого ждёте.`,
+        choices: []
+      },
+
+      macaroniEnding: {
+        title: 'Концовка · Мир макарон',
+        text: `Ты остаёшься в мире макарон. Здесь всё мягкое, тёплое и пахнет сыром. Ты живёшь тут год. Потом два. Потом тебе нравится.
+
+Ты больше не воюешь. Ты просто ешь. Вселенную макарон можно есть. Она бесконечна.`,
+        choices: []
+      },
+
+      visionsEnding: {
+        title: 'Концовка · Видения',
+        text: `Ты пьёшь настойку и видишь правду. Ты видишь себя со стороны — не героя, не монстра. Просто человека, который что-то ищет.
+
+Ты видишь Дайан. Она улыбается тебе. Она говорит: «Присмотри за ним. Он этого не заслуживает. Но присмотри».
+
+Ты приходишь в себя на полу кухни. Рика нет. Настойка впиталась в тебя — ты стал другим.`,
+        choices: []
+      }
+    });
+
+    // ================== ПЕРЕЗАПИСЬ renderScene ДЛЯ КОНЦОВОК ==================
+    const _renderScene = renderScene;
+    renderScene = function(key) {
+      const s = scenes[key];
+      if (!s) return;
+
+      // если концовка — рисуем финальный экран
+      if (key.endsWith('Ending')) {
+        const titles = {
+          mercyEnding: { verdict: 'epic', title: 'ПОБЕДА · МИЛОСЕРДИЕ' },
+          talkEnding: { verdict: 'win', title: 'ПОБЕДА · ПОНИМАНИЕ' },
+          controlEnding: { verdict: 'win', title: 'ПОБЕДА · КОНТРОЛЬ' },
+          shootRickWin: { verdict: 'win', title: 'ПОБЕДА · ВЫСТРЕЛ' },
+          breakEnding: { verdict: 'lose', title: 'ПОБЕДА · СЛОМАН' },
+          truceEnding: { verdict: 'epic', title: 'НИЧЬЯ' },
+          macaroniEnding: { verdict: 'win', title: 'ПОБЕДА · МАКАРОНЫ' },
+          visionsEnding: { verdict: 'epic', title: 'ПОБЕДА · ВИДЕНИЯ' }
+        };
+        const t = titles[key] || { verdict: 'win', title: 'КОНЦОВКА' };
+        state.over = true;
+        sceneTitleEl.textContent = s.title;
+        sceneEl.innerHTML = `
+          <div class="end-box fade">
+            <div class="icon">${t.verdict === 'lose' ? '💀' : '🏆'}</div>
+            <div class="verdict ${t.verdict}">${t.title}</div>
+            <div class="desc">${s.text}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        choicesEl.innerHTML = '';
+        return;
+      }
+
+      // обычная сцена
+      _renderScene(key);
+    };
+
+    // ссылка для startGame в HTML — оставим совместимость
+    window.startGame = function() {
+      restart();
+    };
+
+    // ================== ОБРАБОТЧИК ВВОДА ==================
+    customBtn.addEventListener('click', () => {
+      const text = customInput.value.trim();
+      if (!text || state.over) return;
+      handleFreeInput(text);
+      customInput.value = '';
+    });
+
+    customInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') customBtn.click();
+    });
+
+    // ================== СТАРТ ==================
+    restart();
+  </script>
+</body>
+</html>
