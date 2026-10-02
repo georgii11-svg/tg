@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Жми сюда</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 40%, #1a1a2e 0%, #0a0a14 70%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    user-select: none;
+    position: relative;
+  }
+
+  #start {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .icon {
+    font-size: 90px;
+    margin-bottom: 22px;
+    animation: bounce 1.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(255, 42, 106, 0.5));
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-14px) rotate(3deg); }
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, #ff2a6a, #ff8aa8, #ffb800);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.5px;
+  }
+
+  .sub {
+    font-size: 14px;
+    color: #8a8aa0;
+    margin-bottom: 36px;
+    max-width: 320px;
+    line-height: 1.6;
+  }
+
+  .btn {
+    padding: 20px 52px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #ff2a6a, #ff5c8a);
+    border: none;
+    border-radius: 60px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    box-shadow: 0 8px 0 #a01040, 0 14px 40px rgba(255, 42, 106, 0.5);
+    transition: all 0.1s ease;
+    animation: pulseBtn 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseBtn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .btn:active {
+    transform: translateY(6px) scale(1.02);
+    box-shadow: 0 2px 0 #a01040, 0 6px 20px rgba(255, 42, 106, 0.4);
+  }
+
+  /* экран со значками */
+  #fakScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    overflow: hidden;
+    z-index: 100;
+  }
+  #fakScreen.show { display: block; }
+
+  .fak-symbol {
+    position: absolute;
+    user-select: none;
+    pointer-events: none;
+    will-change: transform;
+    line-height: 1;
+  }
+
+  /* вылетают наружу из центра */
+  .fak-symbol.out {
+    animation: flyOut 1.2s ease-out forwards;
+  }
+  @keyframes flyOut {
+    0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(var(--sc)) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* падают сверху */
+  .fak-symbol.fall {
+    animation: fallDown linear forwards;
+  }
+  @keyframes fallDown {
+    0% { transform: translateY(-120px) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* пульсируют по центру */
+  .fak-symbol.pulse {
+    animation: bigPulse 0.6s ease-out forwards;
+  }
+  @keyframes bigPulse {
+    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+    40% { opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(8); opacity: 0; }
+  }
+
+  #stopBtn {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    padding: 14px 36px;
+    background: #1a1a26;
+    border: 2px solid #ff2a6a;
+    border-radius: 12px;
+    color: #ff5c8a;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(255, 42, 106, 0.5);
+  }
+  #stopBtn:active { transform: translateX(-50%) scale(0.95); }
+
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: #ff2a6a;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 250;
+    animation: flashPulse 0.3s ease;
+  }
+  @keyframes flashPulse {
+    0% { opacity: 0; }
+    30% { opacity: 0.5; }
+    100% { opacity: 0; }
+  }
+
+  /* тряска тела */
+  body.shaking { animation: bodyShake 0.08s infinite; }
+  @keyframes bodyShake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-3px, 2px); }
+    50% { transform: translate(3px, -2px); }
+    75% { transform: translate(-2px, -2px); }
+    100% { transform: translate(2px, 2px); }
+  }
+
+  /* нарастающая центральная надпись */
+  #fakCenter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    font-size: 80px;
+    animation: centerGrow 0.4s ease-out;
+    pointer-events: none;
+  }
+  @keyframes centerGrow {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    60% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+  <div id="start">
+    <div class="icon">👇</div>
+    <h1>Тут спрятан секрет</h1>
+    <div class="sub">Нажми на кнопку ниже. Обещаем — тебе понравится.</div>
+    <button class="btn" id="startBtn">Жми сюда</button>
+  </div>
+
+  <div id="fakScreen">
+    <button id="stopBtn">Стоп</button>
+  </div>
+
+  <script>
+    const start = document.getElementById('start');
+    const fakScreen = document.getElementById('fakScreen');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    const SYMBOL = '🖕';
+    const COLORS = ['#ff2a6a', '#ff5c8a', '#ffb800', '#ff0040', '#ff8aa8', '#ffd700', '#fff', '#ff5050'];
+
+    // аудио
+    let audioCtx = null;
+    function initAudio() {
+      if (audioCtx) return;
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+    function noiseBurst(dur) {
+      if (!audioCtx) return;
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.4;
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 900;
+      filter.Q.value = 1.5;
+      src.connect(filter).connect(gain).connect(audioCtx.destination);
+      src.start(); src.stop(audioCtx.currentTime + dur);
+    }
+    function beepFast() {
+      if (!audioCtx) return;
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(500 + Math.random() * 900, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        }, i * 90);
+      }
+    }
+
+    let spawnInterval = null;
+    let audioInterval = null;
+    let centerInterval = null;
+
+    function randomColor() {
+      return COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+
+    // 1. вылетающие из центра
+    function spawnOut() {
+      const el = document.createElement('div');
+      el.className = 'fak-symbol out';
+      el.textContent = SYMBOL;
+      el.style.fontSize = (20 + Math.random() * 50) + 'px';
+      el.style.left = '50%';
+      el.style.top = '50%';
+      el.style.color = randomColor();
+      el.style.filter = `drop-shadow(0 0 10px ${el.style.color}) drop-shadow(0 0 20px ${el.style.color})`;
+
+      // угол и дистанция
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 200 + Math.random() * 400;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      const sc = 0.8 + Math.random() * 1.5;
+      const rot = -360 + Math.random() * 720;
+
+      el.style.setProperty('--tx', tx + 'px');
+      el.style.setProperty('--ty', ty + 'px');
+      el.style.setProperty('--sc', sc);
+      el.style.setProperty('--rot', rot + 'deg');
+
+      fakScreen.appendChild(el);
+      setTimeout(() => el.remove(), 1400);
+    }
+
+    // 2. падающие сверху
+    function spawnFall() {
+      const el = document.createElement('div');
+      el.className = 'fak-symbol fall';
+      el.textContent = SYMBOL;
+      el.style.fontSize = (24 + Math.random() * 60) + 'px';
+      el.style.left = (Math.random() * 100) + '%';
+      el.style.top = '-120px';
+      el.style.color = randomColor();
+      el.style.filter = `drop-shadow(0 0 12px ${el.style.color})`;
+      const dur = 1.5 + Math.random() * 2.5;
+      el.style.animationDuration = dur + 's';
+      fakScreen.appendChild(el);
+      setTimeout(() => el.remove(), dur * 1000 + 300);
+    }
+
+    // 3. большие пульсирующие из центра
+    function spawnPulse() {
+      const el = document.createElement('div');
+      el.className = 'fak-symbol pulse';
+      el.textContent = SYMBOL;
+      el.style.fontSize = (60 + Math.random() * 40) + 'px';
+      el.style.left = '50%';
+      el.style.top = '50%';
+      el.style.color = randomColor();
+      el.style.filter = `drop-shadow(0 0 20px ${el.style.color}) drop-shadow(0 0 40px ${el.style.color})`;
+      fakScreen.appendChild(el);
+      setTimeout(() => el.remove(), 700);
+    }
+
+    function startFak() {
+      initAudio();
+      start.style.display = 'none';
+      fakScreen.classList.add('show');
+      document.body.classList.add('shaking');
+
+      // стартовая вспышка
+      const f = document.createElement('div');
+      f.className = 'flash';
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 400);
+
+      noiseBurst(0.5);
+      beepFast();
+
+      // центр — большая надпись из 🖕
+      const center = document.createElement('div');
+      center.id = 'fakCenter';
+      center.textContent = SYMBOL + SYMBOL + SYMBOL;
+      fakScreen.appendChild(center);
+      // и обновляем текст со временем
+      centerInterval = setInterval(() => {
+        center.textContent = SYMBOL.repeat(1 + Math.floor(Math.random() * 3));
+      }, 200);
+
+      // фоновые вылеты и падения
+      spawnInterval = setInterval(() => {
+        spawnOut();
+        if (Math.random() < 0.7) spawnFall();
+        if (Math.random() < 0.35) spawnPulse();
+      }, 80);
+
+      // звук повтор
+      audioInterval = setInterval(() => {
+        noiseBurst(0.25);
+        beepFast();
+      }, 700);
+
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200, 50, 300]);
+    }
+
+    function stopFak() {
+      clearInterval(spawnInterval);
+      clearInterval(audioInterval);
+      clearInterval(centerInterval);
+      spawnInterval = audioInterval = centerInterval = null;
+      document.body.classList.remove('shaking');
+
+      const all = fakScreen.querySelectorAll('.fak-symbol, #fakCenter');
+      all.forEach(el => el.remove());
+
+      fakScreen.classList.remove('show');
+      start.style.display = 'flex';
+    }
+
+    startBtn.addEventListener('click', startFak);
+    stopBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopFak();
+    });
+  </script>
+</body>
+</html>
