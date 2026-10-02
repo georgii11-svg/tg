@@ -16,7 +16,6 @@
     display: flex; flex-direction: column; align-items: center;
     padding: 14px 10px; min-height: 100vh; overflow-x: hidden;
   }
-
   .game {
     max-width: 600px; width: 100%;
     background: rgba(8, 8, 18, 0.92);
@@ -25,7 +24,6 @@
     padding: 18px;
     box-shadow: 0 0 50px rgba(110, 227, 124, 0.2), 0 20px 60px rgba(0,0,0,0.7);
   }
-
   .hud {
     display: flex; justify-content: space-between; align-items: center;
     font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
@@ -36,23 +34,14 @@
   .hud .hp-rick { color: #ff5c8a; }
   .hud .turn { color: #8a7ad6; }
   .hud .state { color: #f7c948; }
-
-  .scene-title {
-    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-    color: #8a7ad6; margin-bottom: 10px;
-  }
-
-  .scene {
-    font-size: 14.5px; line-height: 1.75; color: #c8c8dc;
-    margin-bottom: 18px; white-space: pre-wrap;
-  }
+  .scene-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #8a7ad6; margin-bottom: 10px; }
+  .scene { font-size: 14.5px; line-height: 1.75; color: #c8c8dc; margin-bottom: 18px; white-space: pre-wrap; }
   .scene .rick { color: #6ee37c; font-weight: 700; }
   .scene .you { color: #5ecbff; font-weight: 700; }
   .scene .sys { color: #8a7ad6; font-style: italic; }
   .scene .danger { color: #ff4040; font-weight: 600; }
   .scene .action { color: #b8b8d0; font-style: italic; }
   .scene .good { color: #6ee37c; font-weight: 600; }
-
   .choices { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
   .choice {
     display: block; width: 100%; text-align: left;
@@ -66,7 +55,6 @@
     transform: translateX(3px); box-shadow: 0 0 18px rgba(110,227,124,0.25);
   }
   .choice .arrow { color: #6ee37c; margin-right: 10px; }
-
   .custom { display: flex; gap: 8px; margin-bottom: 8px; }
   .custom input {
     flex: 1; padding: 13px 15px; background: #0a0a14;
@@ -84,12 +72,9 @@
   }
   .custom button:hover { box-shadow: 0 0 24px rgba(110,227,124,0.6); }
   .custom button:active { transform: scale(0.95); }
-
   .hint { font-size: 10.5px; color: #5a5a7a; text-align: center; margin-bottom: 8px; letter-spacing: 0.5px; line-height: 1.55; }
-
   .fade { animation: fadeIn 0.4s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
   .shake { animation: shake 0.35s ease; }
   @keyframes shake {
     0%,100% { transform: translate(0,0); }
@@ -106,18 +91,10 @@
     50% { transform: translate(-10px,-6px) rotate(-0.6deg); }
     70% { transform: translate(10px,6px) rotate(0.6deg); }
   }
-
-  .flash {
-    position: fixed; inset: 0; pointer-events: none; z-index: 999;
-    opacity: 0; transition: opacity 0.12s;
-  }
-
+  .flash { position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0; transition: opacity 0.12s; }
   .end-box { text-align: center; padding: 22px 10px; }
   .end-box .icon { font-size: 60px; margin-bottom: 12px; }
-  .end-box .verdict {
-    font-size: 20px; letter-spacing: 4px; text-transform: uppercase;
-    margin-bottom: 14px; font-weight: 700;
-  }
+  .end-box .verdict { font-size: 20px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 14px; font-weight: 700; }
   .verdict.win { color: #5ecbff; text-shadow: 0 0 24px #2a8aff; }
   .verdict.lose { color: #ff2a6a; text-shadow: 0 0 24px #ff2a6a; }
   .verdict.epic { color: #f7c948; text-shadow: 0 0 24px #f7c948, 0 0 60px #ff2a6a; animation: rage 1s infinite; }
@@ -131,12 +108,7 @@
     text-transform: uppercase; cursor: pointer; transition: all 0.15s;
   }
   .replay:hover { background: rgba(110,227,124,0.15); box-shadow: 0 0 20px rgba(110,227,124,0.4); }
-
-  /* индикатор инвентаря/статусов */
-  .status {
-    display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
-    font-size: 10px; letter-spacing: 1px;
-  }
+  .status { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; font-size: 10px; letter-spacing: 1px; }
   .status .badge {
     padding: 4px 8px; border-radius: 4px;
     background: #0e1018; border: 1px solid #24243a; color: #4a4a6a;
@@ -146,15 +118,12 @@
     background: rgba(110,227,124,0.12); border-color: #6ee37c; color: #6ee37c;
     box-shadow: 0 0 8px rgba(110,227,124,0.35);
   }
-  .status .badge.danger {
-    background: rgba(255, 64, 64, 0.12); border-color: #ff4040; color: #ff4040;
-  }
+  .status .badge.danger { background: rgba(255, 64, 64, 0.12); border-color: #ff4040; color: #ff4040; }
 </style>
 </head>
 <body>
 
   <div class="game" id="game">
-
     <div class="hud">
       <span class="hp-you">Ты: <span id="youHp">100</span>%</span>
       <span class="hp-rick">Рик: <span id="rickHp">100</span>%</span>
@@ -179,8 +148,7 @@
       <input type="text" id="customInput" placeholder="Опиши, что ты делаешь...">
       <button id="customBtn">⚡</button>
     </div>
-    <div class="hint">Пиши свободно: «телепортируюсь», «хватаю пушку», «беру его под контроль», «отпрыгиваю в сторону» · игра распознаёт действия</div>
-
+    <div class="hint">Пиши свободно: «телепортируюсь», «хватаю пушку», «беру его под контроль», «убиваю его» · игра распознаёт действия</div>
   </div>
 
   <div class="flash" id="flash"></div>
@@ -218,9 +186,6 @@
     const statusBar = document.getElementById('statusBar');
 
     // ================== СЦЕНЫ ==================
-    // Каждая сцена: title, text, choices (кнопки) с ключами → next.
-    // У некоторых сцен есть onEnter — что происходит при входе.
-
     const scenes = {
       start: {
         title: 'Сцена 1 · Кухня',
@@ -252,7 +217,7 @@
         choices: [
           { text: 'Отпрыгнуть в сторону', next: 'portalFloor' },
           { text: 'Успеть схватить его за руку', next: 'grabRick' },
-          { text: 'Активировать щит (если есть)', next: 'portalFloor' }
+          { text: 'Прыгнуть в портал первым', next: 'intoBlenderWorld' }
         ]
       },
 
@@ -286,7 +251,7 @@
         choices: [
           { text: 'Успеть зацепиться за край шкафа', next: 'grabShelf' },
           { text: 'Прыгнуть в портал — посмотрим, что там', next: 'intoBlenderWorld' },
-          { text: 'Телепортироваться самому (если умеешь)', next: 'selfTeleport' }
+          { text: 'Телепортироваться самому', next: 'selfTeleport' }
         ]
       },
 
@@ -317,7 +282,8 @@
           { text: 'Стрелять из пушки в Рика', next: 'shootRick' },
           { text: 'Открыть портал в мир блендеров и бросить туда Рика', next: 'throwRick' },
           { text: 'Развернуть пушку и выстрелить в потолок', next: 'shootCeiling' }
-        ]
+        ],
+        onEnter: function() { state.flags.hasPortalGun = true; updateStatus(); }
       },
 
       grabRick: {
@@ -413,7 +379,8 @@
           { text: 'Ударить его по самому больному — по Дайан', next: 'hitDian' },
           { text: 'Успокоить его — сказать, что ты не враг', next: 'calmRick' },
           { text: 'Захватить контроль над его телом — пока он не сопротивляется', next: 'controlRick' }
-        ]
+        ],
+        onEnter: function() { state.flags.mindLink = true; updateStatus(); }
       },
 
       hitDian: {
@@ -459,7 +426,8 @@
           { text: 'Заставить его открыть портал и выбросить себя на кухню', next: 'escapeSuccess' },
           { text: 'Оставить его в таком состоянии — пусть почувствует', next: 'controlEnding' },
           { text: 'Выпустить — ты не монстр', next: 'releaseRick' }
-        ]
+        ],
+        onEnter: function() { state.flags.rickUnderControl = true; updateStatus(); }
       },
 
       grabGunFromFloor: {
@@ -473,7 +441,8 @@
           { text: 'Выстрелить в него из его же пушки', next: 'shootRickWin' },
           { text: 'Открыть портал и вернуться домой', next: 'escapeSuccess' },
           { text: 'Оставить ему пушку и уйти', next: 'mercyEnding' }
-        ]
+        ],
+        onEnter: function() { state.flags.hasPortalGun = true; updateStatus(); }
       },
 
       intoBlenderWorld: {
@@ -488,10 +457,7 @@
           { text: 'Взломать блендер — пусть станет твоим', next: 'hackToaster' },
           { text: 'Телепатически подчинить его — он живой', next: 'mindBlender' }
         ],
-        onEnter: function() {
-          state.flags.worldBlenders = true;
-          updateStatus();
-        }
+        onEnter: function() { state.flags.worldBlenders = true; updateStatus(); }
       },
 
       selfTeleport: {
@@ -508,7 +474,6 @@
         ]
       },
 
-      // ---- концовки ветки портала ----
       outOfPortal: {
         title: 'Сцена 4 · Вылез',
         text: `Ты <span class="good">подтягиваешься</span> и вылезаешь обратно. Ноги ещё в портале, но корпус уже на кухне. Рик смотрит на тебя с уважением.
@@ -538,12 +503,11 @@
 <span class="rick">РИК:</span> Я ухожу. Не потому что проиграл. Потому что устал. В следующий раз будет другой разговор.`,
         choices: [
           { text: 'Отпустить его', next: 'mercyEnding' },
-          { text: 'Добить его — пока он безоружен', next: 'breakRick' }
+          { text: 'Убить его — пока он безоружен', next: 'killEnding' }
         ]
       },
 
-      // ---- что-то заглушки-концовки ----
-      escapeEndingPlaceholder: { title: '', text: '', choices: [] }
+      escapeSuccessAlt: { title: '', text: '', choices: [] }
     };
 
     // ================== UI ==================
@@ -570,24 +534,47 @@
       turnNumEl.textContent = state.turn;
     }
 
-    function addLine(html) {
-      state.log.push(html);
-    }
-
     function renderScene(sceneKey) {
       const s = scenes[sceneKey];
       if (!s) return;
       state.currentScene = sceneKey;
       sceneTitleEl.textContent = s.title;
 
-      // собираем текст: общий лог + текущая сцена
-      let html = s.text;
-      sceneEl.innerHTML = html;
+      // концовки
+      if (sceneKey.endsWith('Ending') || sceneKey === 'shootRickWin') {
+        const titles = {
+          mercyEnding: { verdict: 'epic', title: 'ПОБЕДА · МИЛОСЕРДИЕ' },
+          talkEnding: { verdict: 'win', title: 'ПОБЕДА · ПОНИМАНИЕ' },
+          controlEnding: { verdict: 'win', title: 'ПОБЕДА · КОНТРОЛЬ' },
+          shootRickWin: { verdict: 'win', title: 'ПОБЕДА · ВЫСТРЕЛ' },
+          breakEnding: { verdict: 'lose', title: 'ПОБЕДА · СЛОМАН' },
+          truceEnding: { verdict: 'epic', title: 'НИЧЬЯ' },
+          macaroniEnding: { verdict: 'win', title: 'ПОБЕДА · МАКАРОНЫ' },
+          visionsEnding: { verdict: 'epic', title: 'ПОБЕДА · ВИДЕНИЯ' },
+          killEnding: { verdict: 'win', title: 'ПОБЕДА · УБИЙСТВО' },
+          killBrokenEnding: { verdict: 'lose', title: 'ПОРАЖЕНИЕ · ТЫ СТАЛ ИМ' }
+        };
+        const t = titles[sceneKey] || { verdict: 'win', title: 'КОНЦОВКА' };
+        state.over = true;
+        sceneTitleEl.textContent = s.title;
+        sceneEl.innerHTML = `
+          <div class="end-box fade">
+            <div class="icon">${t.verdict === 'lose' ? '💀' : '🏆'}</div>
+            <div class="verdict ${t.verdict}">${t.title}</div>
+            <div class="desc">${s.text}</div>
+            <button class="replay" onclick="restart()">Начать заново</button>
+          </div>
+        `;
+        choicesEl.innerHTML = '';
+        return;
+      }
+
+      // обычная сцена
+      sceneEl.innerHTML = s.text;
       sceneEl.scrollTop = sceneEl.scrollHeight;
 
-      // варианты
       if (s.choices && s.choices.length) {
-        choicesEl.innerHTML = s.choices.map((c, i) =>
+        choicesEl.innerHTML = s.choices.map(c =>
           `<button class="choice" data-next="${c.next}" data-text="${c.text.replace(/"/g, '&quot;')}">
             <span class="arrow">▸</span>${c.text}
           </button>`
@@ -604,7 +591,6 @@
         choicesEl.innerHTML = '';
       }
 
-      // onEnter
       if (s.onEnter) s.onEnter();
       updateStatus();
     }
@@ -617,129 +603,90 @@
       setTimeout(() => renderScene(key), 250);
     }
 
-    // ================== СВОБОДНЫЙ ВВОД ==================
-    // Распознаёт намерение игрока и ведёт в подходящую сцену.
-
+    // ================== КЛАССИФИКАЦИЯ СВОБОДНОГО ВВОДА ==================
     function classify(text) {
       const t = text.toLowerCase();
 
+      // УБИЙСТВО — приоритет №1
+      if (/(убить|убива|убью|убей|добить|добива|приконч|прикончить|казн|уничтож|раздав|задуш|зарез|приреж|поконч|кончить|смерт|лишить жизн|мочить|замоч|вал|валю|рубану|порублю|казню|пришибу|грохну|завалю)/.test(t)) {
+        return 'kill';
+      }
       // телепорт / портал / пространство
-      if (/(телепорт|портал|трещин|разрыв|простран|скачок|прыг|уйти|убега|ускользн|выйти)/.test(t)) {
+      if (/(телепорт|портал|трещин|разрыв|простран|скачок|прыг|уйти|убега|ускользн|выйти|сбежа|спрят|скрыть)/.test(t)) {
         return 'portal';
       }
       // контроль / подчинение / разум
-      if (/(контрол|подчин|захват|управл|взять под|внуш|подчинить|заставить|слом|телепат|разум|мысл|сознани)/.test(t)) {
+      if (/(контрол|подчин|захват|управл|взять под|внуш|подчинить|заставить|слом|телепат|разум|мысл|сознани|гипноз|внутренн)/.test(t)) {
         return 'mind';
       }
       // пушка / оружие / схватить
-      if (/(пушк|портальн пушк|схватить|выхват|отобрать|забрать|оружи|ствол)/.test(t)) {
+      if (/(пушк|портальн пушк|схватить|выхват|отобрать|забрать|оружи|ствол|фляжк|бутылк)/.test(t)) {
         return 'grab';
       }
-      // взлом / хакнуть / подчинить устройство
-      if (/(взлам|хакн|хак|взлом|подчин устройств|перепрограмм|тостер|блендер|механизм)/.test(t)) {
+      // взлом / хакнуть
+      if (/(взлам|хакн|хак|взлом|подчин устройств|перепрограмм|тостер|блендер|механизм|систем)/.test(t)) {
         return 'hack';
       }
       // удар / атака
-      if (/(удар|бью|атак|пинаю|ломаю|рву|бью по|кулаком|ногой)/.test(t)) {
+      if (/(удар|бью|бей|атак|пинаю|пну|ломаю|рву|кулаком|ногой|плечом|головой|врезать|заехать)/.test(t)) {
         return 'attack';
       }
-      // успокоить / поговорить / не враг
-      if (/(успоко|поговор|разговор|не враг|мир|подруж|сдаюсь|предлож)/.test(t)) {
+      // успокоить / поговорить
+      if (/(успоко|поговор|разговор|не враг|мир|подруж|предлож|обнять|обнима)/.test(t)) {
         return 'calm';
       }
-      // фляжка / взять что-то
-      if (/(фляжк|бутылк|кофе|чашк|взять|поднять|с пола)/.test(t)) {
-        return 'flask';
-      }
-
       return 'unknown';
     }
 
-    // Универсальный обработчик свободного ввода.
-    // Ведёт в разные сцены в зависимости от текущего контекста.
+    // ================== ОБРАБОТКА СВОБОДНОГО ВВОДА ==================
     function handleFreeInput(text) {
       const intent = classify(text);
       const cur = state.currentScene;
 
       state.turn++;
       updateHud();
-      addLine(`<span class="you">▸ Ты:</span> <span class="action">${text}</span>`);
 
-      // контекстно-зависимая маршрутизация
-      // если мы на кухне (start/askRick/watchRick/attackFirst)
-      const isKitchen = ['start', 'askRick', 'watchRick', 'attackFirst', 'grabShelf', 'grabGun', 'grabRick', 'portalFloor', 'intoBlenderWorld', 'selfTeleport', 'outOfPortal', 'hitDian', 'calmRick', 'grabGunFromFloor'].includes(cur);
+      const isBlenderWorld = ['toasterLook', 'selfPortal', 'hackToaster', 'mindLinkRick', 'runFromBlender', 'rideBlender', 'flyUp', 'archEnding', 'mindBlender'].includes(cur);
+      const isBroken = ['breakRick', 'hitDian', 'grabGunFromFloor', 'crashIntoRick', 'releaseRick', 'rickLeaves'].includes(cur);
 
-      // если в мире блендеров (toasterLook/selfPortal/hackToaster и т.д.)
-      const isBlenderWorld = ['toasterLook', 'selfPortal', 'hackToaster', 'mindLinkRick', 'runFromBlender', 'rideBlender', 'flyUp'].includes(cur);
+      // === УБИЙСТВО ===
+      if (intent === 'kill') {
+        if (isBroken || state.rickHp <= 0) {
+          return goTo('killBrokenEnding', text);
+        }
+        if (cur === 'escapeSuccess' || cur === 'outOfPortal' || cur === 'mercyEnding') {
+          return goTo('killEnding', text);
+        }
+        return goTo('killEnding', text);
+      }
 
-      // В мире блендеров
+      // === МИР БЛЕНДЕРОВ ===
       if (isBlenderWorld) {
         if (intent === 'portal') return goTo('selfPortal', text);
         if (intent === 'hack') return goTo('hackToaster', text);
         if (intent === 'mind') return goTo('mindLinkRick', text);
         if (intent === 'attack') return goTo('runFromBlender', text);
+        if (intent === 'grab') return goTo('selfPortal', text);
+        if (intent === 'calm') return goTo('mindLinkRick', text);
         return goTo('toasterLook', text);
       }
 
-      // На кухне
+      // === КУХНЯ ===
       if (intent === 'mind') return goTo('mindLinkRick', text);
       if (intent === 'grab') return goTo('grabGun', text);
       if (intent === 'hack') return goTo('hackToaster', text);
       if (intent === 'portal') return goTo('selfTeleport', text);
+      if (intent === 'calm') return goTo('calmRick', text);
       if (intent === 'attack') {
-        // если мы на кухне и ещё не было схватки — начинаем с первой атаки
         if (cur === 'start') return goTo('attackFirst', text);
         return goTo('attackRick2', text);
       }
-      if (intent === 'calm') return goTo('calmRick', text);
-      if (intent === 'flask') return goTo('grabFlask', text);
 
-      // если не понял — обычная реакция
       goTo('unknownFree', text);
     }
 
-    // ================== КОНЦОВКИ ==================
-    // их надо добавить как сцены с флагом end
-
-    // ... дальше — все концовки
-    function endScene(title, verdict, desc) {
-      sceneTitleEl.textContent = title;
-      sceneEl.innerHTML = `
-        <div class="end-box fade">
-          <div class="icon">${verdict === 'win' ? '🏆' : verdict === 'lose' ? '💀' : '🌀'}</div>
-          <div class="verdict ${verdict}">${verdict === 'win' ? 'ПОБЕДА' : verdict === 'lose' ? 'ПОРАЖЕНИЕ' : 'КОНЦОВКА'}</div>
-          <div class="desc">${desc}</div>
-          <button class="replay" onclick="restart()">Начать заново</button>
-        </div>
-      `;
-      choicesEl.innerHTML = '';
-      state.over = true;
-    }
-
-    function restart() {
-      state.youHp = 100;
-      state.rickHp = 100;
-      state.turn = 1;
-      state.log = [];
-      state.over = false;
-      state.flags = {
-        hasPortalGun: false,
-        mindLink: false,
-        bleeding: false,
-        onToaster: false,
-        worldBlenders: false,
-        rickUnderControl: false
-      };
-      updateHud();
-      updateStatus();
-      renderScene('start');
-    }
-
-    // ================== ИНИЦИАЛИЗАЦИЯ ==================
-    // Дополняем сцены-заглушки и концовки
+    // ================== ДОП. СЦЕНЫ ==================
     Object.assign(scenes, {
-
-      // ==== заглушка для непонятого ввода ====
       unknownFree: {
         title: 'Сцена · Неожиданный ход',
         text: `<span class="sys">Ты делаешь что-то необычное. Рик смотрит на тебя с недоумением.</span>
@@ -754,7 +701,18 @@
         ]
       },
 
-      // ==== доп. сцены, на которые ссылаются ветки ====
+      attackRick2: {
+        title: 'Сцена · Атака',
+        text: `Ты атакуешь. Рик уже готов — он выставляет портальную пушку как щит. Твой кулак входит в портал и выходит с другой стороны, ударяя тебя самого по спине.
+
+<span class="rick">РИК:</span> Классика. Ты не первый, кто так делает.`,
+        choices: [
+          { text: 'Ударить левой рукой вместо правой', next: 'hitDian' },
+          { text: 'Пнуть его по колену — неожиданно', next: 'hitDian' },
+          { text: 'Отступить', next: 'portalFloor' }
+        ]
+      },
+
       shootRick: {
         title: 'Сцена · Выстрел',
         text: `Ты жмёшь на спуск. Из пушки вылетает <span class="danger">зелёный луч</span> — и разворачивается портал прямо в груди Рика. Он не успевает увернуться. Портал проходит через него — и на секунду от него остаётся <span class="danger">половина</span>. Вторая половина улетает куда-то в другое измерение.
@@ -764,7 +722,8 @@
 Он собирается обратно — медленно, кровь закипает в воздухе. Он зол. Он правда зол.`,
         choices: [
           { text: 'Добить его, пока он собирается', next: 'breakRick' },
-          { text: 'Отступить и наблюдать', next: 'selfTeleport' }
+          { text: 'Отступить и наблюдать', next: 'selfTeleport' },
+          { text: 'Убить его', next: 'killEnding' }
         ]
       },
 
@@ -843,12 +802,6 @@
         ]
       },
 
-      escapeSuccessAlt: {
-        title: '',
-        text: '',
-        choices: []
-      },
-
       runFromBlender: {
         title: 'Сцена · Побег',
         text: `Ты бежишь. Блендер сзади <span class="danger">приближается</span>. Ты успеваешь нырнуть за огромную кастрюлю. Блендер проезжает мимо, жужжа.
@@ -868,18 +821,6 @@
         choices: [
           { text: 'Использовать его как транспорт', next: 'rideBlender' },
           { text: 'Приказать ему привести тебя к выходу', next: 'flyUp' }
-        ]
-      },
-
-      attackRick2: {
-        title: 'Сцена · Атака',
-        text: `Ты атакуешь. Рик уже готов — он выставляет портальную пушку как щит. Твой кулак входит в портал и выходит с другой стороны, ударяя тебя самого по спине.
-
-<span class="rick">РИК:</span> Классика. Ты не первый, кто так делает.`,
-        choices: [
-          { text: 'Ударить левой рукой вместо правой', next: 'hitDian' },
-          { text: 'Пнуть его по колену — неожиданно', next: 'hitDian' },
-          { text: 'Отступить', next: 'portalFloor' }
         ]
       },
 
@@ -956,6 +897,7 @@
 <span class="rick">РИК:</span> <span class="danger">ТЫ ОТРЕЗАЛ МНЕ РУКУ!</span> Ты... ты вообще нормальный?!`,
         choices: [
           { text: 'Добить его', next: 'breakRick' },
+          { text: 'Убить его', next: 'killEnding' },
           { text: 'Сожалеть и предложить помощь', next: 'mercyEnding' }
         ]
       },
@@ -981,7 +923,9 @@
 
 <span class="rick">РИК:</span> <span class="sys">(тихо)</span> Ты... ты не лучше меня. Ты <span class="danger">хуже</span>.`,
         choices: [
-          { text: 'Уйти', next: 'breakEnding' }
+          { text: 'Уйти и оставить его', next: 'breakEnding' },
+          { text: 'Убить его — пусть не мучается', next: 'killBrokenEnding' },
+          { text: 'Отпустить — ты не монстр', next: 'releaseRick' }
         ]
       },
 
@@ -1012,6 +956,7 @@
         ]
       },
 
+      // ================== КОНЦОВКИ ==================
       mercyEnding: {
         title: 'Концовка · Милосердие',
         text: `Ты остаёшься один на кухне. Кофе остыл. Свет больше не мигает. Портал закрылся за Риком.
@@ -1086,52 +1031,51 @@
 
 Ты приходишь в себя на полу кухни. Рика нет. Настойка впиталась в тебя — ты стал другим.`,
         choices: []
+      },
+
+      killEnding: {
+        title: 'Концовка · Убийство',
+        text: `Ты бьёшь. Он падает. Раз и навсегда. Рик лежит на полу твоей кухни — в луже крови, с открытыми глазами. Фляжка откатилась в угол. Пушка — под столом.
+
+Ты победил. По-настоящему. Но ты чувствуешь только тишину. Никакого облегчения. Просто тишина.
+
+Ты теперь тот, кто убил Рика Санчеза. В одной вселенной из миллиона. И эта вселенная — твоя.`,
+        choices: []
+      },
+
+      killBrokenEnding: {
+        title: 'Концовка · Добить сломленного',
+        text: `Ты добиваешь его. Того, кто уже не мог сопротивляться. Того, кто лежал на полу и смотрел в потолок.
+
+Кровь на твоих руках. Рик мёртв. Ты выиграл. Ты — сильнейший.
+
+Но что-то внутри тебя сломалось. Что-то, чего ты уже не починишь. Может быть, именно это Рик и имел в виду, когда сказал, что ты — хуже, чем он.`,
+        choices: []
       }
     });
 
-    // ================== ПЕРЕЗАПИСЬ renderScene ДЛЯ КОНЦОВОК ==================
-    const _renderScene = renderScene;
-    renderScene = function(key) {
-      const s = scenes[key];
-      if (!s) return;
+    // ================== УПРАВЛЕНИЕ ==================
+    function updateHudAll() { updateHud(); updateStatus(); }
 
-      // если концовка — рисуем финальный экран
-      if (key.endsWith('Ending')) {
-        const titles = {
-          mercyEnding: { verdict: 'epic', title: 'ПОБЕДА · МИЛОСЕРДИЕ' },
-          talkEnding: { verdict: 'win', title: 'ПОБЕДА · ПОНИМАНИЕ' },
-          controlEnding: { verdict: 'win', title: 'ПОБЕДА · КОНТРОЛЬ' },
-          shootRickWin: { verdict: 'win', title: 'ПОБЕДА · ВЫСТРЕЛ' },
-          breakEnding: { verdict: 'lose', title: 'ПОБЕДА · СЛОМАН' },
-          truceEnding: { verdict: 'epic', title: 'НИЧЬЯ' },
-          macaroniEnding: { verdict: 'win', title: 'ПОБЕДА · МАКАРОНЫ' },
-          visionsEnding: { verdict: 'epic', title: 'ПОБЕДА · ВИДЕНИЯ' }
-        };
-        const t = titles[key] || { verdict: 'win', title: 'КОНЦОВКА' };
-        state.over = true;
-        sceneTitleEl.textContent = s.title;
-        sceneEl.innerHTML = `
-          <div class="end-box fade">
-            <div class="icon">${t.verdict === 'lose' ? '💀' : '🏆'}</div>
-            <div class="verdict ${t.verdict}">${t.title}</div>
-            <div class="desc">${s.text}</div>
-            <button class="replay" onclick="restart()">Начать заново</button>
-          </div>
-        `;
-        choicesEl.innerHTML = '';
-        return;
-      }
+    function restart() {
+      state.youHp = 100;
+      state.rickHp = 100;
+      state.turn = 1;
+      state.log = [];
+      state.over = false;
+      state.flags = {
+        hasPortalGun: false,
+        mindLink: false,
+        bleeding: false,
+        onToaster: false,
+        worldBlenders: false,
+        rickUnderControl: false
+      };
+      updateHud();
+      updateStatus();
+      renderScene('start');
+    }
 
-      // обычная сцена
-      _renderScene(key);
-    };
-
-    // ссылка для startGame в HTML — оставим совместимость
-    window.startGame = function() {
-      restart();
-    };
-
-    // ================== ОБРАБОТЧИК ВВОДА ==================
     customBtn.addEventListener('click', () => {
       const text = customInput.value.trim();
       if (!text || state.over) return;
@@ -1143,7 +1087,7 @@
       if (e.key === 'Enter') customBtn.click();
     });
 
-    // ================== СТАРТ ==================
+    // СТАРТ
     restart();
   </script>
 </body>
