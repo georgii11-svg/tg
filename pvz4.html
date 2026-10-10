@@ -6,368 +6,95 @@
 <title>Растения против зомби 4</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #1a2a0a;
-    color: #fff;
-    user-select: none;
-    touch-action: none;
-  }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a2a0a; color: #fff; user-select: none; touch-action: none; }
   @media (orientation: portrait) {
-    body::before {
-      content: '↻ Поверни телефон горизонтально';
-      position: fixed;
-      inset: 0;
-      background: #1a2a0a;
-      color: #f7c948;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      font-weight: 700;
-      z-index: 99999;
-      text-align: center;
-      padding: 20px;
-    }
+    body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #1a2a0a; color: #f7c948; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
   }
-  #levelScreen {
-    position: fixed; inset: 0;
-    background: radial-gradient(circle at 50% 40%, #2a4a0a 0%, #0a1a05 70%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 20px; z-index: 5000;
-  }
+  #levelScreen { position: fixed; inset: 0; background: radial-gradient(circle at 50% 40%, #2a4a0a 0%, #0a1a05 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 5000; }
   #levelScreen.hidden { display: none; }
-  #levelScreen h1 {
-    font-size: 30px; letter-spacing: 4px; text-transform: uppercase;
-    color: #6ee37c; text-shadow: 0 0 24px rgba(110,227,124,0.6);
-    margin-bottom: 8px;
-  }
-  #levelScreen .subtitle {
-    font-size: 13px; letter-spacing: 2px; color: #a0a0c0; margin-bottom: 26px;
-  }
-  .total-points {
-    display: inline-flex; align-items: center; gap: 10px;
-    padding: 12px 26px;
-    background: linear-gradient(135deg, #f7c948, #b8924a);
-    border: 3px solid #6a4a0a; border-radius: 40px;
-    color: #1a0a08; font-weight: 900; font-size: 18px;
-    letter-spacing: 2px; margin-bottom: 26px;
-    box-shadow: 0 6px 0 #4a3a0a, 0 0 30px rgba(247,201,72,0.4);
-  }
+  #levelScreen h1 { font-size: 30px; letter-spacing: 4px; text-transform: uppercase; color: #6ee37c; text-shadow: 0 0 24px rgba(110,227,124,0.6); margin-bottom: 8px; }
+  #levelScreen .subtitle { font-size: 13px; letter-spacing: 2px; color: #a0a0c0; margin-bottom: 26px; }
+  .total-points { display: inline-flex; align-items: center; gap: 10px; padding: 12px 26px; background: linear-gradient(135deg, #f7c948, #b8924a); border: 3px solid #6a4a0a; border-radius: 40px; color: #1a0a08; font-weight: 900; font-size: 18px; letter-spacing: 2px; margin-bottom: 26px; box-shadow: 0 6px 0 #4a3a0a, 0 0 30px rgba(247,201,72,0.4); }
   .total-points .icon { font-size: 22px; }
-  .total-points .unlock-hint {
-    font-size: 11px; letter-spacing: 1px; opacity: 0.7;
-    display: block; margin-top: 2px;
-  }
-  .levels-row {
-    display: flex; gap: 14px; flex-wrap: wrap;
-    justify-content: center; max-width: 900px;
-  }
-  .level-card {
-    width: 150px; height: 190px;
-    background: linear-gradient(180deg, #2a4a0a 0%, #1a2a08 100%);
-    border: 3px solid #4a8a2a; border-radius: 16px;
-    padding: 16px 12px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: space-between;
-    cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 6px 0 #1a3a08; position: relative;
-  }
-  .level-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 0 #1a3a08, 0 0 30px rgba(110,227,124,0.4);
-  }
+  .total-points .unlock-hint { font-size: 11px; letter-spacing: 1px; opacity: 0.7; display: block; margin-top: 2px; }
+  .levels-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+  .level-card { width: 150px; height: 190px; background: linear-gradient(180deg, #2a4a0a 0%, #1a2a08 100%); border: 3px solid #4a8a2a; border-radius: 16px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 0 #1a3a08; position: relative; }
+  .level-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 #1a3a08, 0 0 30px rgba(110,227,124,0.4); }
   .level-card:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a3a08; }
-  .level-card.locked {
-    opacity: 0.4; cursor: not-allowed; filter: grayscale(0.7);
-  }
+  .level-card.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.7); }
   .level-card.locked:hover { transform: none; box-shadow: 0 6px 0 #1a3a08; }
-  .level-card .level-num {
-    font-size: 40px; font-weight: 900; color: #f7c948;
-    text-shadow: 0 0 16px rgba(247,201,72,0.5); line-height: 1;
-  }
-  .level-card .level-name {
-    font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
-    text-transform: uppercase; color: #6ee37c;
-    text-align: center; line-height: 1.2;
-  }
-  .level-card .level-info {
-    font-size: 10px; color: #a0a0c0; text-align: center; line-height: 1.4;
-  }
-  .level-card .level-status {
-    font-size: 10px; font-weight: 800; letter-spacing: 1px;
-    padding: 3px 10px; border-radius: 10px;
-  }
-  .level-card .level-status.passed {
-    background: rgba(110,227,124,0.2); color: #6ee37c; border: 1px solid #6ee37c;
-  }
-  .level-card .level-status.new {
-    background: rgba(247,201,72,0.2); color: #f7c948; border: 1px solid #f7c948;
-  }
-  .level-card .level-status.locked-tag {
-    background: rgba(255,255,255,0.1); color: #808098; border: 1px solid #4a4a5a;
-  }
-  .level-card.locked::after {
-    content: '🔒'; position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); font-size: 40px; opacity: 0.8;
-  }
-  #resetBtn {
-    margin-top: 26px; padding: 10px 24px;
-    background: transparent; border: 2px solid #4a4a5a;
-    border-radius: 30px; color: #808098;
-    font-family: inherit; font-size: 12px; font-weight: 700;
-    letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; transition: all 0.15s;
-  }
+  .level-card .level-num { font-size: 40px; font-weight: 900; color: #f7c948; text-shadow: 0 0 16px rgba(247,201,72,0.5); line-height: 1; }
+  .level-card .level-name { font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #6ee37c; text-align: center; line-height: 1.2; }
+  .level-card .level-info { font-size: 10px; color: #a0a0c0; text-align: center; line-height: 1.4; }
+  .level-card .level-status { font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 3px 10px; border-radius: 10px; }
+  .level-card .level-status.passed { background: rgba(110,227,124,0.2); color: #6ee37c; border: 1px solid #6ee37c; }
+  .level-card .level-status.new { background: rgba(247,201,72,0.2); color: #f7c948; border: 1px solid #f7c948; }
+  .level-card .level-status.locked-tag { background: rgba(255,255,255,0.1); color: #808098; border: 1px solid #4a4a5a; }
+  .level-card.locked::after { content: '🔒'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; opacity: 0.8; }
+  #resetBtn { margin-top: 26px; padding: 10px 24px; background: transparent; border: 2px solid #4a4a5a; border-radius: 30px; color: #808098; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
   #resetBtn:hover { border-color: #ff5c5c; color: #ff5c5c; }
-  #game {
-    position: fixed; inset: 0; display: none; flex-direction: column;
-  }
+  #game { position: fixed; inset: 0; display: none; flex-direction: column; }
   #game.show { display: flex; }
-  .hud {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 5px 8px;
-    background: linear-gradient(180deg, #2a1a08 0%, #1a1008 100%);
-    border-bottom: 2px solid #0a0505;
-    font-size: 11px; z-index: 50;
-    flex-wrap: nowrap; gap: 5px;
-  }
-  .hud .stat {
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(0,0,0,0.4);
-    padding: 3px 9px; border-radius: 20px;
-    border: 1px solid #3a2a10;
-    font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;
-  }
+  .hud { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: linear-gradient(180deg, #2a1a08 0%, #1a1008 100%); border-bottom: 2px solid #0a0505; font-size: 11px; z-index: 50; flex-wrap: nowrap; gap: 5px; }
+  .hud .stat { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 3px 9px; border-radius: 20px; border: 1px solid #3a2a10; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
   .hud .stat .icon { font-size: 13px; }
   .hud .sun-count { color: #f7c948; }
   .hud .wave-info { color: #ff8a8a; }
   .hud .lawn-info { color: #6ee37c; }
   .hud .points-info { color: #a78bfa; }
-  .back-btn {
-    position: absolute; top: 8px; left: 50%;
-    transform: translateX(-50%); z-index: 60;
-    padding: 4px 14px; background: rgba(0,0,0,0.6);
-    border: 1px solid #3a2a10; border-radius: 20px;
-    color: #a0a0c0; font-family: inherit;
-    font-size: 10px; font-weight: 700;
-    letter-spacing: 1px; cursor: pointer;
-  }
+  .back-btn { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 60; padding: 4px 14px; background: rgba(0,0,0,0.6); border: 1px solid #3a2a10; border-radius: 20px; color: #a0a0c0; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
   .back-btn:hover { color: #fff; border-color: #6ee37c; }
-  .seeds {
-    display: flex; gap: 5px; padding: 5px 8px;
-    background: linear-gradient(180deg, #1a1008 0%, #0a0805 100%);
-    overflow-x: auto; border-bottom: 2px solid #0a0505;
-    scrollbar-width: none; flex-shrink: 0; min-height: 86px;
-  }
+  .seeds { display: flex; gap: 5px; padding: 5px 8px; background: linear-gradient(180deg, #1a1008 0%, #0a0805 100%); overflow-x: auto; border-bottom: 2px solid #0a0505; scrollbar-width: none; flex-shrink: 0; min-height: 86px; }
   .seeds::-webkit-scrollbar { display: none; }
-  .seed {
-    flex-shrink: 0; width: 60px; height: 76px;
-    background: linear-gradient(180deg, #f7c948 0%, #b8924a 100%);
-    border: 3px solid #6a4a0a; border-radius: 10px;
-    padding: 3px; display: flex; flex-direction: column;
-    align-items: center; justify-content: space-between;
-    cursor: pointer; transition: all 0.15s ease;
-    position: relative; box-shadow: 0 4px 0 #4a3a0a;
-  }
-  .seed.selected {
-    border-color: #6ee37c;
-    box-shadow: 0 0 20px rgba(110, 227, 124, 0.6), 0 4px 0 #4a3a0a;
-    transform: translateY(-2px);
-  }
+  .seed { flex-shrink: 0; width: 60px; height: 76px; background: linear-gradient(180deg, #f7c948 0%, #b8924a 100%); border: 3px solid #6a4a0a; border-radius: 10px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s ease; position: relative; box-shadow: 0 4px 0 #4a3a0a; }
+  .seed.selected { border-color: #6ee37c; box-shadow: 0 0 20px rgba(110, 227, 124, 0.6), 0 4px 0 #4a3a0a; transform: translateY(-2px); }
   .seed.disabled { opacity: 0.35; cursor: not-allowed; }
   .seed .seed-emoji { font-size: 24px; line-height: 1; }
-  .seed .seed-name {
-    font-size: 6.5px; color: #1a0a08; font-weight: 800;
-    text-align: center; letter-spacing: 0.2px;
-    text-transform: uppercase; line-height: 1.1;
-  }
-  .seed .seed-cost {
-    font-size: 10px; font-weight: 900; color: #1a0a08;
-    background: rgba(255,255,255,0.4); padding: 1px 5px; border-radius: 8px;
-  }
-  .seed .cooldown-overlay {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.75);
-    border-radius: 8px; pointer-events: none; display: none;
-  }
+  .seed .seed-name { font-size: 6.5px; color: #1a0a08; font-weight: 800; text-align: center; letter-spacing: 0.2px; text-transform: uppercase; line-height: 1.1; }
+  .seed .seed-cost { font-size: 10px; font-weight: 900; color: #1a0a08; background: rgba(255,255,255,0.4); padding: 1px 5px; border-radius: 8px; }
+  .seed .cooldown-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); border-radius: 8px; pointer-events: none; display: none; }
   .seed .cooldown-overlay.show { display: block; }
-  .seeds .divider {
-    flex-shrink: 0; width: 2px; background: #4a8a2a;
-    margin: 4px 4px; border-radius: 2px;
-  }
-  .field-wrap {
-    flex: 1; position: relative; overflow: hidden;
-    background: linear-gradient(180deg, #4a2a10 0%, #2a1a08 100%);
-  }
+  .seeds .divider { flex-shrink: 0; width: 2px; background: #4a8a2a; margin: 4px 4px; border-radius: 2px; }
+  .field-wrap { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #4a2a10 0%, #2a1a08 100%); }
   #field { position: absolute; inset: 0; }
-  .grid-cell {
-    position: absolute; border: 1px dashed rgba(255,255,255,0.08);
-    box-sizing: border-box; transition: background 0.15s;
-  }
-  .plant {
-    position: absolute; display: flex;
-    align-items: center; justify-content: center;
-    font-size: 38px; line-height: 1; z-index: 5;
-    transition: transform 0.15s;
-    animation: plantPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border-radius: 50%;
-  }
+  .grid-cell { position: absolute; border: 1px dashed rgba(255,255,255,0.08); box-sizing: border-box; transition: background 0.15s; }
+  .plant { position: absolute; display: flex; align-items: center; justify-content: center; font-size: 38px; line-height: 1; z-index: 5; transition: transform 0.15s; animation: plantPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 50%; }
   @keyframes plantPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
   .plant.hybrid { filter: drop-shadow(0 0 12px #a78bfa); }
   .plant.shooting { animation: plantShoot 0.2s ease; }
-  @keyframes plantShoot {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
-  .bullet {
-    position: absolute; width: 12px; height: 12px;
-    background: radial-gradient(circle at 30% 30%, #b6ff6e, #4a8a2a);
-    border-radius: 50%; box-shadow: 0 0 10px #6ee37c;
-    z-index: 3; pointer-events: none;
-  }
-  .zombie {
-    position: absolute; font-size: 40px; line-height: 1;
-    z-index: 4; display: flex; align-items: center; justify-content: center;
-  }
+  @keyframes plantShoot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  .bullet { position: absolute; width: 12px; height: 12px; background: radial-gradient(circle at 30% 30%, #b6ff6e, #4a8a2a); border-radius: 50%; box-shadow: 0 0 10px #6ee37c; z-index: 3; pointer-events: none; }
+  .zombie { position: absolute; font-size: 40px; line-height: 1; z-index: 4; display: flex; align-items: center; justify-content: center; }
   .zombie.hit { filter: brightness(2.5) saturate(0); }
   .zombie.dying { animation: zombieDie 0.6s ease-out forwards; }
-  @keyframes zombieDie {
-    0% { transform: rotate(0deg); opacity: 1; }
-    100% { transform: rotate(90deg) translateY(30px); opacity: 0; }
-  }
-  .zombie-hp {
-    position: absolute; height: 4px; background: #ff4040;
-    border-radius: 2px; z-index: 6; pointer-events: none;
-    transition: width 0.15s;
-  }
-  .zombie-hp-bg {
-    position: absolute; height: 4px; background: rgba(0,0,0,0.5);
-    border-radius: 2px; z-index: 5; pointer-events: none;
-  }
-  .sun {
-    position: absolute; width: 44px; height: 44px;
-    background: radial-gradient(circle, #ffe066 0%, #f7c948 50%, #b8924a 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 20px #f7c948, 0 0 40px rgba(247,201,72,0.5);
-    cursor: pointer; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
+  @keyframes zombieDie { 0% { transform: rotate(0deg); opacity: 1; } 100% { transform: rotate(90deg) translateY(30px); opacity: 0; } }
+  .zombie-hp { position: absolute; height: 4px; background: #ff4040; border-radius: 2px; z-index: 6; pointer-events: none; transition: width 0.15s; }
+  .zombie-hp-bg { position: absolute; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; z-index: 5; pointer-events: none; }
+  .sun { position: absolute; width: 44px; height: 44px; background: radial-gradient(circle, #ffe066 0%, #f7c948 50%, #b8924a 100%); border-radius: 50%; box-shadow: 0 0 20px #f7c948, 0 0 40px rgba(247,201,72,0.5); cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 20px; }
   .sun.falling { animation: sunFall 10s linear forwards; }
-  @keyframes sunFall {
-    0% { top: -50px; opacity: 0; }
-    5% { opacity: 1; }
-    95% { opacity: 1; }
-    100% { top: 100%; opacity: 0.5; }
-  }
+  @keyframes sunFall { 0% { top: -50px; opacity: 0; } 5% { opacity: 1; } 95% { opacity: 1; } 100% { top: 100%; opacity: 0.5; } }
   .sun.collected { animation: sunCollect 0.4s ease-out forwards; }
   @keyframes sunCollect { to { transform: scale(2) translateY(-100px); opacity: 0; } }
-  .mower {
-    position: absolute; left: 2px; width: 50px; height: 60px;
-    z-index: 7; display: flex; align-items: center; justify-content: center;
-    font-size: 34px; pointer-events: none;
-    filter: drop-shadow(0 0 10px #ff5c5c);
-    transition: transform 1.5s linear;
-  }
+  .mower { position: absolute; left: 2px; width: 50px; height: 60px; z-index: 7; display: flex; align-items: center; justify-content: center; font-size: 34px; pointer-events: none; filter: drop-shadow(0 0 10px #ff5c5c); transition: transform 1.5s linear; }
   .mower.working { transform: translateX(100vw); }
-  .explosion {
-    position: absolute; width: 200px; height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #fff 0%, #ffb800 30%, #ff4040 60%, transparent 80%);
-    z-index: 20; pointer-events: none;
-    animation: explode 0.6s ease-out forwards;
-  }
-  @keyframes explode {
-    0% { transform: scale(0); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
-  }
-  .toast {
-    position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: rgba(20, 10, 5, 0.95);
-    border: 3px solid #f7c948; border-radius: 14px;
-    padding: 18px 32px; font-size: 18px;
-    font-weight: 800; color: #f7c948;
-    text-align: center; letter-spacing: 2px;
-    z-index: 200; box-shadow: 0 0 40px rgba(247,201,72,0.5);
-    pointer-events: none; max-width: 80vw;
-  }
+  .explosion { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #ffb800 30%, #ff4040 60%, transparent 80%); z-index: 20; pointer-events: none; animation: explode 0.6s ease-out forwards; }
+  @keyframes explode { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+  .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(20, 10, 5, 0.95); border: 3px solid #f7c948; border-radius: 14px; padding: 18px 32px; font-size: 18px; font-weight: 800; color: #f7c948; text-align: center; letter-spacing: 2px; z-index: 200; box-shadow: 0 0 40px rgba(247,201,72,0.5); pointer-events: none; max-width: 80vw; }
   .toast.show { animation: toastPop 2s ease-out forwards; }
-  @keyframes toastPop {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-  }
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-    display: none; align-items: center; justify-content: center;
-    flex-direction: column; z-index: 300;
-    padding: 20px; text-align: center;
-  }
+  @keyframes toastPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 30% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 85% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 300; padding: 20px; text-align: center; }
   .overlay.show { display: flex; }
-  .overlay h1 {
-    font-size: 28px; letter-spacing: 3px;
-    margin-bottom: 12px; color: #6ee37c;
-    text-shadow: 0 0 20px rgba(110,227,124,0.6);
-  }
-  .overlay h1.lose {
-    color: #ff5c5c; text-shadow: 0 0 20px rgba(255,92,92,0.6);
-  }
-  .overlay p {
-    font-size: 14px; color: #c8c8dc;
-    line-height: 1.7; max-width: 440px; margin-bottom: 20px;
-  }
-  .overlay .reward {
-    font-size: 20px; color: #f7c948; font-weight: 900;
-    letter-spacing: 2px; margin: 10px 0 20px;
-    text-shadow: 0 0 20px rgba(247,201,72,0.6);
-  }
-  .overlay button {
-    padding: 12px 36px;
-    background: linear-gradient(135deg, #6ee37c, #4a8a2a);
-    border: none; border-radius: 40px;
-    color: #0a1a0a; font-family: inherit;
-    font-size: 14px; font-weight: 800;
-    letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; box-shadow: 0 5px 0 #2a5a1a;
-    transition: all 0.15s; margin: 4px;
-  }
-  .overlay button:active {
-    transform: translateY(3px); box-shadow: 0 2px 0 #2a5a1a;
-  }
-  .overlay button.alt {
-    background: transparent; border: 2px solid #6ee37c;
-    color: #6ee37c; box-shadow: none;
-  }
-  .shovel-btn {
-    position: absolute; bottom: 10px; right: 10px;
-    width: 54px; height: 54px;
-    background: linear-gradient(180deg, #b8924a, #6a4a0a);
-    border: 3px solid #4a3a0a; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px; cursor: pointer; z-index: 15;
-    box-shadow: 0 4px 0 #2a1a0a; transition: all 0.15s;
-  }
+  .overlay h1 { font-size: 28px; letter-spacing: 3px; margin-bottom: 12px; color: #6ee37c; text-shadow: 0 0 20px rgba(110,227,124,0.6); }
+  .overlay h1.lose { color: #ff5c5c; text-shadow: 0 0 20px rgba(255,92,92,0.6); }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.7; max-width: 440px; margin-bottom: 20px; }
+  .overlay .reward { font-size: 20px; color: #f7c948; font-weight: 900; letter-spacing: 2px; margin: 10px 0 20px; text-shadow: 0 0 20px rgba(247,201,72,0.6); }
+  .overlay button { padding: 12px 36px; background: linear-gradient(135deg, #6ee37c, #4a8a2a); border: none; border-radius: 40px; color: #0a1a0a; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 0 #2a5a1a; transition: all 0.15s; margin: 4px; }
+  .overlay button:active { transform: translateY(3px); box-shadow: 0 2px 0 #2a5a1a; }
+  .overlay button.alt { background: transparent; border: 2px solid #6ee37c; color: #6ee37c; box-shadow: none; }
+  .shovel-btn { position: absolute; bottom: 10px; right: 10px; width: 54px; height: 54px; background: linear-gradient(180deg, #b8924a, #6a4a0a); border: 3px solid #4a3a0a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; z-index: 15; box-shadow: 0 4px 0 #2a1a0a; transition: all 0.15s; }
   .shovel-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2a1a0a; }
-  .shovel-btn.selected {
-    border-color: #ff5c5c;
-    box-shadow: 0 0 20px rgba(255,92,92,0.6), 0 4px 0 #2a1a0a;
-  }
-  .merge-indicator {
-    position: absolute; top: 8px; right: 10px;
-    padding: 6px 14px;
-    background: linear-gradient(135deg, #a78bfa, #6e4aff);
-    border: 2px solid #fff; border-radius: 20px;
-    color: #fff; font-size: 11px; font-weight: 800;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    z-index: 20; box-shadow: 0 0 20px rgba(167, 139, 250, 0.7);
-    display: none;
-  }
+  .shovel-btn.selected { border-color: #ff5c5c; box-shadow: 0 0 20px rgba(255,92,92,0.6), 0 4px 0 #2a1a0a; }
+  .merge-indicator { position: absolute; top: 8px; right: 10px; padding: 6px 14px; background: linear-gradient(135deg, #a78bfa, #6e4aff); border: 2px solid #fff; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; z-index: 20; box-shadow: 0 0 20px rgba(167, 139, 250, 0.7); display: none; }
   .merge-indicator.show { display: block; }
   @media (max-width: 600px) {
     .seed { width: 52px; height: 66px; padding: 2px; }
@@ -422,50 +149,17 @@
   </div>
 
   <script>
-    // ================== ГЛОБАЛЬНЫЕ НАСТРОЙКИ ==================
     const STORAGE_KEY = 'pvz4_progress_v1';
     const MERGE_UNLOCK_POINTS = 10000;
 
-    // ================== КОНФИГ УРОВНЕЙ ==================
     const LEVELS = [
-      {
-        id: 1, name: 'Лужайка', desc: 'Знакомство. Медленные зомби.',
-        waves: 8, startingSun: 150, sunDropInterval: 6000,
-        firstWaveDelay: 30000, waveInterval: 35000,
-        mowersCount: 4, zombieTypes: ['normal', 'cone'],
-        waveSizeMult: 0.85, hpMult: 1.0, reward: 500,
-      },
-      {
-        id: 2, name: 'Огород', desc: 'Быстрые зомби и конусы.',
-        waves: 10, startingSun: 150, sunDropInterval: 6000,
-        firstWaveDelay: 30000, waveInterval: 35000,
-        mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast'],
-        waveSizeMult: 0.9, hpMult: 1.0, reward: 1000,
-      },
-      {
-        id: 3, name: 'Поле', desc: 'Зомби с вёдрами. Держись!',
-        waves: 12, startingSun: 175, sunDropInterval: 5500,
-        firstWaveDelay: 30000, waveInterval: 35000,
-        mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket'],
-        waveSizeMult: 0.9, hpMult: 1.0, reward: 2000,
-      },
-      {
-        id: 4, name: 'Ферма', desc: 'Танки и вёдра. Но чуть легче.',
-        waves: 14, startingSun: 200, sunDropInterval: 5500,
-        firstWaveDelay: 30000, waveInterval: 35000,
-        mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank'],
-        waveSizeMult: 0.85, hpMult: 0.95, reward: 3000,
-      },
-      {
-        id: 5, name: 'Большая ферма', desc: 'ФИНАЛ. Всё вместе.',
-        waves: 16, startingSun: 225, sunDropInterval: 5000,
-        firstWaveDelay: 30000, waveInterval: 35000,
-        mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank', 'flag'],
-        waveSizeMult: 0.8, hpMult: 0.9, reward: 5000,
-      }
+      { id: 1, name: 'Лужайка', desc: 'Знакомство.', waves: 8, startingSun: 150, sunDropInterval: 6000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone'], waveSizeMult: 0.85, hpMult: 1.0, reward: 500 },
+      { id: 2, name: 'Огород', desc: 'Быстрые зомби.', waves: 10, startingSun: 150, sunDropInterval: 6000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast'], waveSizeMult: 0.9, hpMult: 1.0, reward: 1000 },
+      { id: 3, name: 'Поле', desc: 'Зомби с вёдрами.', waves: 12, startingSun: 175, sunDropInterval: 5500, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket'], waveSizeMult: 0.9, hpMult: 1.0, reward: 2000 },
+      { id: 4, name: 'Ферма', desc: 'Танки и вёдра.', waves: 14, startingSun: 200, sunDropInterval: 5500, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank'], waveSizeMult: 0.85, hpMult: 0.95, reward: 3000 },
+      { id: 5, name: 'Большая ферма', desc: 'ФИНАЛ.', waves: 16, startingSun: 225, sunDropInterval: 5000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank', 'flag'], waveSizeMult: 0.8, hpMult: 0.9, reward: 5000 }
     ];
 
-    // ================== РАСТЕНИЯ ==================
     const PLANT_TYPES = {
       peashooter: { name: 'Горохострел', emoji: '🌱', cost: 100, hp: 6, attack: 2, fireRate: 1500, projectileSpeed: 350 },
       sunflower: { name: 'Подсолнух', emoji: '🌻', cost: 50, hp: 5, attack: 0, sunProduction: 20000 },
@@ -475,7 +169,6 @@
       threepeater: { name: 'Тристрел', emoji: '🌿', cost: 200, hp: 6, attack: 2, fireRate: 1800, projectileSpeed: 350, threeRows: true }
     };
 
-    // ================== ГИБРИДЫ ==================
     const HYBRID_TYPES = {
       'peashooter+sunflower': { name: 'Солнечный стрелок', emoji: '🌟', hp: 6, attack: 2, fireRate: 1500, projectileSpeed: 350, sunProduction: 18000, parents: ['peashooter', 'sunflower'] },
       'peashooter+walnut': { name: 'Стенострел', emoji: '🧱', hp: 60, attack: 2, fireRate: 1500, projectileSpeed: 350, parents: ['peashooter', 'walnut'] },
@@ -495,12 +188,9 @@
     };
 
     function findHybrid(a, b) {
-      const k1 = a + '+' + b;
-      const k2 = b + '+' + a;
-      return HYBRID_TYPES[k1] || HYBRID_TYPES[k2] || null;
+      return HYBRID_TYPES[a + '+' + b] || HYBRID_TYPES[b + '+' + a] || null;
     }
 
-    // ================== ЗОМБИ ==================
     const ZOMBIE_TYPES = {
       normal: { emoji: '🧟', hp: 8, speedMult: 1.0, damage: 4, weight: 1, points: 10 },
       cone: { emoji: '🧟', overlay: '🔺', hp: 16, speedMult: 0.85, damage: 5, weight: 2, points: 25 },
@@ -510,7 +200,6 @@
       flag: { emoji: '🧟‍♂️', overlay: '🚩', hp: 8, speedMult: 1.5, damage: 4, weight: 1, points: 20 }
     };
 
-    // ================== СОХРАНЕНИЕ ==================
     function loadProgress() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -519,25 +208,18 @@
         return { points: data.points || 0, completed: data.completed || {} };
       } catch (e) { return { points: 0, completed: {} }; }
     }
-    function saveProgress(p) {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch (e) {}
-    }
+    function saveProgress(p) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); } catch (e) {} }
     let progress = loadProgress();
 
-    // ================== СОСТОЯНИЕ ==================
     const state = {
-      level: null, levelIndex: 0,
-      sun: 50, wave: 0, totalWaves: 1,
-      running: false, gameOver: false,
-      selectedSeed: null, shovelMode: false,
+      level: null, levelIndex: 0, sun: 50, wave: 0, totalWaves: 1,
+      running: false, gameOver: false, selectedSeed: null, shovelMode: false,
       mergeMode: false, mergeSourceType: null,
       plants: [], zombies: [], bullets: [], suns: [], mowers: [],
       mowersLeft: 4, levelPoints: 0,
-      lastFrameTime: 0, nextPlantId: 1, nextZombieId: 1,
-      nextBulletId: 1, nextSunId: 1,
+      lastFrameTime: 0, nextPlantId: 1, nextZombieId: 1, nextBulletId: 1, nextSunId: 1,
       lastSunDrop: 0, lastWave: 0, lastZombieSpawn: 0,
-      wavePoints: 0, waveSpawned: 0, waveTarget: 0, waveZombiesKilled: 0,
-      firstPlantPlaced: false
+      waveSpawned: 0, waveTarget: 0, firstPlantPlaced: false
     };
 
     const levelScreen = document.getElementById('levelScreen');
@@ -568,11 +250,8 @@
 
     function renderLevelScreen() {
       totalPointsDisplay.textContent = progress.points;
-      if (progress.points >= MERGE_UNLOCK_POINTS) {
-        unlockHint.textContent = '✨ Слияние разблокировано!';
-      } else {
-        unlockHint.textContent = 'До слияния: ' + (MERGE_UNLOCK_POINTS - progress.points);
-      }
+      if (progress.points >= MERGE_UNLOCK_POINTS) unlockHint.textContent = '✨ Слияние разблокировано!';
+      else unlockHint.textContent = 'До слияния: ' + (MERGE_UNLOCK_POINTS - progress.points);
       levelsRow.innerHTML = '';
       LEVELS.forEach((lvl, idx) => {
         const card = document.createElement('div');
@@ -589,7 +268,7 @@
         levelsRow.appendChild(card);
       });
     }
-    
+
     function startLevel(idx) {
       state.levelIndex = idx;
       state.level = LEVELS[idx];
@@ -603,29 +282,23 @@
       state.mergeMode = false;
       state.mergeSourceType = null;
       state.levelPoints = 0;
-      state.wavePoints = 0;
       state.waveSpawned = 0;
       state.waveTarget = 0;
-      state.waveZombiesKilled = 0;
       state.firstPlantPlaced = false;
       state._lastZombieSpawn = 0;
-
       state.plants.forEach(p => p.el.remove());
       state.zombies.forEach(z => { z.el.remove(); if (z.hpEl) z.hpEl.remove(); if (z.hpBgEl) z.hpBgEl.remove(); });
       state.bullets.forEach(b => b.el.remove());
       state.suns.forEach(s => s.el.remove());
       state.mowers.forEach(m => m.el.remove());
       state.plants = []; state.zombies = []; state.bullets = []; state.suns = []; state.mowers = [];
-
       state.lastSunDrop = 0;
       state.lastWave = 0;
       state.lastFrameTime = 0;
       Object.keys(seedCooldowns).forEach(k => delete seedCooldowns[k]);
-
       levelScreen.classList.add('hidden');
       gameEl.classList.add('show');
       endOverlay.classList.remove('show');
-
       setTimeout(() => {
         calcField(); buildGrid(); buildMowers(); buildSeedsUI();
         updateSun(); updatePoints(); updateMowers(); updateWave();
@@ -926,7 +599,6 @@
         z.el.classList.add('dying');
         z.hpEl.remove(); z.hpBgEl.remove();
         state.levelPoints += z.points || 10;
-        state.waveZombiesKilled++;
         updatePoints();
         setTimeout(() => {
           z.el.remove();
@@ -1122,7 +794,6 @@
       waveWeight *= lvl.waveSizeMult;
       state.waveTarget = Math.round(waveWeight);
       state.waveSpawned = 0;
-      state.waveZombiesKilled = 0;
       if (isFinal) showToast('🎯 ФИНАЛЬНАЯ ВОЛНА!');
       else if (isBig) showToast('🔥 Большая волна ' + waveNum + '!');
       else showToast('Волна ' + waveNum);
@@ -1260,6 +931,6 @@
         updateMergeIndicator();
       }
     }, 2000);
-    </script>
+  </script>
 </body>
 </html>
