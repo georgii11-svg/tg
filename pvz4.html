@@ -152,7 +152,6 @@
     const STORAGE_KEY = 'pvz4_progress_v1';
     const MERGE_UNLOCK_POINTS = 10000;
 
-    // ================== УРОВНИ (баланс как в оригинале) ==================
     const LEVELS = [
       { id: 1, name: 'Лужайка', desc: 'Знакомство.', waves: 8, startingSun: 50, sunDropInterval: 12000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone'], waveSizeMult: 1.0, hpMult: 1.0, reward: 500 },
       { id: 2, name: 'Огород', desc: 'Быстрые зомби.', waves: 10, startingSun: 50, sunDropInterval: 12000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast'], waveSizeMult: 1.1, hpMult: 1.0, reward: 1000 },
@@ -161,7 +160,6 @@
       { id: 5, name: 'Большая ферма', desc: 'ФИНАЛ.', waves: 16, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank', 'flag'], waveSizeMult: 0.95, hpMult: 1.1, reward: 5000 }
     ];
 
-    // ================== РАСТЕНИЯ (урон снижен как в оригинале) ==================
     const PLANT_TYPES = {
       peashooter: { name: 'Горохострел', emoji: '🌱', cost: 100, hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350 },
       sunflower: { name: 'Подсолнух', emoji: '🌻', cost: 50, hp: 5, attack: 0, sunProduction: 24000 },
@@ -171,7 +169,6 @@
       threepeater: { name: 'Тристрел', emoji: '🌿', cost: 200, hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, threeRows: true }
     };
 
-    // ================== ГИБРИДЫ ==================
     const HYBRID_TYPES = {
       'peashooter+sunflower': { name: 'Солнечный стрелок', emoji: '🌟', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, sunProduction: 20000, parents: ['peashooter', 'sunflower'] },
       'peashooter+walnut': { name: 'Стенострел', emoji: '🧱', hp: 60, attack: 1, fireRate: 1500, projectileSpeed: 350, parents: ['peashooter', 'walnut'] },
@@ -194,14 +191,13 @@
       return HYBRID_TYPES[a + '+' + b] || HYBRID_TYPES[b + '+' + a] || null;
     }
 
-    // ================== ЗОМБИ (HP увеличен как в оригинале) ==================
     const ZOMBIE_TYPES = {
       normal: { emoji: '🧟', hp: 10, speedMult: 1.0, damage: 4, weight: 1, points: 10 },
       cone: { emoji: '🧟', overlay: '🔺', hp: 28, speedMult: 0.85, damage: 5, weight: 2, points: 25 },
-      fast: { emoji: '🧟‍♂️', hp: 10, speedMult: 2.0, damage: 3, weight: 1.5, points: 15 },
+      fast: { emoji: '🧟‍♂️', hp: 10, speedMult: 1.5, damage: 3, weight: 1.5, points: 15 },
       bucket: { emoji: '🧟', overlay: '🪣', hp: 65, speedMult: 0.75, damage: 6, weight: 4, points: 50 },
       tank: { emoji: '🧟‍♀️', overlay: '🛡️', hp: 45, speedMult: 0.6, damage: 8, weight: 10, points: 100 },
-      flag: { emoji: '🧟‍♂️', overlay: '🚩', hp: 10, speedMult: 1.5, damage: 4, weight: 1, points: 20 }
+      flag: { emoji: '🧟‍♂️', overlay: '🚩', hp: 10, speedMult: 1.3, damage: 4, weight: 1, points: 20 }
     };
 
     function loadProgress() {
@@ -579,7 +575,9 @@
       hpEl.style.left = (fieldRect.width + 15) + 'px';
       hpEl.style.top = (cy + 30) + 'px';
       fieldEl.appendChild(hpEl);
-      const baseSpeed = fieldRect.cellW / 6.5;
+      // ==== СКОРОСТЬ КАК В ОРИГИНАЛЕ PVZ 1 ====
+      // 4.7 секунды на клетку — стандарт оригинала
+      const baseSpeed = fieldRect.cellW / 4.7;
       const finalSpeed = baseSpeed * zt.speedMult;
       state.zombies.push({
         id: state.nextZombieId++, x: fieldRect.width + 10, row, type,
