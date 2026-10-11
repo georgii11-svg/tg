@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Растения против зомби 4</title>
+<title>Растения против зомби</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a2a0a; color: #fff; user-select: none; touch-action: none; }
@@ -111,7 +111,7 @@
 <body>
 
   <div id="levelScreen">
-    <h1>Растения против зомби 4</h1>
+    <h1>Растения против зомби</h1>
     <div class="subtitle">5 уровней · ДЕНЬ</div>
     <div class="total-points">
       <span class="icon">🏆</span>
@@ -149,39 +149,53 @@
   </div>
 
   <script>
+    // ============================================================
+    // НАСТРОЙКИ КАК В ОРИГИНАЛЕ PVZ 1
+    // ============================================================
     const STORAGE_KEY = 'pvz4_progress_v1';
     const MERGE_UNLOCK_POINTS = 10000;
 
-    // ================== СКОРОСТЬ ЗОМБИ ==================
-    // 14 секунд на клетку — ОЧЕНЬ медленно (в 3 раза медленнее оригинала)
-    const ZOMBIE_SPEED_SECONDS = 14.0;
-    // Скорость поедания растения. 1.0 = как в оригинале.
-    // Меньше 1.0 = медленнее жрут. Больше 1.0 = быстрее жрут.
-    const ZOMBIE_EAT_MULT = 1.0;
+    // Базовая скорость зомби — 4.7 сек/клетку (как в оригинале)
+    const BASE_SPEED_SECONDS = 4.7;
+    // Множитель урона от поедания растений — 1.0 (как в оригинале)
+    const EAT_MULT = 1.0;
+    // Пауза между волнами (принудительный запуск) — 25 сек
+    const FORCED_WAVE_INTERVAL = 25000;
 
+    // ============================================================
+    // УРОВНИ
+    // ============================================================
     const LEVELS = [
-      { id: 1, name: 'Лужайка', desc: 'Знакомство.', waves: 8, startingSun: 50, sunDropInterval: 12000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone'], waveSizeMult: 1.0, hpMult: 1.0, reward: 500 },
-      { id: 2, name: 'Огород', desc: 'Быстрые зомби.', waves: 10, startingSun: 50, sunDropInterval: 12000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast'], waveSizeMult: 1.1, hpMult: 1.0, reward: 1000 },
-      { id: 3, name: 'Поле', desc: 'Зомби с вёдрами.', waves: 12, startingSun: 50, sunDropInterval: 11000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket'], waveSizeMult: 1.1, hpMult: 1.05, reward: 2000 },
-      { id: 4, name: 'Ферма', desc: 'Танки и вёдра.', waves: 14, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank'], waveSizeMult: 1.0, hpMult: 1.05, reward: 3000 },
-      { id: 5, name: 'Большая ферма', desc: 'ФИНАЛ.', waves: 16, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 30000, waveInterval: 35000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'fast', 'bucket', 'tank', 'flag'], waveSizeMult: 0.95, hpMult: 1.1, reward: 5000 }
+      { id: 1, name: 'Лужайка', desc: 'Знакомство.', waves: 8, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 15000, waveInterval: 25000, mowersCount: 4, zombieTypes: ['normal', 'cone'], hpMult: 1.0, reward: 500 },
+      { id: 2, name: 'Огород', desc: 'Флаговые зомби.', waves: 10, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 15000, waveInterval: 25000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'flag'], hpMult: 1.0, reward: 1000 },
+      { id: 3, name: 'Поле', desc: 'Зомби с вёдрами.', waves: 12, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 15000, waveInterval: 25000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'flag', 'bucket'], hpMult: 1.0, reward: 2000 },
+      { id: 4, name: 'Ферма', desc: 'Спортсмены.', waves: 14, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 15000, waveInterval: 25000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'flag', 'bucket', 'fast'], hpMult: 1.0, reward: 3000 },
+      { id: 5, name: 'Большая ферма', desc: 'ФИНАЛ.', waves: 16, startingSun: 50, sunDropInterval: 10000, firstWaveDelay: 15000, waveInterval: 25000, mowersCount: 4, zombieTypes: ['normal', 'cone', 'flag', 'bucket', 'fast', 'tank'], hpMult: 1.0, reward: 5000 }
     ];
 
+    // ============================================================
+    // РАСТЕНИЯ — КАК В ОРИГИНАЛЕ
+    // ============================================================
+    // Горохострел: 1 горошина = 1 урон, стреляет раз в 1.4 сек.
+    // (в оригинале ~20 урона за горошину, зомби 270 HP ≈ 13.5 горошин)
     const PLANT_TYPES = {
-      peashooter: { name: 'Горохострел', emoji: '🌱', cost: 100, hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350 },
+      peashooter: { name: 'Горохострел', emoji: '🌱', cost: 100, hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350 },
       sunflower: { name: 'Подсолнух', emoji: '🌻', cost: 50, hp: 5, attack: 0, sunProduction: 24000 },
       walnut: { name: 'Орех', emoji: '🥜', cost: 50, hp: 4000, attack: 0 },
-      snowpea: { name: 'Снегострел', emoji: '❄️', cost: 175, hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, slow: true },
+      snowpea: { name: 'Снегострел', emoji: '❄️', cost: 175, hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, slow: true },
       cherry: { name: 'Вишня', emoji: '🍒', cost: 150, hp: 1, attack: 0, bomb: true },
-      threepeater: { name: 'Тристрел', emoji: '🌿', cost: 200, hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, threeRows: true }
+      threepeater: { name: 'Тристрел', emoji: '🌿', cost: 200, hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, threeRows: true }
     };
 
+    // ============================================================
+    // ГИБРИДЫ
+    // ============================================================
     const HYBRID_TYPES = {
-      'peashooter+sunflower': { name: 'Солнечный стрелок', emoji: '🌟', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, sunProduction: 20000, parents: ['peashooter', 'sunflower'] },
-      'peashooter+walnut': { name: 'Стенострел', emoji: '🧱', hp: 60, attack: 1, fireRate: 1500, projectileSpeed: 350, parents: ['peashooter', 'walnut'] },
-      'peashooter+snowpea': { name: 'Морозный горох', emoji: '🌨️', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, slow: true, parents: ['peashooter', 'snowpea'] },
-      'peashooter+cherry': { name: 'Гороховая бомба', emoji: '💥', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, deathBomb: true, parents: ['peashooter', 'cherry'] },
-      'peashooter+threepeater': { name: 'Пятистрел', emoji: '🌈', hp: 8, attack: 1, fireRate: 1500, projectileSpeed: 350, fiveRows: true, parents: ['peashooter', 'threepeater'] },
+      'peashooter+sunflower': { name: 'Солнечный стрелок', emoji: '🌟', hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, sunProduction: 20000, parents: ['peashooter', 'sunflower'] },
+      'peashooter+walnut': { name: 'Стенострел', emoji: '🧱', hp: 60, attack: 1, fireRate: 1400, projectileSpeed: 350, parents: ['peashooter', 'walnut'] },
+      'peashooter+snowpea': { name: 'Морозный горох', emoji: '🌨️', hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, slow: true, parents: ['peashooter', 'snowpea'] },
+      'peashooter+cherry': { name: 'Гороховая бомба', emoji: '💥', hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, deathBomb: true, parents: ['peashooter', 'cherry'] },
+      'peashooter+threepeater': { name: 'Пятистрел', emoji: '🌈', hp: 8, attack: 1, fireRate: 1400, projectileSpeed: 350, fiveRows: true, parents: ['peashooter', 'threepeater'] },
       'sunflower+walnut': { name: 'Орех-солнце', emoji: '🌰', hp: 60, sunProduction: 20000, parents: ['sunflower', 'walnut'] },
       'sunflower+snowpea': { name: 'Ледяной цветок', emoji: '🌼', hp: 6, sunProduction: 20000, auraSlow: true, parents: ['sunflower', 'snowpea'] },
       'sunflower+cherry': { name: 'Солнечная бомба', emoji: '☀️', hp: 5, sunProduction: 20000, deathBomb: true, parents: ['sunflower', 'cherry'] },
@@ -190,23 +204,34 @@
       'walnut+cherry': { name: 'Взрывной орех', emoji: '🔥', hp: 60, deathBomb: true, parents: ['walnut', 'cherry'] },
       'walnut+threepeater': { name: 'Орех-башня', emoji: '🗼', hp: 120, parents: ['walnut', 'threepeater'] },
       'snowpea+cherry': { name: 'Криобомба', emoji: '❄️', hp: 5, deathBomb: true, freezeAll: true, parents: ['snowpea', 'cherry'] },
-      'snowpea+threepeater': { name: 'Ледотристрел', emoji: '🧊', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, slow: true, threeRows: true, parents: ['snowpea', 'threepeater'] },
-      'cherry+threepeater': { name: 'Цветок-смертник', emoji: '☠️', hp: 6, attack: 1, fireRate: 1500, projectileSpeed: 350, deathBomb: true, parents: ['cherry', 'threepeater'] }
+      'snowpea+threepeater': { name: 'Ледотристрел', emoji: '🧊', hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, slow: true, threeRows: true, parents: ['snowpea', 'threepeater'] },
+      'cherry+threepeater': { name: 'Цветок-смертник', emoji: '☠️', hp: 6, attack: 1, fireRate: 1400, projectileSpeed: 350, deathBomb: true, parents: ['cherry', 'threepeater'] }
     };
 
     function findHybrid(a, b) {
       return HYBRID_TYPES[a + '+' + b] || HYBRID_TYPES[b + '+' + a] || null;
     }
 
-    // ================== ЗОМБИ ==================
-    // speedMult — множитель к базовой скорости. ВСЕ стоят 1.0 — идут одинаково.
+    // ============================================================
+    // ЗОМБИ — HP, СКОРОСТЬ, УРОН КАК В ОРИГИНАЛЕ
+    // ============================================================
+    // normal: 270 HP / 4.7 сек/клетку / урон 4
+    // cone: 640 HP / 4.7 сек/клетку / урон 4
+    // flag: 270 HP / 3.7 сек/клетку (быстрее) / урон 4
+    // bucket: 1370 HP / 4.7 сек/клетку / урон 4
+    // fast: 1670 HP / 2.5 сек/клетку (быстрее всех) / урон 4
+    // tank: 2700 HP / 4.7 сек/клетку / урон 8 (условный)
+    // speedMult — относительный множитель к базовой скорости (4.7 сек/клетку)
+    // speedMult = 1.0 — 4.7 сек
+    // speedMult = 1.27 — 3.7 сек (флаг)
+    // speedMult = 1.88 — 2.5 сек (быстрый)
     const ZOMBIE_TYPES = {
-      normal: { emoji: '🧟', hp: 10, speedMult: 1.0, damage: 4, weight: 1, points: 10 },
-      cone: { emoji: '🧟', overlay: '🔺', hp: 28, speedMult: 1.0, damage: 5, weight: 2, points: 25 },
-      fast: { emoji: '🧟‍♂️', hp: 10, speedMult: 1.0, damage: 3, weight: 1.5, points: 15 },
-      bucket: { emoji: '🧟', overlay: '🪣', hp: 65, speedMult: 1.0, damage: 6, weight: 4, points: 50 },
-      tank: { emoji: '🧟‍♀️', overlay: '🛡️', hp: 45, speedMult: 1.0, damage: 8, weight: 10, points: 100 },
-      flag: { emoji: '🧟‍♂️', overlay: '🚩', hp: 10, speedMult: 1.0, damage: 4, weight: 1, points: 20 }
+      normal: { emoji: '🧟', hp: 270, speedMult: 1.0, damage: 4, weight: 1, points: 10 },
+      cone: { emoji: '🧟', overlay: '🔺', hp: 640, speedMult: 1.0, damage: 4, weight: 2, points: 25 },
+      flag: { emoji: '🧟‍♂️', overlay: '🚩', hp: 270, speedMult: 1.27, damage: 4, weight: 1, points: 20 },
+      bucket: { emoji: '🧟', overlay: '🪣', hp: 1370, speedMult: 1.0, damage: 4, weight: 4, points: 50 },
+      fast: { emoji: '🧟‍♂️', hp: 1670, speedMult: 1.88, damage: 4, weight: 6, points: 15 },
+      tank: { emoji: '🧟‍♀️', overlay: '🛡️', hp: 2700, speedMult: 1.0, damage: 8, weight: 10, points: 100 }
     };
 
     function loadProgress() {
@@ -228,7 +253,7 @@
       mowersLeft: 4, levelPoints: 0,
       lastFrameTime: 0, nextPlantId: 1, nextZombieId: 1, nextBulletId: 1, nextSunId: 1,
       lastSunDrop: 0, lastWave: 0, lastZombieSpawn: 0,
-      waveSpawned: 0, waveTarget: 0, firstPlantPlaced: false
+      waveSpawned: 0, waveTarget: 0, waveKilled: 0, waveZombiesTotal: 0, firstPlantPlaced: false
     };
 
     const levelScreen = document.getElementById('levelScreen');
@@ -293,6 +318,8 @@
       state.levelPoints = 0;
       state.waveSpawned = 0;
       state.waveTarget = 0;
+      state.waveKilled = 0;
+      state.waveZombiesTotal = 0;
       state.firstPlantPlaced = false;
       state._lastZombieSpawn = 0;
       state.plants.forEach(p => p.el.remove());
@@ -507,7 +534,6 @@
       updateSeedsUI();
       if (!state.firstPlantPlaced) {
         state.firstPlantPlaced = true;
-        showToast('🌱 Первое растение! Волна через 30 сек.');
       }
       return true;
     }
@@ -584,12 +610,9 @@
       hpEl.style.left = (fieldRect.width + 15) + 'px';
       hpEl.style.top = (cy + 30) + 'px';
       fieldEl.appendChild(hpEl);
-      // ========================================
-      // СКОРОСТЬ ЗОМБИ: ZOMBIE_SPEED_SECONDS секунд на клетку
-      // 14 секунд = ОЧЕНЬ медленно
-      const baseSpeed = fieldRect.cellW / ZOMBIE_SPEED_SECONDS;
+      // ==== БАЗОВАЯ СКОРОСТЬ: 4.7 сек/клетку (как в оригинале) ====
+      const baseSpeed = fieldRect.cellW / BASE_SPEED_SECONDS;
       const finalSpeed = baseSpeed * zt.speedMult;
-      // ========================================
       state.zombies.push({
         id: state.nextZombieId++, x: fieldRect.width + 10, row, type,
         hp: Math.round(zt.hp * state.level.hpMult),
@@ -612,6 +635,7 @@
         z.el.classList.add('dying');
         z.hpEl.remove(); z.hpBgEl.remove();
         state.levelPoints += z.points || 10;
+        state.waveKilled++;
         updatePoints();
         setTimeout(() => {
           z.el.remove();
@@ -658,7 +682,7 @@
         if (z.dead) return;
         const dx = Math.abs(z.x - plant.x);
         const dy = Math.abs((fieldRect.cellH * z.row + fieldRect.cellH/2) - plant.y);
-        if (dx < fieldRect.cellW * 1.5 && dy < fieldRect.cellH * 1.5) damageZombie(z, 100, def.freezeAll);
+        if (dx < fieldRect.cellW * 1.5 && dy < fieldRect.cellH * 1.5) damageZombie(z, 3000, def.freezeAll);
       });
     }
 
@@ -730,12 +754,8 @@
         );
         if (plantHere) {
           z.eating = true;
-          // ========================================
-          // СКОРОСТЬ ПОЕДАНИЯ РАСТЕНИЯ
-          // ZOMBIE_EAT_MULT = 1.0 — как в оригинале.
-          // Меньше = медленнее жрут.
-          // ========================================
-          plantHere.hp -= z.damage * ZOMBIE_EAT_MULT * dt;
+          // Урон по растению: z.damage * EAT_MULT * dt (как в оригинале)
+          plantHere.hp -= z.damage * EAT_MULT * dt;
           if (plantHere.def && plantHere.def.eatSlow) {
             z.slowedUntil = Date.now() + 2000;
             z.el.style.filter = 'hue-rotate(180deg) brightness(1.2)';
@@ -774,6 +794,12 @@
       requestAnimationFrame(gameLoop);
     }
 
+    // ============================================================
+    // СИСТЕМА ВОЛН КАК В ОРИГИНАЛЕ
+    // ============================================================
+    // Первая волна — через firstWaveDelay после первого растения.
+    // Следующая волна — когда убито 50% зомби текущей.
+    // Если зомби не умирают — принудительный запуск через waveInterval.
     function updateWaves(now) {
       const lvl = state.level;
       if (state.lastWave === 0) {
@@ -783,13 +809,15 @@
       }
       if (now > state.lastWave) {
         const aliveZombies = state.zombies.filter(z => !z.dead).length;
-        const waveDone = state.waveSpawned >= state.waveTarget && aliveZombies === 0;
-        if (waveDone || now > state.lastWave + 10000) {
+        const killRatio = state.waveZombiesTotal > 0 ? state.waveKilled / state.waveZombiesTotal : 0;
+        // Новая волна если убито 50% ИЛИ принудительно по таймеру
+        const killTrigger = killRatio >= 0.5 && state.waveZombiesTotal > 0;
+        const timeTrigger = now > state.lastWave + FORCED_WAVE_INTERVAL;
+        if ((killTrigger || timeTrigger) && state.waveSpawned >= state.waveTarget) {
           if (state.wave >= state.totalWaves) {
-            if (aliveZombies === 0 && state.waveSpawned >= state.waveTarget) {
-              endGame(true); return;
-            }
-            state.lastWave = now + 500;
+            // Победа если волн больше нет и все зомби мертвы
+            if (aliveZombies === 0) { endGame(true); return; }
+            state.lastWave = now + 1000;
             return;
           }
           state.wave++;
@@ -801,19 +829,30 @@
       spawnWaveZombies();
     }
 
+    // Количество зомби в волне. В оригинале плавно нарастает:
+    // волна 1 — 1 зомби, волна 2 — 1, волна 3 — 2, волна 4 — 3, волна 5 — 5, и т.д.
     function startWave() {
       const lvl = state.level;
       const waveNum = state.wave;
-      const isFinal = waveNum === state.totalWaves;
+
+      let waveWeight;
+      if (waveNum === 1) waveWeight = 1;
+      else if (waveNum === 2) waveWeight = 1;
+      else if (waveNum === 3) waveWeight = 2;
+      else if (waveNum === 4) waveWeight = 3;
+      else if (waveNum === 5) waveWeight = 5;
+      else waveWeight = Math.floor(5 + (waveNum - 5) * 1.8);
+
+      // Флаг-волна (большая) — каждая 5-я
       const isBig = waveNum % 5 === 0;
-      let waveWeight = 1.5 + waveNum * 1.4;
-      if (isBig) waveWeight *= 1.8;
-      if (isFinal) waveWeight *= 2.5;
-      waveWeight *= lvl.waveSizeMult;
-      state.waveTarget = Math.round(waveWeight);
+      if (isBig) waveWeight = Math.floor(waveWeight * 1.5);
+
+      state.waveTarget = waveWeight;
       state.waveSpawned = 0;
-      if (isFinal) showToast('🎯 ФИНАЛЬНАЯ ВОЛНА!');
-      else if (isBig) showToast('🔥 Большая волна ' + waveNum + '!');
+      state.waveKilled = 0;
+      state.waveZombiesTotal = 0;
+
+      if (isBig) showToast('🔥 Большая волна ' + waveNum + '!');
       else showToast('Волна ' + waveNum);
     }
 
@@ -821,18 +860,20 @@
       if (!state.running || state.gameOver) return;
       if (state.waveSpawned >= state.waveTarget) return;
       const aliveZombies = state.zombies.filter(z => !z.dead).length;
+      // Максимум зомби на поле одновременно — как в оригинале
       const maxAlive = 6 + state.wave;
       if (aliveZombies >= maxAlive) return;
       const now = Date.now();
-      if (state._lastZombieSpawn && now - state._lastZombieSpawn < 1500) return;
+      // Пауза между спавном зомби внутри волны — 4 секунды (плавно)
+      if (state._lastZombieSpawn && now - state._lastZombieSpawn < 4000) return;
       state._lastZombieSpawn = now;
       const types = state.level.zombieTypes;
       const type = types[Math.floor(Math.random() * types.length)];
       const zt = ZOMBIE_TYPES[type];
       if (!zt) return;
-      if (state.waveSpawned + zt.weight > state.waveTarget + 2) return;
       spawnZombie(type);
-      state.waveSpawned += zt.weight;
+      state.waveSpawned++;
+      state.waveZombiesTotal++;
     }
 
     function handleFieldClick(e) {
