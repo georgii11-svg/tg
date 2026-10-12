@@ -8,12 +8,8 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #2a1a08; color: #fff; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
 
-  #game {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column;
-  }
+  #game { position: fixed; inset: 0; display: flex; flex-direction: column; }
 
-  /* HUD */
   .hud {
     background: linear-gradient(180deg, #4a2a08 0%, #2a1a05 100%);
     border-bottom: 3px solid #1a0a02;
@@ -42,13 +38,8 @@
     color: #ffd24a;
     letter-spacing: 1px;
   }
-  .mowers-info {
-    color: #6ee37c;
-    letter-spacing: 1px;
-    font-size: 12px;
-  }
+  .mowers-info { color: #6ee37c; letter-spacing: 1px; font-size: 12px; }
 
-  /* Панель семян */
   .seeds {
     background: linear-gradient(180deg, #3a2a08 0%, #1a1008 100%);
     border-bottom: 3px solid #1a0a02;
@@ -69,11 +60,8 @@
     padding: 4px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: space-between;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    box-shadow: 0 4px 0 #4a3a0a;
-    user-select: none;
+    cursor: pointer; transition: all 0.15s;
+    position: relative; box-shadow: 0 4px 0 #4a3a0a; user-select: none;
   }
   .seed.selected {
     border-color: #6ee37c;
@@ -88,68 +76,44 @@
     letter-spacing: 0.2px; line-height: 1.1;
   }
   .seed .seed-cost {
-    font-size: 12px; font-weight: 900;
-    color: #1a0a08;
+    font-size: 12px; font-weight: 900; color: #1a0a08;
     background: rgba(255,255,255,0.5);
-    padding: 1px 6px;
-    border-radius: 8px;
+    padding: 1px 6px; border-radius: 8px;
   }
   .seed .cooldown-overlay {
     position: absolute; inset: 0;
     background: rgba(0,0,0,0.7);
-    border-radius: 8px;
-    pointer-events: none;
-    display: none;
+    border-radius: 8px; pointer-events: none; display: none;
   }
   .seed .cooldown-overlay.show { display: block; }
 
-  /* Игровое поле */
   .field-wrap {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
+    flex: 1; position: relative; overflow: hidden;
     background: linear-gradient(180deg, #5a3a10 0%, #2a1a08 100%);
   }
-  #field {
-    position: absolute;
-    inset: 0;
-  }
+  #field { position: absolute; inset: 0; }
 
-  .grid-cell {
-    position: absolute;
-    box-sizing: border-box;
-  }
+  .grid-cell { position: absolute; box-sizing: border-box; }
 
   .plant {
     position: absolute;
     display: flex; align-items: center; justify-content: center;
-    font-size: 40px;
-    line-height: 1;
-    z-index: 5;
+    font-size: 40px; line-height: 1; z-index: 5;
     pointer-events: none;
     animation: plantPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes plantPop {
-    0% { transform: scale(0); }
-    100% { transform: scale(1); }
-  }
+  @keyframes plantPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
   .bullet {
-    position: absolute;
-    width: 14px; height: 14px;
+    position: absolute; width: 14px; height: 14px;
     background: radial-gradient(circle at 30% 30%, #b6ff6e, #4a8a2a);
-    border-radius: 50%;
-    box-shadow: 0 0 10px #6ee37c;
-    z-index: 3;
-    pointer-events: none;
+    border-radius: 50%; box-shadow: 0 0 10px #6ee37c;
+    z-index: 3; pointer-events: none;
   }
 
   .zombie {
-    position: absolute;
-    font-size: 44px;
-    line-height: 1;
-    z-index: 4;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute; font-size: 44px; line-height: 1;
+    z-index: 4; display: flex; align-items: center; justify-content: center;
     pointer-events: none;
   }
   .zombie.hit { filter: brightness(2.5) saturate(0); }
@@ -160,31 +124,21 @@
   }
 
   .zombie-hp {
-    position: absolute;
-    height: 5px;
-    background: #ff4040;
-    border-radius: 3px;
-    z-index: 6;
-    pointer-events: none;
+    position: absolute; height: 5px; background: #ff4040;
+    border-radius: 3px; z-index: 6; pointer-events: none;
     transition: width 0.15s;
   }
   .zombie-hp-bg {
-    position: absolute;
-    height: 5px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 3px;
-    z-index: 5;
-    pointer-events: none;
+    position: absolute; height: 5px; background: rgba(0,0,0,0.5);
+    border-radius: 3px; z-index: 5; pointer-events: none;
   }
 
   .sun {
-    position: absolute;
-    width: 54px; height: 54px;
+    position: absolute; width: 54px; height: 54px;
     background: radial-gradient(circle, #ffe066 0%, #f7c948 50%, #b8924a 100%);
     border-radius: 50%;
     box-shadow: 0 0 24px #f7c948, 0 0 48px rgba(247,201,72,0.6);
-    cursor: pointer;
-    z-index: 10;
+    cursor: pointer; z-index: 10;
     display: flex; align-items: center; justify-content: center;
     font-size: 24px;
     animation: sunPulse 1.5s ease-in-out infinite;
@@ -193,68 +147,35 @@
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
   }
-  .sun.falling {
-    animation: sunFall 10s linear forwards;
-  }
+  .sun.falling { animation: sunFall 10s linear forwards; }
   @keyframes sunFall {
     0% { top: -60px; opacity: 0; }
     5% { opacity: 1; }
     95% { opacity: 1; }
     100% { top: 100%; opacity: 0.3; }
   }
-  .sun.collected {
-    animation: sunCollect 0.4s ease-out forwards;
-  }
-  @keyframes sunCollect {
-    to { transform: scale(2) translateY(-100px); opacity: 0; }
-  }
+  .sun.collected { animation: sunCollect 0.4s ease-out forwards; }
+  @keyframes sunCollect { to { transform: scale(2) translateY(-100px); opacity: 0; } }
 
-  /* Газонокосилка */
   .mower {
-    position: absolute;
-    left: -20px;
-    width: 60px; height: 70px;
-    z-index: 7;
+    position: absolute; left: -20px;
+    width: 60px; height: 70px; z-index: 7;
     display: flex; align-items: center; justify-content: center;
-    font-size: 38px;
-    pointer-events: none;
+    font-size: 38px; pointer-events: none;
     filter: drop-shadow(0 0 12px #ff5c5c);
     transition: transform 1.5s linear;
   }
   .mower.working { transform: translateX(120vw); }
 
-  /* Всплывающий текст */
-  .popup {
-    position: absolute;
-    font-size: 14px;
-    font-weight: 900;
-    color: #ffd24a;
-    pointer-events: none;
-    z-index: 20;
-    text-shadow: 0 0 8px #000, 0 0 16px #000;
-    animation: popupFloat 1s ease-out forwards;
-  }
-  @keyframes popupFloat {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-40px); opacity: 0; }
-  }
-
-  /* Toast */
   .toast {
     position: fixed; top: 50%; left: 50%;
     transform: translate(-50%, -50%) scale(0);
     background: rgba(20, 10, 5, 0.95);
-    border: 3px solid #ffd24a;
-    border-radius: 14px;
-    padding: 18px 32px;
-    font-size: 18px;
-    font-weight: 900;
-    color: #ffd24a;
-    text-align: center;
-    z-index: 200;
-    pointer-events: none;
-    max-width: 80vw;
-    letter-spacing: 2px;
+    border: 3px solid #ffd24a; border-radius: 14px;
+    padding: 18px 32px; font-size: 18px; font-weight: 900;
+    color: #ffd24a; text-align: center;
+    z-index: 200; pointer-events: none;
+    max-width: 80vw; letter-spacing: 2px;
   }
   .toast.show { animation: toastPop 2s ease-out forwards; }
   @keyframes toastPop {
@@ -265,64 +186,41 @@
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
 
-  /* Экраны */
   .overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.92);
-    display: none;
-    align-items: center; justify-content: center;
-    flex-direction: column;
-    z-index: 300;
-    padding: 20px;
-    text-align: center;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 300;
+    padding: 20px; text-align: center;
   }
   .overlay.show { display: flex; }
-  .overlay h1 {
-    font-size: 30px;
-    color: #6ee37c;
-    margin-bottom: 14px;
-    letter-spacing: 2px;
-  }
+  .overlay h1 { font-size: 30px; color: #6ee37c; margin-bottom: 14px; letter-spacing: 2px; }
   .overlay h1.lose { color: #ff5c8a; }
-  .overlay p {
-    font-size: 14px;
-    color: #c8c8dc;
-    line-height: 1.6;
-    max-width: 420px;
-    margin-bottom: 22px;
-  }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.6; max-width: 420px; margin-bottom: 22px; }
   .overlay button {
     padding: 14px 40px;
     background: linear-gradient(135deg, #6ee37c, #4a8a2a);
-    border: none;
-    border-radius: 40px;
-    color: #0a1a0a;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 5px 0 #2a5a1a;
+    border: none; border-radius: 40px;
+    color: #0a1a0a; font-family: inherit;
+    font-size: 15px; font-weight: 900;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; box-shadow: 0 5px 0 #2a5a1a;
   }
   .overlay button:active { transform: translateY(3px); box-shadow: 0 2px 0 #2a5a1a; }
 
-  /* Лопата */
   .shovel-btn {
-    position: fixed;
-    bottom: 12px; right: 12px;
+    position: fixed; bottom: 12px; right: 12px;
     width: 64px; height: 64px;
     background: linear-gradient(180deg, #b8924a, #6a4a0a);
-    border: 3px solid #4a3a0a;
-    border-radius: 12px;
+    border: 3px solid #4a3a0a; border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
-    cursor: pointer;
-    z-index: 15;
+    font-size: 32px; cursor: pointer; z-index: 15;
     box-shadow: 0 4px 0 #2a1a0a;
   }
   .shovel-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2a1a0a; }
-  .shovel-btn.selected { border-color: #ff5c5c; box-shadow: 0 0 20px rgba(255,92,92,0.8), 0 4px 0 #2a1a0a; }
+  .shovel-btn.selected {
+    border-color: #ff5c5c;
+    box-shadow: 0 0 20px rgba(255,92,92,0.8), 0 4px 0 #2a1a0a;
+  }
 </style>
 </head>
 <body>
@@ -331,7 +229,7 @@
     <div class="hud">
       <div class="sun-counter">
         <span>☀️</span>
-        <span id="sunCount">50</span>
+        <span id="sunCount">150</span>
       </div>
       <div class="mowers-info">🚜 <span id="mowersLeft">5</span></div>
       <div class="wave-info">ВОЛНА <span id="waveNum">1</span></div>
@@ -361,19 +259,11 @@
   </div>
 
   <script>
-    // ============================================
-    // PLANTS VS ZOMBIES — оригинальный баланс
-    // ============================================
-    var canvas = null;
-    var W = 0, H = 0;
-
-    // Конфиг поля
     var COLS = 9;
     var ROWS = 5;
 
-    // Состояние
     var state = {
-      sun: 50,
+      sun: 150,
       wave: 0,
       totalWaves: 10,
       running: false,
@@ -399,28 +289,17 @@
       fieldW: 0,
       fieldH: 0,
       cellW: 0,
-      cellH: 0,
-      fieldLeft: 0,
-      fieldTop: 0
+      cellH: 0
     };
 
-    // ============================================
-    // РАСТЕНИЯ — оригинал PVZ 1
-    // ============================================
-    // Горохострел: урон 20, стреляет каждые 1.4 сек
-    // Подсолнух: 25 солнца каждые 24 сек
-    // Орех: 4000 HP
-    // Снежный горох: 20 урона + замедление
-    // Вишнёвая бомба: взрыв 1800 урона
-    // Повторитель: 2 горошины подряд
     var PLANT_TYPES = {
       peashooter: {
         name: 'Горохострел', emoji: '🌱', cost: 100, hp: 300,
-        attack: 20, fireRate: 1400, projectileSpeed: 350, color: '#6ee37c'
+        attack: 20, fireRate: 1400, projectileSpeed: 350
       },
       sunflower: {
         name: 'Подсолнух', emoji: '🌻', cost: 50, hp: 300,
-        sunProduction: 24000, sunValue: 25
+        sunProduction: 15000, sunValue: 25
       },
       wallnut: {
         name: 'Орех', emoji: '🥜', cost: 50, hp: 4000
@@ -439,45 +318,15 @@
       }
     };
 
-    // ============================================
-    // ЗОМБИ — оригинал PVZ 1
-    // ============================================
-    // Обычный: 270 HP, 4.7 сек/клетку
-    // Конус: 370+270 = 640 HP
-    // Ведро: 1100+270 = 1370 HP
-    // Флаг: 270 HP, быстрее в 2 раза
-    // Газетчик: 400+270 = 670 HP, быстрый после потери газеты
-    // Танк: 2700 HP, медленнее
     var ZOMBIE_TYPES = {
-      normal: {
-        name: 'Обычный', emoji: '🧟', hp: 270,
-        speed: 4.7, damage: 100, coins: 10
-      },
-      cone: {
-        name: 'Конус', emoji: '🧟', overlay: '🔺', hp: 640,
-        speed: 4.7, damage: 100, coins: 25
-      },
-      bucket: {
-        name: 'Ведро', emoji: '🧟', overlay: '🪣', hp: 1370,
-        speed: 4.7, damage: 100, coins: 50
-      },
-      flag: {
-        name: 'Флаг', emoji: '🧟‍♂️', overlay: '🚩', hp: 270,
-        speed: 2.35, damage: 100, coins: 20, isFlag: true
-      },
-      newspaper: {
-        name: 'Газетчик', emoji: '🧟‍♂️', overlay: '📰', hp: 670,
-        speed: 4.7, damage: 100, coins: 35
-      },
-      tank: {
-        name: 'Танк', emoji: '🧟‍♀️', overlay: '🛡️', hp: 2700,
-        speed: 7.0, damage: 200, coins: 100
-      }
+      normal: { name: 'Обычный', emoji: '🧟', hp: 270, speed: 4.7, damage: 100, coins: 10 },
+      cone: { name: 'Конус', emoji: '🧟', overlay: '🔺', hp: 640, speed: 4.7, damage: 100, coins: 25 },
+      bucket: { name: 'Ведро', emoji: '🧟', overlay: '🪣', hp: 1370, speed: 4.7, damage: 100, coins: 50 },
+      flag: { name: 'Флаг', emoji: '🧟‍♂️', overlay: '🚩', hp: 270, speed: 2.35, damage: 100, coins: 20 },
+      newspaper: { name: 'Газетчик', emoji: '🧟‍♂️', overlay: '📰', hp: 670, speed: 4.7, damage: 100, coins: 35 },
+      tank: { name: 'Танк', emoji: '🧟‍♀️', overlay: '🛡️', hp: 2700, speed: 7.0, damage: 200, coins: 100 }
     };
 
-    // ============================================
-    // DOM
-    // ============================================
     var fieldEl = document.getElementById('field');
     var seedsBar = document.getElementById('seedsBar');
     var sunCountEl = document.getElementById('sunCount');
@@ -492,9 +341,6 @@
 
     var seedCooldowns = {};
 
-    // ============================================
-    // РАСЧЁТ ПОЛЯ
-    // ============================================
     function calcField() {
       var wrap = fieldEl.parentElement;
       var rect = wrap.getBoundingClientRect();
@@ -502,8 +348,6 @@
       state.fieldH = rect.height;
       state.cellW = state.fieldW / COLS;
       state.cellH = state.fieldH / ROWS;
-      state.fieldLeft = 0;
-      state.fieldTop = 0;
     }
 
     function cellCenter(col, row) {
@@ -513,9 +357,6 @@
       };
     }
 
-    // ============================================
-    // СЕТКА
-    // ============================================
     function buildGrid() {
       fieldEl.innerHTML = '';
       for (var r = 0; r < ROWS; r++) {
@@ -536,9 +377,6 @@
       }
     }
 
-    // ============================================
-    // ГАЗОНОКОСИЛКИ
-    // ============================================
     function buildMowers() {
       state.mowers.forEach(function(m) { if (m.el) m.el.remove(); });
       state.mowers = [];
@@ -556,9 +394,7 @@
       updateMowers();
     }
 
-    function updateMowers() {
-      mowersLeftEl.textContent = state.mowersLeft;
-    }
+    function updateMowers() { mowersLeftEl.textContent = state.mowersLeft; }
 
     function triggerMower(row) {
       var m = state.mowers[row];
@@ -588,9 +424,6 @@
       return true;
     }
 
-    // ============================================
-    // СЕМЕНА UI
-    // ============================================
     function buildSeedsUI() {
       seedsBar.innerHTML = '';
       for (var key in PLANT_TYPES) {
@@ -612,11 +445,7 @@
 
     function selectSeed(type) {
       if (!state.running) return;
-      if (state.selectedSeed === type) {
-        state.selectedSeed = null;
-      } else {
-        state.selectedSeed = type;
-      }
+      state.selectedSeed = state.selectedSeed === type ? null : type;
       state.shovelMode = false;
       updateSeedsUI();
       updateShovel();
@@ -639,13 +468,8 @@
       });
     }
 
-    // ============================================
-    // ПОСАДКА
-    // ============================================
     function tryPlantAt(col, row) {
-      if (state.plants.find(function(p) { return p.col === col && p.row === row; })) {
-        return false;
-      }
+      if (state.plants.find(function(p) { return p.col === col && p.row === row; })) return false;
       var type = state.selectedSeed;
       if (!type) return false;
       var p = PLANT_TYPES[type];
@@ -684,7 +508,7 @@
       updateSeedsUI();
       if (!state.firstPlaced) {
         state.firstPlaced = true;
-        showToast('🌱 Первое растение!');
+        showToast('🌱 Волна через 30 сек!');
       }
       return true;
     }
@@ -695,12 +519,7 @@
       if (i >= 0) state.plants.splice(i, 1);
     }
 
-    // ============================================
-    // СОЛНЦЕ
-    // ============================================
-    function updateSun() {
-      sunCountEl.textContent = state.sun;
-    }
+    function updateSun() { sunCountEl.textContent = state.sun; }
 
     function spawnFallingSun() {
       if (!state.running || state.gameOver) return;
@@ -713,10 +532,7 @@
       fieldEl.appendChild(el);
       var sun = { id: state.nextSunId++, el: el, collected: false, value: 25 };
       state.suns.push(sun);
-      el.addEventListener('click', function(e) {
-        e.stopPropagation();
-        collectSun(sun);
-      });
+      el.addEventListener('click', function(e) { e.stopPropagation(); collectSun(sun); });
     }
 
     function collectSun(sun) {
@@ -742,15 +558,9 @@
       fieldEl.appendChild(el);
       var sun = { id: state.nextSunId++, el: el, collected: false, value: 25 };
       state.suns.push(sun);
-      el.addEventListener('click', function(e) {
-        e.stopPropagation();
-        collectSun(sun);
-      });
+      el.addEventListener('click', function(e) { e.stopPropagation(); collectSun(sun); });
     }
 
-    // ============================================
-    // ЗОМБИ
-    // ============================================
     function spawnZombie(type) {
       var zt = ZOMBIE_TYPES[type];
       if (!zt) return;
@@ -789,7 +599,6 @@
       hpEl.style.top = (cy + 34) + 'px';
       fieldEl.appendChild(hpEl);
 
-      // скорость: секунд на клетку → пикселей в секунду
       var speedPxPerSec = state.cellW / zt.speed;
 
       state.zombies.push({
@@ -800,12 +609,8 @@
         hp: zt.hp, maxHp: zt.hp,
         speed: speedPxPerSec,
         damage: zt.damage,
-        el: el,
-        hpEl: hpEl,
-        hpBgEl: hpBg,
-        eating: false,
-        dead: false,
-        slowUntil: 0,
+        el: el, hpEl: hpEl, hpBgEl: hpBg,
+        eating: false, dead: false, slowUntil: 0,
         def: zt
       });
     }
@@ -833,9 +638,6 @@
       }
     }
 
-    // ============================================
-    // ПУЛИ
-    // ============================================
     function spawnBullet(plant) {
       var p = plant.def;
       var el = document.createElement('div');
@@ -849,22 +651,14 @@
       fieldEl.appendChild(el);
       state.bullets.push({
         id: state.nextBulletId++,
-        x: plant.x,
-        y: plant.y,
-        row: plant.row,
-        dmg: p.attack,
-        slow: !!p.slow,
-        speed: p.projectileSpeed || 350,
-        el: el
+        x: plant.x, y: plant.y, row: plant.row,
+        dmg: p.attack, slow: !!p.slow,
+        speed: p.projectileSpeed || 350, el: el
       });
     }
 
-    // ============================================
-    // ВЗРЫВ
-    // ============================================
     function explodeCherry(plant) {
       var p = plant.def;
-      // визуальный эффект
       var el = document.createElement('div');
       el.style.position = 'absolute';
       el.style.width = '240px';
@@ -875,11 +669,9 @@
       el.style.top = (plant.y - 120) + 'px';
       el.style.zIndex = '20';
       el.style.pointerEvents = 'none';
-      el.style.animation = 'explode 0.6s ease-out forwards';
       fieldEl.appendChild(el);
       setTimeout(function() { el.remove(); }, 700);
 
-      // урон всем зомби в радиусе 1.5 клетки
       var toKill = [];
       state.zombies.forEach(function(z) {
         if (z.dead) return;
@@ -893,9 +685,6 @@
       removePlant(plant);
     }
 
-    // ============================================
-    // ИГРОВОЙ ЦИКЛ
-    // ============================================
     function gameLoop(timestamp) {
       if (!state.running) return;
       if (!state.lastTime) state.lastTime = timestamp;
@@ -903,24 +692,17 @@
       state.lastTime = timestamp;
       var now = Date.now();
 
-      // растения
       state.plants.forEach(function(p) {
         var def = p.def;
         if (!def) return;
-
-        // бомба
         if (p.bomb && now > p.bombTime) {
           explodeCherry(p);
           return;
         }
-
-        // подсолнух
         if (def.sunProduction && now - p.lastSun > def.sunProduction) {
           p.lastSun = now;
           spawnPlantSun(p);
         }
-
-        // стрельба
         if (def.attack && now - p.lastShot > def.fireRate) {
           var hasTarget = state.zombies.some(function(z) {
             return z.row === p.row && z.x > p.x && !z.dead;
@@ -928,14 +710,11 @@
           if (hasTarget) {
             p.lastShot = now;
             spawnBullet(p);
-            if (def.double) {
-              setTimeout(function() { spawnBullet(p); }, 150);
-            }
+            if (def.double) setTimeout(function() { spawnBullet(p); }, 150);
           }
         }
       });
 
-      // пули
       state.bullets.forEach(function(b) {
         b.x += b.speed * dt;
         b.el.style.left = (b.x - 7) + 'px';
@@ -957,18 +736,14 @@
         }
       });
 
-      // зомби
       state.zombies.forEach(function(z) {
         if (z.dead) return;
         var slowFactor = (z.slowUntil && Date.now() < z.slowUntil) ? 0.5 : 1;
-
-        // есть ли растение впереди?
         var plantHere = state.plants.find(function(p) {
           return p.row === z.row &&
                  Math.abs(p.x - z.x) < state.cellW * 0.6 &&
                  p.x < z.x + state.cellW * 0.4;
         });
-
         if (plantHere) {
           z.eating = true;
           plantHere.hp -= z.damage * dt;
@@ -984,13 +759,9 @@
           z.hpEl.style.left = (z.x - 25) + 'px';
           z.hpBgEl.style.left = (z.x - 25) + 'px';
         }
-
-        // дошёл до края
         if (z.x < 0) {
           var worked = triggerMower(z.row);
-          if (!worked) {
-            endGame(false);
-          }
+          if (!worked) endGame(false);
           z.dead = true;
           z.el.remove();
           if (z.hpEl) z.hpEl.remove();
@@ -1002,55 +773,39 @@
         return !z.dead || z.el.parentElement;
       });
 
-      // солнце падает
-      if (now - state.lastSunDrop > 10000) {
+      // солнце каждые 5 секунд (было 10)
+      if (now - state.lastSunDrop > 5000) {
         state.lastSunDrop = now;
         spawnFallingSun();
       }
 
-      // волны
       updateWaves(now);
-
       requestAnimationFrame(gameLoop);
     }
 
-    // ============================================
-    // ВОЛНЫ
-    // ============================================
     function updateWaves(now) {
-      // первая волна — через 10 сек после первого растения
+      // первая волна через 30 сек после первого растения (было 10)
       if (state.lastWave === 0) {
         if (!state.firstPlaced) return;
-        state.lastWave = now + 10000;
+        state.lastWave = now + 30000;
         return;
       }
-
       if (now > state.lastWave) {
         var aliveZombies = state.zombies.filter(function(z) { return !z.dead; }).length;
-
-        // победа: все волны пройдены и зомби мертвы
         if (state.wave >= state.totalWaves) {
-          if (aliveZombies === 0) {
-            endGame(true);
-            return;
-          }
+          if (aliveZombies === 0) { endGame(true); return; }
           state.lastWave = now + 1000;
           return;
         }
-
         state.wave++;
         waveNumEl.textContent = state.wave;
         startWave();
-
-        // между волнами 25 сек (или 15 если убито 50%)
         state.lastWave = now + 25000;
       }
     }
 
     function startWave() {
       var w = state.wave;
-
-      // Количество зомби в волне — нарастает плавно
       var count;
       if (w === 1) count = 1;
       else if (w === 2) count = 2;
@@ -1063,7 +818,6 @@
       else if (w === 9) count = 17;
       else count = 22;
 
-      // Флаг-волна каждые 5
       var isBig = w % 5 === 0;
       if (isBig) count = Math.floor(count * 1.3);
 
@@ -1071,24 +825,19 @@
       state.waveSpawned = 0;
 
       showToast(isBig ? '🔥 БОЛЬШАЯ ВОЛНА ' + w + '!' : 'Волна ' + w);
-
-      // спавним зомби волны
       spawnWaveZombies();
     }
 
     function spawnWaveZombies() {
       if (!state.running || state.gameOver) return;
       if (state.waveSpawned >= state.waveTarget) return;
-
       var alive = state.zombies.filter(function(z) { return !z.dead; }).length;
       var maxAlive = 8 + state.wave;
       if (alive >= maxAlive) return;
-
       var now = Date.now();
       if (state._lastSpawn && now - state._lastSpawn < 2000) return;
       state._lastSpawn = now;
 
-      // выбор типа
       var w = state.wave;
       var pool;
       if (w === 1) pool = ['normal'];
@@ -1102,14 +851,9 @@
       var type = pool[Math.floor(Math.random() * pool.length)];
       spawnZombie(type);
       state.waveSpawned++;
-
-      // вызываем следующий спавн через 2 сек
       setTimeout(spawnWaveZombies, 2000);
     }
 
-    // ============================================
-    // КЛИКИ
-    // ============================================
     function handleFieldClick(e) {
       if (!state.running) return;
       var rect = fieldEl.getBoundingClientRect();
@@ -1118,7 +862,6 @@
       var col = Math.floor(x / state.cellW);
       var row = Math.floor(y / state.cellH);
       if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
-
       if (state.shovelMode) {
         var p = state.plants.find(function(pp) { return pp.col === col && pp.row === row; });
         if (p) { removePlant(p); showToast('Убрано'); }
@@ -1134,9 +877,6 @@
       else shovelBtn.classList.remove('selected');
     }
 
-    // ============================================
-    // TOAST
-    // ============================================
     function showToast(text) {
       toastEl.textContent = text;
       toastEl.classList.remove('show');
@@ -1144,9 +884,6 @@
       toastEl.classList.add('show');
     }
 
-    // ============================================
-    // ФИНАЛ
-    // ============================================
     function endGame(won) {
       if (state.gameOver) return;
       state.gameOver = true;
@@ -1154,7 +891,7 @@
       if (won) {
         endTitle.textContent = '🏆 Победа!';
         endTitle.classList.remove('lose');
-        endText.innerHTML = 'Ты отбил все 10 волн! Зомби не прорвались в дом.<br>Газонокосилок осталось: ' + state.mowersLeft + '.';
+        endText.innerHTML = 'Ты отбил все 10 волн! Зомби не прорвались.<br>Газонокосилок осталось: ' + state.mowersLeft + '.';
       } else {
         endTitle.textContent = '💀 Поражение';
         endTitle.classList.add('lose');
@@ -1163,11 +900,8 @@
       endOverlay.classList.add('show');
     }
 
-    // ============================================
-    // СТАРТ
-    // ============================================
     function startGame() {
-      state.sun = 50;
+      state.sun = 150;
       state.wave = 0;
       state.running = true;
       state.gameOver = false;
@@ -1177,7 +911,6 @@
       state.waveSpawned = 0;
       state.waveTarget = 0;
 
-      // очистка
       state.plants.forEach(function(p) { p.el.remove(); });
       state.zombies.forEach(function(z) {
         z.el.remove();
@@ -1214,9 +947,6 @@
       }, 50);
     }
 
-    // ============================================
-    // СОБЫТИЯ
-    // ============================================
     fieldEl.addEventListener('click', handleFieldClick);
     fieldEl.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
