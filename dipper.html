@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Гравити Фолз · Дневник Диппера</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; background: #1a0a20; touch-action: none; }
+
+  .hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; font-weight: 700; z-index: 10; pointer-events: none; gap: 5px; flex-wrap: wrap; }
+  .hud .stat { background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 20px; border: 1px solid #3a1a4a; }
+  .hud .hp { color: #ff5c8a; }
+  .hud .pages { color: #5ecbff; }
+  .hud .coins { color: #ffd24a; }
+  .hud .lvl { color: #a78bfa; }
+  .hud .loc { color: #6ee37c; }
+
+  .quest-panel {
+    position: fixed; top: 60px; left: 12px;
+    background: rgba(0,0,0,0.7);
+    border: 2px solid #ffd24a;
+    border-radius: 12px;
+    padding: 10px 14px;
+    max-width: 260px;
+    font-size: 12px;
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+  }
+  .quest-panel.show { display: block; }
+  .quest-panel .q-title { color: #ffd24a; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
+  .quest-panel .q-text { color: #d8d8e8; line-height: 1.4; }
+
+  .weapon-bar {
+    position: fixed; bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 6px;
+    padding: 6px 10px;
+    background: rgba(10, 5, 16, 0.85);
+    border: 2px solid #3a1a4a;
+    border-radius: 16px;
+    z-index: 15;
+    max-width: 95vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .weapon-bar::-webkit-scrollbar { display: none; }
+  .weapon {
+    flex-shrink: 0;
+    width: 52px; height: 52px;
+    background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
+    border: 2px solid #3a1a4a;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    position: relative;
+    touch-action: manipulation;
+  }
+  .weapon.selected { border-color: #ffd24a; box-shadow: 0 0 16px rgba(255,210,74,0.8); transform: translateY(-3px); }
+  .weapon.locked { opacity: 0.3; }
+  .weapon.locked::after { content: '🔒'; position: absolute; font-size: 18px; }
+
+  .joystick {
+    position: fixed;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.08);
+    border: 3px solid rgba(255,210,74,0.5);
+    display: none;
+    pointer-events: none;
+    z-index: 30;
+    transform: translate(-50%, -50%);
+  }
+  .joystick .knob {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 65px; height: 65px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.6);
+    border: 3px solid #ffd24a;
+    box-shadow: 0 0 25px rgba(255,210,74,0.9);
+  }
+
+  .shoot-btn {
+    position: fixed;
+    bottom: 90px; right: 20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff5c8a, #8a2a4a);
+    border: 3px solid #ffd24a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    z-index: 20;
+    box-shadow: 0 0 30px rgba(255,92,138,0.6);
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .shoot-btn:active { transform: scale(0.92); }
+
+  .interact-btn {
+    position: fixed;
+    bottom: 90px; right: 110px;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5ecbff, #2a5a8a);
+    border: 3px solid #ffd24a;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: 26px;
+    z-index: 20;
+    box-shadow: 0 0 30px rgba(94,203,255,0.6);
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  .interact-btn.show { display: flex; }
+  .interact-btn:active { transform: scale(0.92); }
+
+  .dialog-box {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10, 5, 20, 0.97);
+    border-top: 4px solid #ffd24a;
+    padding: 20px 24px 26px;
+    z-index: 100;
+    display: none;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+  .dialog-box.show { display: block; }
+  .dialog-box .speaker {
+    color: #ffd24a;
+    font-weight: 900;
+    font-size: 16px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .dialog-box .text {
+    color: #e8e8f0;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .dialog-box .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dialog-box .choice {
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
+    border: 2px solid #3a1a4a;
+    border-radius: 10px;
+    color: #e8e8f0;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .dialog-box .choice:active { border-color: #ffd24a; }
+
+  .toast {
+    position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(20, 5, 15, 0.95);
+    border: 3px solid #ffd24a;
+    border-radius: 14px;
+    padding: 16px 30px;
+    font-size: 15px; font-weight: 800;
+    color: #ffd24a;
+    text-align: center;
+    z-index: 200;
+    pointer-events: none;
+    max-width: 80vw;
+  }
+  .toast.show { animation: toastPop 2s ease-out forwards; }
+  @keyframes toastPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 300;
+    padding: 20px;
+    text-align: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay h1 { font-size: 26px; color: #ffd24a; margin-bottom: 14px; letter-spacing: 2px; }
+  .overlay h1.lose { color: #ff5c8a; }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.6; max-width: 440px; margin-bottom: 20px; }
+  .overlay button {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px;
+    color: #1a0a08;
+    font-family: inherit; font-size: 14px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; margin: 4px;
+    touch-action: manipulation;
+  }
+</style>
+</head>
+<body>
+
+  <canvas id="canvas"></canvas>
+
+  <div class="hud">
+    <div class="stat hp"><span>❤️</span> <span id="hpVal">100</span></div>
+    <div class="stat lvl"><span>⭐</span> LVL <span id="lvlVal">1</span></div>
+    <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 5</span></div>
+    <div class="stat coins"><span>🪙</span> <span id="coinsVal">0</span></div>
+    <div class="stat loc"><span>📍</span> <span id="locVal">Хижина Чудес</span></div>
+  </div>
+
+  <div class="quest-panel show" id="questPanel">
+    <div class="q-title">📜 ЗАДАНИЕ</div>
+    <div class="q-text" id="questText">Найди страницы Дневника №3</div>
+  </div>
+
+  <div class="weapon-bar" id="weaponBar"></div>
+
+  <div class="joystick" id="joystick"><div class="knob" id="knob"></div></div>
+
+  <button class="interact-btn" id="interactBtn" type="button">💬</button>
+  <button class="shoot-btn" id="shootBtn" type="button">💥</button>
+
+  <div class="dialog-box" id="dialogBox">
+    <div class="speaker" id="dlgSpeaker"></div>
+    <div class="text" id="dlgText"></div>
+    <div class="choices" id="dlgChoices"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="overlay">
+    <h1 id="overlayTitle">🏆 Победа!</h1>
+    <p id="overlayText"></p>
+    <button id="restartBtn" type="button">Играть снова</button>
+  </div>
+
+  <script>
+    // ============================================================
+    // ГРАВИТИ ФОЛЗ · ДНЕВНИК ДИППЕРА · RPG
+    // ============================================================
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    var W = 0, H = 0;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    // ============================================================
+    // ОРУЖИЕ
+    // ============================================================
+    var WEAPONS = [
+      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 400, color: '#5ecbff', size: 5 },
+      { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 700, color: '#a78bfa', size: 10 },
+      { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 6, short: true },
+      { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 600, color: '#5ecbff', size: 7, slow: true },
+      { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', size: 12 }
+    ];
+
+    // ============================================================
+    // ВРАГИ
+    // ============================================================
+    var ENEMY_TYPES = {
+      gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, xp: 10, coins: 15, radius: 16 },
+      vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, xp: 20, coins: 30, radius: 18 },
+      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 60, damage: 15, xp: 35, coins: 50, radius: 20 },
+      mummy: { emoji: '🧟', hp: 200, speed: 50, damage: 20, xp: 60, coins: 80, radius: 22 },
+      water: { emoji: '🐙', hp: 350, speed: 55, damage: 25, xp: 100, coins: 130, radius: 26 },
+      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30 },
+      gideon: { emoji: '🧙', hp: 800, speed: 50, damage: 25, xp: 300, coins: 300, radius: 28, boss: true },
+      bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, xp: 1500, coins: 1000, radius: 36, boss: true }
+    };
+
+    // ============================================================
+    // КАРТЫ
+    // ============================================================
+    var TILE = 60;
+    var ROWS = 15, COLS = 20;
+
+    function makeMap(walls) {
+      var map = [];
+      for (var y = 0; y < ROWS; y++) {
+        var row = [];
+        for (var x = 0; x < COLS; x++) {
+          if (x === 0 || x === COLS - 1 || y === 0 || y === ROWS - 1) row.push(1);
+          else row.push(0);
+        }
+        map.push(row);
+      }
+      for (var i = 0; i < walls.length; i++) {
+        var w = walls[i];
+        if (w.type === 'rect') {
+          for (var yy = w.y1; yy <= w.y2; yy++)
+            for (var xx = w.x1; xx <= w.x2; xx++)
+              if (map[yy] && map[yy][xx] !== undefined) map[yy][xx] = 1;
+        } else if (w.type === 'chest') {
+          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 2;
+        } else if (w.type === 'door') {
+          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 3;
+        }
+      }
+      return map;
+    }
+
+    var LOCATIONS = [
+      {
+        id: 0,
+        name: 'Хижина Чудес',
+        floorColor: '#1a0a2a',
+        wallColor: '#6a3a8a',
+        walls: [
+          { type: 'rect', x1: 3, y1: 3, x2: 8, y2: 3 },
+          { type: 'rect', x1: 3, y1: 3, x2: 3, y2: 7 },
+          { type: 'rect', x1: 12, y1: 3, x2: 16, y2: 3 },
+          { type: 'rect', x1: 16, y1: 3, x2: 16, y2: 7 },
+          { type: 'rect', x1: 3, y1: 11, x2: 8, y2: 11 },
+          { type: 'rect', x1: 12, y1: 11, x2: 16, y2: 11 },
+          { type: 'chest', x: 5, y: 5 },
+          { type: 'chest', x: 14, y: 5 },
+          { type: 'door', x: 17, y: 7 }
+        ]
+      },
+      {
+        id: 1,
+        name: 'Тёмный лес',
+        floorColor: '#061a06',
+        wallColor: '#2a6a2a',
+        walls: [
+          { type: 'rect', x1: 4, y1: 4, x2: 5, y2: 4 },
+          { type: 'rect', x1: 8, y1: 3, x2: 8, y2: 5 },
+          { type: 'rect', x1: 12, y1: 4, x2: 13, y2: 4 },
+          { type: 'rect', x1: 15, y1: 6, x2: 15, y2: 8 },
+          { type: 'rect', x1: 4, y1: 8, x2: 4, y2: 10 },
+          { type: 'rect', x1: 7, y1: 9, x2: 9, y2: 9 },
+          { type: 'rect', x1: 12, y1: 10, x2: 12, y2: 12 },
+          { type: 'rect', x1: 16, y1: 10, x2: 17, y2: 10 },
+          { type: 'chest', x: 10, y: 5 },
+          { type: 'chest', x: 6, y: 12 },
+          { type: 'door', x: 17, y: 7 }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Озеро',
+        floorColor: '#050f20',
+        wallColor: '#3a6aa8',
+        walls: [
+          { type: 'rect', x1: 8, y1: 6, x2: 12, y2: 9 },
+          { type: 'rect', x1: 4, y1: 3, x2: 5, y2: 4 },
+          { type: 'rect', x1: 15, y1: 3, x2: 16, y2: 4 },
+          { type: 'rect', x1: 4, y1: 11, x2: 5, y2: 12 },
+          { type: 'rect', x1: 15, y1: 11, x2: 16, y2: 12 },
+          { type: 'chest', x: 3, y: 7 },
+          { type: 'chest', x: 17, y: 7 },
+          { type: 'door', x: 17, y: 7 }
+        ]
+      },
+      {
+        id: 3,
+        name: 'Подземелье',
+        floorColor: '#0a0402',
+        wallColor: '#6a3a1a',
+        walls: [
+          { type: 'rect', x1: 3, y1: 4, x2: 3, y2: 10 },
+          { type: 'rect', x1: 6, y1: 3, x2: 6, y2: 6 },
+          { type: 'rect', x1: 9, y1: 5, x2: 9, y2: 9 },
+          { type: 'rect', x1: 12, y1: 3, x2: 12, y2: 6 },
+          { type: 'rect', x1: 15, y1: 5, x2: 15, y2: 11 },
+          { type: 'rect', x1: 5, y1: 12, x2: 14, y2: 12 },
+          { type: 'chest', x: 10, y: 11 }
+        ]
+      }
+    ];
+
+    // ============================================================
+    // NPC
+    // ============================================================
+    var NPCS = [
+      {
+        location: 0,
+        x: 5 * TILE + TILE / 2,
+        y: 8 * TILE + TILE / 2,
+        emoji: '👱‍♀️',
+        name: 'Мэйбл',
+        color: '#ff8ac4',
+        dialog: {
+          text: 'Диппер! Ты нашёл ещё страницы? Где-то в лесу прячется Билл... Будь осторожен.',
+          choices: [
+            { text: 'Дай аптечку', action: 'heal' },
+            { text: 'Просто поговорить', action: 'close' }
+          ]
+        }
+      },
+      {
+        location: 0,
+        x: 14 * TILE + TILE / 2,
+        y: 8 * TILE + TILE / 2,
+        emoji: '👨‍🦳',
+        name: 'Стэн',
+        color: '#c8a060',
+        dialog: {
+          text: 'Псс, пацан. Хочешь новую пушку? Давай 100 монет — и она твоя.',
+          choices: [
+            { text: 'Купить за 100 🪙', action: 'buy' },
+            { text: 'Отказаться', action: 'close' }
+          ]
+        }
+      },
+      {
+        location: 1,
+        x: 10 * TILE + TILE / 2,
+        y: 12 * TILE + TILE / 2,
+        emoji: '🧑‍🦱',
+        name: 'Зус',
+        color: '#9ad04a',
+        dialog: {
+          text: 'Йо, Диппер! Слышал — в лесу гномы шастают. Хочешь, покажу короткую дорогу?',
+          choices: [
+            { text: 'Спасибо, Зус', action: 'heal' },
+            { text: 'Позже', action: 'close' }
+          ]
+        }
+      }
+    ];
+
+    // ============================================================
+    // СОСТОЯНИЕ
+    // ============================================================
+    var state = {
+      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0, level: 1, xp: 0, xpNext: 50, damageBonus: 0 },
+      enemies: [], bullets: [], pickups: [], particles: [],
+      pages: 0, totalPages: 5, coins: 0,
+      selected: 0,
+      unlocked: [true, false, false, false, false],
+      keys: { w: 0, a: 0, s: 0, d: 0 },
+      joy: { active: false, cx: 0, cy: 0, dx: 0, dy: 0 },
+      running: true, gameOver: false, paused: false,
+      lastTime: 0, lastShot: 0,
+      location: 0,
+      map: null,
+      chestsOpened: {},
+      waveTimer: 0, waveCount: 0,
+      nearestNpc: null,
+      dialogOpen: false,
+      quest: 'Найди 5 страниц Дневника №3',
+      bossSpawned: false
+    };
+
+    function getLocation() { return LOCATIONS[state.location]; }
+
+    // ============================================================
+    // СОХРАНЕНИЕ
+    // ============================================================
+    function saveProgress() {
+      try {
+        localStorage.setItem('dipper_rpg', JSON.stringify({
+          pages: state.pages,
+          coins: state.coins,
+          level: state.player.level,
+          xp: state.player.xp,
+          maxHp: state.player.maxHp,
+          unlocked: state.unlocked,
+          chestsOpened: state.chestsOpened,
+          location: state.location
+        }));
+      } catch (e) {}
+    }
+
+    function loadProgress() {
+      try {
+        var raw = localStorage.getItem('dipper_rpg');
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) { return null; }
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    function init() {
+      resize();
+      state.location = 0;
+      state.map = makeMap(getLocation().walls);
+      state.player.x = 10 * TILE + TILE / 2;
+      state.player.y = 8 * TILE + TILE / 2;
+      state.player.hp = state.player.maxHp;
+      state.enemies = [];
+      state.bullets = [];
+      state.pickups = [];
+      state.particles = [];
+      state.pages = 0;
+      state.coins = 0;
+      state.player.level = 1;
+      state.player.xp = 0;
+      state.player.xpNext = 50;
+      state.player.damageBonus = 0;
+      state.selected = 0;
+      state.unlocked = [true, false, false, false, false];
+      state.running = true;
+      state.gameOver = false;
+      state.lastTime = performance.now();
+      state.waveTimer = 0;
+      state.waveCount = 0;
+      state.chestsOpened = {};
+      state.nearestNpc = null;
+      state.dialogOpen = false;
+      state.bossSpawned = false;
+      buildWeapons();
+      updateHud();
+      requestAnimationFrame(loop);
+    }
+
+    // ============================================================
+    // ОРУЖИЕ UI
+    // ============================================================
+    function buildWeapons() {
+      var bar = document.getElementById('weaponBar');
+      bar.innerHTML = '';
+      for (var i = 0; i < WEAPONS.length; i++) {
+        (function(idx) {
+          var w = WEAPONS[idx];
+          var el = document.createElement('div');
+          el.className = 'weapon';
+          if (!state.unlocked[idx]) el.classList.add('locked');
+          if (idx === state.selected) el.classList.add('selected');
+          el.textContent = w.emoji;
+          el.onclick = function(ev) {
+            ev.stopPropagation();
+            if (!state.unlocked[idx]) return;
+            state.selected = idx;
+            buildWeapons();
+          };
+          bar.appendChild(el);
+        })(i);
+      }
+    }
+
+    function updateHud() {
+      document.getElementById('hpVal').textContent = Math.max(0, Math.round(state.player.hp));
+      document.getElementById('lvlVal').textContent = state.player.level;
+      document.getElementById('pagesVal').textContent = state.pages + ' / ' + state.totalPages;
+      document.getElementById('coinsVal').textContent = state.coins;
+      document.getElementById('locVal').textContent = getLocation().name;
+      document.getElementById('questText').textContent = state.quest;
+    }
+
+    // ============================================================
+    // КОЛЛИЗИИ
+    // ============================================================
+    function isWallAt(px, py) {
+      var x = Math.floor(px / TILE);
+      var y = Math.floor(py / TILE);
+      if (y < 0 || y >= state.map.length) return true;
+      if (x < 0 || x >= state.map[0].length) return true;
+      return state.map[y][x] === 1;
+    }
+
+    function canMoveTo(nx, ny, r) {
+      var pts = [
+        [nx - r, ny - r], [nx + r, ny - r],
+        [nx - r, ny + r], [nx + r, ny + r],
+        [nx, ny - r], [nx, ny + r],
+        [nx - r, ny], [nx + r, ny]
+      ];
+      for (var i = 0; i < pts.length; i++) {
+        if (isWallAt(pts[i][0], pts[i][1])) return false;
+      }
+      return true;
+    }
+
+    // ============================================================
+    // СПАВН
+    // ============================================================
+    function spawnEnemy(type) {
+      var et = ENEMY_TYPES[type];
+      var tries = 0;
+      var ex = 0, ey = 0;
+      while (tries < 60) {
+        ex = (1 + Math.random() * (state.map[0].length - 2)) * TILE;
+        ey = (1 + Math.random() * (state.map.length - 2)) * TILE;
+        var tx = Math.floor(ex / TILE);
+        var ty = Math.floor(ey / TILE);
+        if (state.map[ty] && state.map[ty][tx] === 0) {
+          var d = Math.hypot(ex - state.player.x, ey - state.player.y);
+          if (d > 250) break;
+        }
+        tries++;
+      }
+      state.enemies.push({
+        type: type, x: ex, y: ey,
+        hp: et.hp, maxHp: et.hp,
+        speed: et.speed, damage: et.damage,
+        radius: et.radius, xp: et.xp, coins: et.coins,
+        slowUntil: 0, boss: !!et.boss, dead: false
+      });
+    }
+
+    function spawnPickupAt(x, y, type) {
+      state.pickups.push({ type: type, x: x, y: y, radius: 18, collected: false });
+    }
+
+    // ============================================================
+    // ИГРОВОЙ ЦИКЛ
+    // ============================================================
+    function loop(now) {
+      if (!state.running) return;
+      var dt = Math.min(50, now - state.lastTime) / 1000;
+      state.lastTime = now;
+      if (!state.dialogOpen) update(dt, now);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt, now) {
+      var p = state.player;
+      var dx = 0, dy = 0;
+      if (state.keys.w) dy -= 1;
+      if (state.keys.s) dy += 1;
+      if (state.keys.a) dx -= 1;
+      if (state.keys.d) dx += 1;
+      if (state.joy.active) { dx += state.joy.dx; dy += state.joy.dy; }
+      var len = Math.hypot(dx, dy);
+      if (len > 1) { dx /= len; dy /= len; }
+
+      var nx = p.x + dx * p.speed * dt;
+      var ny = p.y + dy * p.speed * dt;
+      if (canMoveTo(nx, p.y, p.radius)) p.x = nx;
+      if (canMoveTo(p.x, ny, p.radius)) p.y = ny;
+
+      // цель
+      var nearest = null, best = Infinity;
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        if (e.hp <= 0) continue;
+        var d = Math.hypot(e.x - p.x, e.y - p.y);
+        if (d < best) { best = d; nearest = e; }
+      }
+      if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+
+      var w = WEAPONS[state.selected];
+      if (nearest && now - state.lastShot > w.cooldown) {
+        shoot(nearest, w);
+        state.lastShot = now;
+      }
+
+      // пули
+      for (var i = state.bullets.length - 1; i >= 0; i--) {
+        var b = state.bullets[i];
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+        if (isWallAt(b.x, b.y)) b.life = 0;
+        for (var j = 0; j < state.enemies.length; j++) {
+          var e = state.enemies[j];
+          if (e.hp <= 0) continue;
+          if (Math.hypot(e.x - b.x, e.y - b.y) < e.radius + b.radius) {
+            e.hp -= b.damage + p.damageBonus;
+            if (b.slow) e.slowUntil = now + 2000;
+            b.life = 0;
+            break;
+          }
+        }
+        if (b.x < -50 || b.x > W + 50 || b.y < -50 || b.y > H + 50) b.life = 0;
+      }
+      state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
+
+      // враги
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        if (e.hp <= 0) continue;
+        var ddx = p.x - e.x;
+        var ddy = p.y - e.y;
+        var dd = Math.hypot(ddx, ddy);
+        var slow = (e.slowUntil > now) ? 0.4 : 1;
+        if (dd > p.radius + e.radius - 4) {
+          var enx = e.x + (ddx / dd) * e.speed * slow * dt;
+          var eny = e.y + (ddy / dd) * e.speed * slow * dt;
+          if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
+          if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
+        } else {
+          p.hp -= e.damage * dt;
+          if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
+        }
+      }
+
+      // смерть
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        if (e.hp <= 0 && !e.dead) {
+          e.dead = true;
+          state.coins += e.coins;
+          addXp(e.xp);
+          if (Math.random() < 0.6) spawnPickupAt(e.x, e.y, 'coin');
+          if (e.boss && e.type === 'bill') setTimeout(function() { endGame(true); }, 500);
+          updateHud();
+        }
+      }
+      state.enemies = state.enemies.filter(function(e) { return !e.dead; });
+
+      // пикапы
+      for (var i = 0; i < state.pickups.length; i++) {
+        var pk = state.pickups[i];
+        if (pk.collected) continue;
+        if (Math.hypot(pk.x - p.x, pk.y - p.y) < p.radius + pk.radius) {
+          pk.collected = true;
+          if (pk.type === 'page') {
+            state.pages++;
+            unlockWeapon();
+            showToast('📖 Страница ' + state.pages + ' / ' + state.totalPages);
+            if (state.pages >= state.totalPages) setTimeout(spawnBoss, 1500);
+          } else if (pk.type === 'heal') {
+            p.hp = Math.min(p.maxHp, p.hp + 30);
+            showToast('🍦 +30 HP');
+          } else if (pk.type === 'coin') {
+            state.coins += 20;
+            showToast('🪙 +20');
+          }
+          updateHud();
+          saveProgress();
+        }
+      }
+      state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
+
+      // сундуки
+      var cx = Math.floor(p.x / TILE);
+      var cy = Math.floor(p.y / TILE);
+      if (state.map[cy] && state.map[cy][cx] === 2) {
+        var key = cx + ',' + cy + ',' + state.location;
+        if (!state.chestsOpened[key]) {
+          state.chestsOpened[key] = true;
+          var roll = Math.random();
+          if (roll < 0.5) { state.coins += 50; showToast('🪙 Сундук: +50'); }
+          else if (roll < 0.8) { spawnPickupAt(p.x + 40, p.y, 'heal'); showToast('🎁 Аптечка'); }
+          else { spawnPickupAt(p.x + 40, p.y, 'page'); showToast('📖 Страница рядом'); }
+          updateHud();
+          saveProgress();
+        }
+      }
+
+      // двери
+      if (state.map[cy] && state.map[cy][cx] === 3) {
+        if (!state._doorCooldown || now - state._doorCooldown > 2000) {
+          state._doorCooldown = now;
+          if (state.location < LOCATIONS.length - 1) {
+            state.location++;
+            state.map = makeMap(getLocation().walls);
+            state.enemies = [];
+            state.bullets = [];
+            state.pickups = [];
+            state.player.x = 3 * TILE + TILE / 2;
+            state.player.y = 7 * TILE + TILE / 2;
+            state.waveTimer = 2;
+            state.waveCount = 0;
+            showToast('📍 ' + getLocation().name);
+            updateHud();
+            saveProgress();
+          }
+        }
+      }
+
+      // частицы
+      for (var i = 0; i < state.particles.length; i++) {
+        var pt = state.particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.life -= dt;
+      }
+      state.particles = state.particles.filter(function(pt) { return pt.life > 0; });
+
+      // NPC — ближайший
+      state.nearestNpc = null;
+      var bestNpcDist = 80;
+      for (var i = 0; i < NPCS.length; i++) {
+        var npc = NPCS[i];
+        if (npc.location !== state.location) continue;
+        var d = Math.hypot(npc.x - p.x, npc.y - p.y);
+        if (d < bestNpcDist) {
+          bestNpcDist = d;
+          state.nearestNpc = npc;
+        }
+      }
+      var ib = document.getElementById('interactBtn');
+      if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
+      else ib.classList.remove('show');
+
+      // волны
+      state.waveTimer -= dt;
+      if (state.waveTimer <= 0) {
+        state.waveTimer = 4 + Math.random() * 2;
+        state.waveCount++;
+        var count = Math.min(3, 1 + Math.floor(state.waveCount / 5));
+        for (var i = 0; i < count; i++) {
+          var loc = state.location;
+          var pool;
+          if (loc === 0) pool = ['gnome', 'vampire'];
+          else if (loc === 1) pool = ['gnome', 'vampire', 'zombie'];
+          else if (loc === 2) pool = ['zombie', 'mummy', 'water'];
+          else pool = ['mummy', 'water', 'multibear'];
+          spawnEnemy(pool[Math.floor(Math.random() * pool.length)]);
+        }
+      }
+    }
+
+    function addXp(amount) {
+      var p = state.player;
+      p.xp += amount;
+      while (p.xp >= p.xpNext) {
+        p.xp -= p.xpNext;
+        p.level++;
+        p.xpNext = Math.floor(p.xpNext * 1.5);
+        p.maxHp += 20;
+        p.hp = p.maxHp;
+        p.damageBonus += 5;
+        showToast('⬆️ УРОВЕНЬ ' + p.level + '! +20 HP, +5 урон');
+      }
+      updateHud();
+    }
+
+    function shoot(target, w) {
+      var p = state.player;
+      var angle = Math.atan2(target.y - p.y, target.x - p.x);
+      var speed = w.short ? 300 : 600;
+      state.bullets.push({
+        x: p.x, y: p.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        damage: w.damage, radius: w.size,
+        color: w.color, slow: w.slow,
+        life: w.short ? 0.3 : 1.5
+      });
+    }
+
+    function unlockWeapon() {
+      for (var i = 0; i < state.unlocked.length; i++) {
+        if (!state.unlocked[i]) {
+          state.unlocked[i] = true;
+          showToast('🔫 Новое: ' + WEAPONS[i].name);
+          buildWeapons();
+          saveProgress();
+          return;
+        }
+      }
+    }
+
+    function spawnBoss() {
+      if (state.bossSpawned) return;
+      state.bossSpawned = true;
+      var type = 'bill';
+      var et = ENEMY_TYPES[type];
+      state.enemies.push({
+        type: type, x: W / 2, y: 100,
+        hp: et.hp, maxHp: et.hp,
+        speed: et.speed, damage: et.damage,
+        radius: et.radius, xp: et.xp, coins: et.coins,
+        slowUntil: 0, boss: true, dead: false
+      });
+      showToast('👁️ БИЛЛ ШИФР!');
+      state.quest = 'Убей Билла Шифра!';
+      updateHud();
+    }
+
+    // ============================================================
+    // ОТРИСОВКА
+    // ============================================================
+    function draw() {
+      var loc = getLocation();
+      ctx.fillStyle = loc.floorColor;
+      ctx.fillRect(0, 0, W, H);
+
+      // карта
+      for (var y = 0; y < state.map.length; y++) {
+        for (var x = 0; x < state.map[y].length; x++) {
+          var px = x * TILE;
+          var py = y * TILE;
+          var v = state.map[y][x];
+          if (v === 1) {
+            ctx.fillStyle = loc.wallColor;
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+          } else if (v === 2) {
+            ctx.font = '40px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📦', px + TILE / 2, py + TILE / 2);
+          } else if (v === 3) {
+            ctx.fillStyle = '#ffd24a';
+            ctx.fillRect(px + 10, py + 10, TILE - 20, TILE - 20);
+            ctx.font = '30px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚪', px + TILE / 2, py + TILE / 2);
+          } else {
+            if ((x + y) % 2 === 0) {
+              ctx.fillStyle = 'rgba(255,255,255,0.03)';
+              ctx.fillRect(px, py, TILE, TILE);
+            }
+          }
+        }
+      }
+
+      // NPC
+      for (var i = 0; i < NPCS.length; i++) {
+        var npc = NPCS[i];
+        if (npc.location !== state.location) continue;
+        var bob = Math.sin(performance.now() / 300) * 3;
+        ctx.font = '42px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(npc.emoji, npc.x, npc.y + bob);
+        // имя
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = npc.color;
+        ctx.fillText(npc.name, npc.x, npc.y + 40);
+        // индикатор
+        if (state.nearestNpc === npc) {
+          ctx.font = '20px sans-serif';
+          ctx.fillStyle = '#ffd24a';
+          ctx.fillText('💬', npc.x, npc.y - 40);
+        }
+      }
+
+      // пикапы
+      for (var i = 0; i < state.pickups.length; i++) {
+        var pk = state.pickups[i];
+        var bob = Math.sin(performance.now() / 200) * 3;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (pk.type === 'page') { ctx.font = '28px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
+        else if (pk.type === 'heal') { ctx.font = '26px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
+        else if (pk.type === 'coin') { ctx.font = '20px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
+      }
+
+      // враги
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        var et = ENEMY_TYPES[e.type];
+        ctx.font = (e.radius * 2.2) + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(et.emoji, e.x, e.y);
+        if (e.hp < e.maxHp) {
+          var w = e.radius * 2;
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(e.x - w/2, e.y - e.radius - 14, w, 6);
+          ctx.fillStyle = e.boss ? '#ff2a6a' : '#6ee37c';
+          ctx.fillRect(e.x - w/2, e.y - e.radius - 14, w * (e.hp / e.maxHp), 6);
+        }
+      }
+
+      // пули
+      for (var i = 0; i < state.bullets.length; i++) {
+        var b = state.bullets[i];
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // игрок
+      var p = state.player;
+      ctx.font = '40px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🧢', p.x, p.y);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = WEAPONS[state.selected].color;
+      ctx.fillRect(10, -3, 22, 6);
+      ctx.restore();
+
+      drawMinimap();
+    }
+
+    function drawMinimap() {
+      var mmSize = 110;
+      var cell = mmSize / Math.max(state.map[0].length, state.map.length);
+      var mmX = W - mmSize - 20;
+      var mmY = 60;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(mmX - 4, mmY - 4, mmSize + 8, mmSize + 8);
+      ctx.strokeStyle = '#ffd24a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(mmX - 4, mmY - 4, mmSize + 8, mmSize + 8);
+
+      for (var y = 0; y < state.map.length; y++) {
+        for (var x = 0; x < state.map[y].length; x++) {
+          var v = state.map[y][x];
+          ctx.fillStyle = v === 1 ? '#6a3a8a' : v === 2 ? '#ffd24a' : v === 3 ? '#5ecbff' : 'rgba(255,255,255,0.1)';
+          ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
+        }
+      }
+      ctx.fillStyle = '#5ecbff';
+      ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
+      ctx.fillStyle = '#ff5c8a';
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        ctx.fillRect(mmX + (e.x / TILE) * cell - 1, mmY + (e.y / TILE) * cell - 1, 2, 2);
+      }
+    }
+
+    // ============================================================
+    // ДИАЛОГИ
+    // ============================================================
+    function openDialog(npc) {
+      state.dialogOpen = true;
+      var box = document.getElementById('dialogBox');
+      document.getElementById('dlgSpeaker').textContent = npc.name;
+      document.getElementById('dlgText').textContent = npc.dialog.text;
+      var choicesEl = document.getElementById('dlgChoices');
+      choicesEl.innerHTML = '';
+      npc.dialog.choices.forEach(function(ch) {
+        var btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = ch.text;
+        btn.onclick = function() { handleChoice(ch.action, npc); };
+        choicesEl.appendChild(btn);
+      });
+      box.classList.add('show');
+    }
+
+    function handleChoice(action, npc) {
+      if (action === 'heal') {
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
+        showToast('❤️ +40 HP');
+        updateHud();
+        saveProgress();
+        closeDialog();
+      } else if (action === 'buy') {
+        if (state.coins >= 100) {
+          state.coins -= 100;
+          // разблокировать следующую пушку
+          for (var i = 0; i < state.unlocked.length; i++) {
+            if (!state.unlocked[i]) {
+              state.unlocked[i] = true;
+              showToast('🔫 Куплено: ' + WEAPONS[i].name);
+              buildWeapons();
+              break;
+            }
+          }
+          updateHud();
+          saveProgress();
+        } else {
+          showToast('🪙 Мало монет');
+        }
+        closeDialog();
+      } else {
+        closeDialog();
+      }
+    }
+
+    function closeDialog() {
+      state.dialogOpen = false;
+      document.getElementById('dialogBox').classList.remove('show');
+    }
+
+    // ============================================================
+    // ФИНАЛ
+    // ============================================================
+    function endGame(won) {
+      if (state.gameOver) return;
+      state.gameOver = true;
+      state.running = false;
+      var o = document.getElementById('overlay');
+      var t = document.getElementById('overlayTitle');
+      var x = document.getElementById('overlayText');
+      if (won) {
+        t.textContent = '🏆 Победа!';
+        t.classList.remove('lose');
+        x.innerHTML = 'Ты собрал все страницы Дневника №3 и победил Билла Шифра!<br>Уровень: ' + state.player.level + ' · Монеты: ' + state.coins;
+      } else {
+        t.textContent = '💀 Поражение';
+        t.classList.add('lose');
+        x.innerHTML = 'Монстры одолели Диппера.<br>Страниц: ' + state.pages + ' / ' + state.totalPages + ' · Уровень: ' + state.player.level;
+      }
+      o.classList.add('show');
+    }
+
+    function showToast(text) {
+      var el = document.getElementById('toast');
+      el.textContent = text;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+    }
+
+    // ============================================================
+    // УПРАВЛЕНИЕ
+    // ============================================================
+    document.addEventListener('keydown', function(e) {
+      var k = e.key.toLowerCase();
+      if (k === 'w' || k === 'ц' || k === 'arrowup') state.keys.w = 1;
+      if (k === 'a' || k === 'ф' || k === 'arrowleft') state.keys.a = 1;
+      if (k === 's' || k === 'ы' || k === 'arrowdown') state.keys.s = 1;
+      if (k === 'd' || k === 'в' || k === 'arrowright') state.keys.d = 1;
+    });
+    document.addEventListener('keyup', function(e) {
+      var k = e.key.toLowerCase();
+      if (k === 'w' || k === 'ц' || k === 'arrowup') state.keys.w = 0;
+      if (k === 'a' || k === 'ф' || k === 'arrowleft') state.keys.a = 0;
+      if (k === 's' || k === 'ы' || k === 'arrowdown') state.keys.s = 0;
+      if (k === 'd' || k === 'в' || k === 'arrowright') state.keys.d = 0;
+    });
+
+    // джойстик — на телефоне
+    var joystick = document.getElementById('joystick');
+    var knob = document.getElementById('knob');
+    var joyId = null;
+
+    function startJoy(x, y, id) {
+      state.joy.active = true;
+      state.joy.cx = x;
+      state.joy.cy = y;
+      state.joy.dx = 0;
+      state.joy.dy = 0;
+      joyId = id;
+      joystick.style.left = x + 'px';
+      joystick.style.top = y + 'px';
+      joystick.style.display = 'block';
+      knob.style.transform = 'translate(-50%, -50%)';
+    }
+    function moveJoy(x, y) {
+      if (!state.joy.active) return;
+      var dx = x - state.joy.cx;
+      var dy = y - state.joy.cy;
+      var len = Math.hypot(dx, dy);
+      var maxLen = 55;
+      var kx = len > maxLen ? (dx / len) * maxLen : dx;
+      var ky = len > maxLen ? (dy / len) * maxLen : dy;
+      knob.style.transform = 'translate(calc(-50% + ' + kx + 'px), calc(-50% + ' + ky + 'px))';
+      state.joy.dx = kx / maxLen;
+      state.joy.dy = ky / maxLen;
+    }
+    function endJoy() {
+      state.joy.active = false;
+      state.joy.dx = 0;
+      state.joy.dy = 0;
+      joystick.style.display = 'none';
+      joyId = null;
+    }
+
+    document.addEventListener('touchstart', function(e) {
+      if (state.dialogOpen) return;
+      if (e.target.closest && (e.target.closest('.weapon-bar') || e.target.closest('.shoot-btn') || e.target.closest('.interact-btn') || e.target.closest('.dialog-box') || e.target.closest('.overlay'))) return;
+      var t = e.changedTouches[0];
+      startJoy(t.clientX, t.clientY, t.identifier);
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!state.joy.active) return;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (t.identifier === joyId) { moveJoy(t.clientX, t.clientY); break; }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+      if (!state.joy.active) return;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyId) { endJoy(); break; }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchcancel', function() { endJoy(); }, { passive: false });
+
+    // мышь для компьютера
+    var mouseDown = false;
+    document.addEventListener('mousedown', function(e) {
+      if (state.dialogOpen) return;
+      if (e.target.closest && (e.target.closest('.weapon-bar') || e.target.closest('.shoot-btn') || e.target.closest('.interact-btn') || e.target.closest('.dialog-box') || e.target.closest('.overlay'))) return;
+      mouseDown = true;
+      startJoy(e.clientX, e.clientY, 'mouse');
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!mouseDown) return;
+      moveJoy(e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseup', function() {
+      if (mouseDown) { endJoy(); mouseDown = false; }
+    });
+
+    document.getElementById('shootBtn').onclick = function(e) {
+      e.stopPropagation();
+      var nearest = null, best = Infinity;
+      for (var i = 0; i < state.enemies.length; i++) {
+        var en = state.enemies[i];
+        if (en.hp <= 0) continue;
+        var d = Math.hypot(en.x - state.player.x, en.y - state.player.y);
+        if (d < best) { best = d; nearest = en; }
+      }
+      if (nearest) shoot(nearest, WEAPONS[state.selected]);
+    };
+
+    document.getElementById('interactBtn').onclick = function(e) {
+      e.stopPropagation();
+      if (state.nearestNpc) openDialog(state.nearestNpc);
+    };
+
+    document.getElementById('restartBtn').onclick = function() {
+      document.getElementById('overlay').classList.remove('show');
+      init();
+    };
+
+    // ============================================================
+    // СТАРТ
+    // ============================================================
+    init();
+  </script>
+</body>
+</html>
