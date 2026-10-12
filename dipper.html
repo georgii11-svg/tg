@@ -54,14 +54,14 @@
 
   <div class="hud">
     <div class="stat hp"><span>❤️</span> <span id="hpVal">100</span></div>
-    <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 3</span></div>
+    <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 5</span></div>
     <div class="stat coins"><span>🪙</span> <span id="coinsVal">0</span></div>
     <div class="stat loc"><span>📍</span> <span id="locVal">Хижина · 1 этаж</span></div>
   </div>
 
   <div class="quest-panel" id="questPanel">
     <div class="q-title">📜 ЗАДАНИЕ</div>
-    <div class="q-text" id="questText">Поговори с Мэйбл (Хижина, 1 этаж)</div>
+    <div class="q-text" id="questText">Поговори с Мэйбл в Хижине</div>
   </div>
 
   <div class="weapon-bar" id="weaponBar"></div>
@@ -112,7 +112,8 @@
       zombie: { emoji: '🧟‍♀️', hp: 120, speed: 50, damage: 15, xp: 35, coins: 50, radius: 20 },
       mummy: { emoji: '🧟', hp: 200, speed: 45, damage: 20, xp: 60, coins: 80, radius: 22 },
       water: { emoji: '🐙', hp: 350, speed: 50, damage: 25, xp: 100, coins: 130, radius: 26 },
-      gideon: { emoji: '🧙', hp: 800, speed: 55, damage: 25, xp: 500, coins: 500, radius: 28, boss: true }
+      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30 },
+      gideon: { emoji: '🧙', hp: 1200, speed: 55, damage: 30, xp: 500, coins: 500, radius: 30, boss: true }
     };
 
     // ============================================================
@@ -171,7 +172,7 @@
           { x: 2, y: 2, to: 2, spawnX: 21, spawnY: 14, label: '↩️ К Хижине' },
           { x: 22, y: 15, to: 4, spawnX: 2, spawnY: 2, label: '💧 К озеру' }
         ],
-        enemies: ['gnome', 'vampire'],
+        enemies: ['gnome', 'vampire', 'zombie'],
         spawn: { x: 2, y: 2 }
       },
       { name: 'Озеро', floorColor: '#0a1a3a', wallColor: '#2a4a8a',
@@ -182,7 +183,7 @@
           { x: 2, y: 2, to: 3, spawnX: 21, spawnY: 14, label: '↩️ В лес' },
           { x: 22, y: 15, to: 5, spawnX: 2, spawnY: 2, label: '🕳️ К пещере' }
         ],
-        enemies: ['zombie', 'mummy'],
+        enemies: ['zombie', 'mummy', 'water'],
         spawn: { x: 2, y: 2 }
       },
       { name: 'Пещера', floorColor: '#1a0a05', wallColor: '#4a2a10',
@@ -196,7 +197,7 @@
           { x: 2, y: 2, to: 4, spawnX: 21, spawnY: 14, label: '↩️ К озеру' },
           { x: 22, y: 15, to: 6, spawnX: 2, spawnY: 2, label: '🏘️ В городок' }
         ],
-        enemies: ['mummy', 'water'],
+        enemies: ['mummy', 'water', 'multibear'],
         spawn: { x: 2, y: 2 }
       },
       { name: 'Гравити Фолз', floorColor: '#2a2a3a', wallColor: '#6a6a7a',
@@ -210,7 +211,7 @@
           { x: 2, y: 2, to: 5, spawnX: 21, spawnY: 14, label: '↩️ К пещере' },
           { x: 22, y: 15, to: 7, spawnX: 2, spawnY: 2, label: '🏠 Дом Гидеона' }
         ],
-        enemies: ['gnome', 'vampire', 'zombie'],
+        enemies: ['gnome', 'vampire', 'zombie', 'mummy'],
         spawn: { x: 2, y: 2 }
       },
       { name: 'Дом Гидеона', floorColor: '#2a0a2a', wallColor: '#8a2a8a',
@@ -226,22 +227,31 @@
       }
     ];
 
+    // ============================================================
+    // NPC
+    // ============================================================
     var NPCS = {
       mabel: { name: 'Мэйбл', emoji: '👱‍♀️', color: '#ff8ac4', x: 12, y: 10, location: 0,
-        dialog: { text: 'Диппер! В лесу, у озера и в пещере спрятаны 3 страницы Дневника. Собери их — и найдёшь логово Гидеона!',
-          choices: [ { text: 'Дай аптечку', action: 'heal' }, { text: 'Понял', action: 'quest' } ] } },
+        dialog: { text: 'Диппер! Мы нашли 5 страниц Дневника №3, но они разбросаны по всей округе. Собери их все!',
+          choices: [ { text: 'Где искать?', action: 'quest' }, { text: 'Дай аптечку', action: 'heal' } ] } },
       stan: { name: 'Стэн', emoji: '👨‍🦳', color: '#c8a060', x: 20, y: 10, location: 0,
-        dialog: { text: 'Псс, пацан. Хочешь новую пушку? 100 монет — и она твоя.',
-          choices: [ { text: 'Купить за 100 🪙', action: 'buy' }, { text: 'Отказаться', action: 'close' } ] } },
+        dialog: { text: 'Псс, пацан. Хочешь новую пушку? Давай 300 монет — и она твоя.',
+          choices: [ { text: 'Купить за 300 🪙', action: 'buy' }, { text: 'Отказаться', action: 'close' } ] } },
       wendy: { name: 'Венди', emoji: '👩‍🦰', color: '#ff6a3a', x: 12, y: 8, location: 1,
-        dialog: { text: 'Привет, Диппер! Дом Гидеона — на юго-востоке. Иди через лес, озеро и пещеру.',
-          choices: [ { text: 'Спасибо!', action: 'close' } ] } }
+        dialog: { text: 'Привет, Диппер! Гидеон прячется в своём доме на юго-востоке. Но не суйся туда без Дневника — он тебя раздавит.',
+          choices: [ { text: 'Спасибо, Венди', action: 'close' } ] } },
+      zus: { name: 'Зус', emoji: '🧑‍🦱', color: '#9ad04a', x: 12, y: 14, location: 3,
+        dialog: { text: 'Йо, Диппер! В лесу неспокойно. Гномы, вампиры — жуть! Хочешь, подлечу?',
+          choices: [ { text: 'Спасибо, Зус', action: 'heal' }, { text: 'Позже', action: 'close' } ] } },
+      mcgucket: { name: 'МакГаккет', emoji: '👴', color: '#b8a060', x: 5, y: 14, location: 4,
+        dialog: { text: 'Я помню! Помню Гидеона! Он... он построил амулет, который блокирует выстрелы. Пока амулет активен — стреляй в него чаще, чтобы сбить щит!',
+          choices: [ { text: 'Спасибо, старик', action: 'close' } ] } }
     };
 
     var state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0, level: 1, xp: 0, xpNext: 50, damageBonus: 0 },
       enemies: [], bullets: [], pickups: [], particles: [],
-      pages: 0, totalPages: 3, coins: 0,
+      pages: 0, totalPages: 5, coins: 0,
       selected: 0,
       unlocked: [true, false, false, false, false],
       keys: { w: 0, a: 0, s: 0, d: 0 },
@@ -251,11 +261,15 @@
       location: 0,
       map: null,
       cam: { x: 0, y: 0 },
-      enemyTimer: 30,
+      enemyTimer: 20,
       nearestNpc: null,
       dialogOpen: false,
-      quest: 'Поговори с Мэйбл (Хижина, 1 этаж)',
-      gideonSpawned: false
+      questStage: 0, // 0 — Мэйбл, 1 — Стэн, 2 — Зус, 3 — страницы, 4 — Гидеон
+      quest: 'Поговори с Мэйбл в Хижине',
+      gideonSpawned: false,
+      metMabel: false,
+      metStan: false,
+      metZus: false
     };
 
     function getLocation() { return LOCATIONS[state.location]; }
@@ -304,12 +318,12 @@
       state.enemies = [];
       state.bullets = [];
       state.particles = [];
-      state.enemyTimer = 30;
+      state.enemyTimer = 15;
       state.cam.x = state.player.x - W / 2;
       state.cam.y = state.player.y - H / 2;
       showToast('📍 ' + loc.name);
       updateHud();
-      if (to === 7 && !state.gideonSpawned) {
+      if (to === 7 && !state.gideonSpawned && state.pages >= state.totalPages) {
         setTimeout(function() { spawnGideon(); }, 1000);
       }
     }
@@ -339,11 +353,15 @@
       state.running = true;
       state.gameOver = false;
       state.lastTime = performance.now();
-      state.enemyTimer = 30;
+      state.enemyTimer = 20;
       state.nearestNpc = null;
       state.dialogOpen = false;
-      state.quest = 'Поговори с Мэйбл (Хижина, 1 этаж)';
+      state.questStage = 0;
+      state.quest = 'Поговори с Мэйбл в Хижине';
       state.gideonSpawned = false;
+      state.metMabel = false;
+      state.metStan = false;
+      state.metZus = false;
       spawnPages();
       buildWeapons();
       updateHud();
@@ -351,15 +369,19 @@
     }
 
     // ============================================================
-    // СТРАНИЦЫ — на свободных клетках
+    // 5 СТРАНИЦ — спрятаны в углах
     // ============================================================
     function spawnPages() {
-      // 1-я: Тёмный лес, клетка (4, 4) — рядом с точкой входа, точно свободно
-      state.pickups.push({ type: 'page', x: 4 * TILE + TILE/2, y: 4 * TILE + TILE/2, radius: 20, collected: false, location: 3 });
-      // 2-я: Озеро, клетка (3, 3) — рядом с точкой входа
-      state.pickups.push({ type: 'page', x: 3 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 4 });
-      // 3-я: Пещера, клетка (3, 3) — рядом с точкой входа
-      state.pickups.push({ type: 'page', x: 3 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 5 });
+      // 1 — Двор Хижины, правый нижний угол
+      state.pickups.push({ type: 'page', x: 20 * TILE + TILE/2, y: 15 * TILE + TILE/2, radius: 20, collected: false, location: 2 });
+      // 2 — Тёмный лес, правый нижний угол
+      state.pickups.push({ type: 'page', x: 22 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 3 });
+      // 3 — Озеро, правый верхний угол
+      state.pickups.push({ type: 'page', x: 20 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 4 });
+      // 4 — Пещера, правый нижний угол
+      state.pickups.push({ type: 'page', x: 21 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 5 });
+      // 5 — Гравити Фолз, между домами
+      state.pickups.push({ type: 'page', x: 12 * TILE + TILE/2, y: 9 * TILE + TILE/2, radius: 20, collected: false, location: 6 });
     }
 
     function buildWeapons() {
@@ -482,7 +504,6 @@
       }
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
-      // пули
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
         b.x += b.vx * dt;
@@ -503,7 +524,6 @@
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
-      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
@@ -535,7 +555,6 @@
       }
       state.enemies = state.enemies.filter(function(e) { return !e.dead; });
 
-      // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.collected) continue;
@@ -545,8 +564,9 @@
           if (pk.type === 'page') {
             state.pages++;
             showToast('📖 Страница ' + state.pages + ' / ' + state.totalPages);
-            if (state.pages >= state.totalPages) {
-              state.quest = '🎯 Все страницы! Иди в дом Гидеона (юго-восток)';
+            if (state.pages >= state.totalPages && state.questStage < 4) {
+              state.questStage = 4;
+              state.quest = '🎯 Иди в дом Гидеона (юго-восток)';
               showToast('🎯 Иди к Гидеону!');
             }
           } else if (pk.type === 'heal') {
@@ -571,7 +591,7 @@
           if (!state._doorCooldown || now - state._doorCooldown > 1500) {
             state._doorCooldown = now;
             if (ex.to === 7 && state.pages < state.totalPages) {
-              showToast('🔒 Нужно 3 страницы');
+              showToast('🔒 Нужно 5 страниц Дневника');
               p.x -= dx * 20;
               p.y -= dy * 20;
             } else {
@@ -604,11 +624,12 @@
       if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
       else ib.classList.remove('show');
 
+      // ВРАГИ — раз в 15–20 секунд
       var loc2 = getLocation();
       if (loc2.enemies.length > 0) {
         state.enemyTimer -= dt;
         if (state.enemyTimer <= 0) {
-          state.enemyTimer = 40 + Math.random() * 20;
+          state.enemyTimer = 15 + Math.random() * 8;
           var type = loc2.enemies[Math.floor(Math.random() * loc2.enemies.length)];
           spawnEnemy(type);
         }
@@ -630,17 +651,12 @@
       updateHud();
     }
 
-    // ============================================================
-    // РУЧНАЯ СТРЕЛЬБА
-    // ============================================================
     function playerShoot() {
       if (!state.running || state.gameOver || state.dialogOpen) return;
       var p = state.player;
       var now = Date.now();
       var w = WEAPONS[state.selected];
       if (now - state.lastShot < w.cooldown) return;
-
-      // ищем врага
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -648,8 +664,6 @@
         var d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < best) { best = d; nearest = e; }
       }
-
-      // выбираем угол
       var angle;
       if (nearest) {
         angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
@@ -660,12 +674,9 @@
       }
       p.angle = angle;
       state.lastShot = now;
-
       var speed = w.short ? 350 : 650;
-      // пуля появляется в 26 пикселях впереди — НЕ внутри игрока
       var startX = p.x + Math.cos(angle) * 26;
       var startY = p.y + Math.sin(angle) * 26;
-
       state.bullets.push({
         x: startX, y: startY,
         vx: Math.cos(angle) * speed,
@@ -680,7 +691,7 @@
       state.gideonSpawned = true;
       var et = ENEMY_TYPES['gideon'];
       state.enemies.push({
-        type: 'gideon', x: state.player.x + 150, y: state.player.y,
+        type: 'gideon', x: state.player.x + 200, y: state.player.y,
         hp: et.hp, maxHp: et.hp,
         speed: et.speed, damage: et.damage,
         radius: et.radius, xp: et.xp, coins: et.coins,
@@ -760,12 +771,11 @@
         }
       }
 
-      // пикапы — с подсветкой
+      // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location) continue;
         var bob = Math.sin(performance.now() / 200) * 3;
-
         if (pk.type === 'page') {
           ctx.save();
           ctx.fillStyle = 'rgba(255,210,74,0.25)';
@@ -779,7 +789,6 @@
           ctx.stroke();
           ctx.restore();
         }
-
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         if (pk.type === 'page') {
@@ -863,17 +872,14 @@
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
-      // страницы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location || pk.type !== 'page') continue;
         ctx.fillStyle = '#ffd24a';
         ctx.fillRect(mmX + (pk.x / TILE) * cell - 2, mmY + (pk.y / TILE) * cell - 2, 4, 4);
       }
-      // игрок
       ctx.fillStyle = '#5ecbff';
       ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
-      // враги
       ctx.fillStyle = '#ff5c8a';
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -897,15 +903,34 @@
       document.getElementById('dialogBox').classList.add('show');
     }
 
+    // ЛОГИКА КВЕСТОВ
+    function advanceQuest(npc) {
+      if (npc.name === 'Мэйбл' && !state.metMabel) {
+        state.metMabel = true;
+        state.questStage = 1;
+        state.quest = 'Поговори со Стэном в Хижине';
+      } else if (npc.name === 'Стэн' && !state.metStan) {
+        state.metStan = true;
+        state.questStage = 2;
+        state.quest = 'Найди Зуса в Тёмном лесу';
+      } else if (npc.name === 'Зус' && !state.metZus) {
+        state.metZus = true;
+        state.questStage = 3;
+        state.quest = '📖 Найди 5 страниц: Двор, Лес, Озеро, Пещера, Городок';
+      }
+      updateHud();
+    }
+
     function handleChoice(action, npc) {
       if (action === 'heal') {
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
         showToast('❤️ +40 HP');
         updateHud();
+        advanceQuest(npc);
         closeDialog();
       } else if (action === 'buy') {
-        if (state.coins >= 100) {
-          state.coins -= 100;
+        if (state.coins >= 300) {
+          state.coins -= 300;
           for (var i = 0; i < state.unlocked.length; i++) {
             if (!state.unlocked[i]) {
               state.unlocked[i] = true;
@@ -916,14 +941,15 @@
           }
           updateHud();
         } else {
-          showToast('🪙 Мало монет');
+          showToast('🪙 Нужно 300 монет');
         }
+        advanceQuest(npc);
         closeDialog();
       } else if (action === 'quest') {
-        state.quest = '📖 1-я: Лес  ·  📖 2-я: Озеро  ·  📖 3-я: Пещера';
-        updateHud();
+        advanceQuest(npc);
         closeDialog();
       } else {
+        advanceQuest(npc);
         closeDialog();
       }
     }
@@ -960,9 +986,6 @@
       el.classList.add('show');
     }
 
-    // ============================================================
-    // УПРАВЛЕНИЕ
-    // ============================================================
     document.addEventListener('keydown', function(e) {
       var k = e.key.toLowerCase();
       if (k === 'w' || k === 'ц' || k === 'arrowup') state.keys.w = 1;
@@ -1057,7 +1080,6 @@
       if (mouseDown) { endJoy(); mouseDown = false; }
     });
 
-    // КНОПКА 💥 — ручная стрельба
     document.getElementById('shootBtn').addEventListener('click', function(e) {
       e.stopPropagation();
       e.preventDefault();
