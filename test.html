@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тест</title>
+<style>
+  body { background: #0a0510; color: #fff; font-family: sans-serif; padding: 40px 20px; text-align: center; }
+  button { padding: 20px 40px; font-size: 18px; background: #ffd24a; border: none; border-radius: 10px; font-weight: 900; }
+  #result { margin-top: 30px; font-size: 20px; }
+</style>
+</head>
+<body>
+  <h1>Проверка JS</h1>
+  <button id="btn">Нажми меня</button>
+  <div id="result">Пока ничего не нажато</div>
+  <script>
+    document.getElementById('btn').addEventListener('click', function() {
+      document.getElementById('result').textContent = '✅ JavaScript работает!';
+    });
+  </script>
+</body>
+</html>
