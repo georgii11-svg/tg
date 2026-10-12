@@ -10,93 +10,29 @@
   @media (orientation: portrait) {
     body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #1a0a20; color: #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
   }
-  .title-screen {
-    position: fixed; inset: 0;
-    background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 20px; z-index: 5000; text-align: center;
-  }
+  .title-screen { position: fixed; inset: 0; background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 5000; text-align: center; }
   .title-screen.hidden { display: none; }
-  .title-screen h1 {
-    font-size: 42px; letter-spacing: 4px; text-transform: uppercase;
-    background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
-    margin-bottom: 8px; line-height: 1.1;
-  }
-  .title-screen .sub {
-    font-size: 14px; letter-spacing: 3px; color: #a78bfa;
-    margin-bottom: 30px; text-transform: uppercase;
-  }
-  .title-screen p {
-    font-size: 14px; color: #b8b8d8; line-height: 1.7;
-    max-width: 480px; margin-bottom: 20px;
-  }
-  .title-screen button {
-    padding: 16px 44px; margin-top: 16px;
-    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
-    border: none; border-radius: 40px; color: #1a0a08;
-    font-family: inherit; font-size: 16px; font-weight: 800;
-    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
-    box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
-    transition: all 0.15s;
-  }
+  .title-screen h1 { font-size: 42px; letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 30px rgba(255, 210, 74, 0.5); margin-bottom: 8px; line-height: 1.1; }
+  .title-screen .sub { font-size: 14px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 30px; text-transform: uppercase; }
+  .title-screen p { font-size: 14px; color: #b8b8d8; line-height: 1.7; max-width: 480px; margin-bottom: 20px; }
+  .title-screen button { padding: 16px 44px; margin-top: 16px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4); transition: all 0.15s; }
   .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
-  .hint-block {
-    margin-top: 24px; font-size: 12px; color: #6a5a8a;
-    max-width: 400px; line-height: 1.6;
-  }
+  .hint-block { margin-top: 24px; font-size: 12px; color: #6a5a8a; max-width: 400px; line-height: 1.6; }
   #game { position: fixed; inset: 0; display: none; flex-direction: column; }
   #game.show { display: flex; }
-  .hud {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 5px 8px;
-    background: linear-gradient(180deg, #1a0a20 0%, #0a0418 100%);
-    border-bottom: 2px solid #3a1a4a;
-    font-size: 11px; z-index: 50; gap: 5px;
-  }
-  .hud .stat {
-    display: flex; align-items: center; gap: 4px;
-    background: rgba(0,0,0,0.4);
-    padding: 3px 9px; border-radius: 20px;
-    border: 1px solid #3a1a4a;
-    font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;
-  }
+  .hud { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: linear-gradient(180deg, #1a0a20 0%, #0a0418 100%); border-bottom: 2px solid #3a1a4a; font-size: 11px; z-index: 50; gap: 5px; }
+  .hud .stat { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 3px 9px; border-radius: 20px; border: 1px solid #3a1a4a; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
   .hud .stat .icon { font-size: 13px; }
   .hud .hearts { color: #ff5c8a; }
   .hud .coins { color: #ffd24a; }
   .hud .wave-info { color: #a78bfa; }
   .hud .score-info { color: #5ecbff; }
-  .back-btn {
-    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-    z-index: 60; padding: 4px 14px;
-    background: rgba(0,0,0,0.6); border: 1px solid #3a1a4a;
-    border-radius: 20px; color: #a0a0c0;
-    font-family: inherit; font-size: 10px; font-weight: 700;
-    letter-spacing: 1px; cursor: pointer;
-  }
+  .back-btn { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 60; padding: 4px 14px; background: rgba(0,0,0,0.6); border: 1px solid #3a1a4a; border-radius: 20px; color: #a0a0c0; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
   .back-btn:hover { color: #fff; border-color: #ffd24a; }
-  .seeds {
-    display: flex; gap: 5px; padding: 5px 8px;
-    background: linear-gradient(180deg, #0a0418 0%, #05020f 100%);
-    overflow-x: auto; border-bottom: 2px solid #3a1a4a;
-    scrollbar-width: none; flex-shrink: 0; min-height: 86px;
-  }
+  .seeds { display: flex; gap: 5px; padding: 5px 8px; background: linear-gradient(180deg, #0a0418 0%, #05020f 100%); overflow-x: auto; border-bottom: 2px solid #3a1a4a; scrollbar-width: none; flex-shrink: 0; min-height: 86px; }
   .seeds::-webkit-scrollbar { display: none; }
-  .seed {
-    flex-shrink: 0; width: 60px; height: 76px;
-    background: linear-gradient(180deg, #ffd24a 0%, #b8924a 100%);
-    border: 3px solid #6a4a0a; border-radius: 10px;
-    padding: 3px; display: flex; flex-direction: column;
-    align-items: center; justify-content: space-between;
-    cursor: pointer; transition: all 0.15s ease;
-    position: relative; box-shadow: 0 4px 0 #4a3a0a;
-  }
-  .seed.selected {
-    border-color: #ffd24a;
-    box-shadow: 0 0 20px rgba(255, 210, 74, 0.8), 0 4px 0 #4a3a0a;
-    transform: translateY(-2px);
-  }
+  .seed { flex-shrink: 0; width: 60px; height: 76px; background: linear-gradient(180deg, #ffd24a 0%, #b8924a 100%); border: 3px solid #6a4a0a; border-radius: 10px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s ease; position: relative; box-shadow: 0 4px 0 #4a3a0a; }
+  .seed.selected { border-color: #ffd24a; box-shadow: 0 0 20px rgba(255, 210, 74, 0.8), 0 4px 0 #4a3a0a; transform: translateY(-2px); }
   .seed.disabled { opacity: 0.35; cursor: not-allowed; }
   .seed .seed-emoji { font-size: 24px; line-height: 1; }
   .seed .seed-name { font-size: 6.5px; color: #1a0a08; font-weight: 800; text-align: center; text-transform: uppercase; line-height: 1.1; }
@@ -106,75 +42,24 @@
   .field-wrap { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #2a1040 0%, #0a0418 100%); }
   #field { position: absolute; inset: 0; }
   .grid-cell { position: absolute; border: 1px dashed rgba(255,255,255,0.06); box-sizing: border-box; }
-  .defender {
-    position: absolute; display: flex; align-items: center; justify-content: center;
-    font-size: 38px; line-height: 1; z-index: 5;
-    animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border-radius: 50%;
-  }
+  .defender { position: absolute; display: flex; align-items: center; justify-content: center; font-size: 38px; line-height: 1; z-index: 5; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 50%; }
   @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
   .defender.shooting { animation: shoot 0.2s ease; }
   @keyframes shoot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-  .bullet {
-    position: absolute; width: 14px; height: 14px;
-    background: radial-gradient(circle at 30% 30%, #ffe88a, #d4a020);
-    border-radius: 50%; box-shadow: 0 0 12px #ffd24a;
-    z-index: 3; pointer-events: none;
-  }
-  .enemy {
-    position: absolute; font-size: 40px; line-height: 1;
-    z-index: 4; display: flex; align-items: center; justify-content: center;
-  }
+  .bullet { position: absolute; width: 14px; height: 14px; background: radial-gradient(circle at 30% 30%, #ffe88a, #d4a020); border-radius: 50%; box-shadow: 0 0 12px #ffd24a; z-index: 3; pointer-events: none; }
+  .enemy { position: absolute; font-size: 40px; line-height: 1; z-index: 4; display: flex; align-items: center; justify-content: center; }
   .enemy.hit { filter: brightness(2.5) saturate(0); }
   .enemy.dying { animation: die 0.6s ease-out forwards; }
-  @keyframes die {
-    0% { transform: rotate(0deg); opacity: 1; }
-    100% { transform: rotate(90deg) translateY(30px); opacity: 0; }
-  }
+  @keyframes die { 0% { transform: rotate(0deg); opacity: 1; } 100% { transform: rotate(90deg) translateY(30px); opacity: 0; } }
   .enemy-hp { position: absolute; height: 4px; background: #ff4040; border-radius: 2px; z-index: 6; pointer-events: none; transition: width 0.15s; }
   .enemy-hp-bg { position: absolute; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; z-index: 5; pointer-events: none; }
-  .coin {
-    position: absolute; width: 32px; height: 32px;
-    background: radial-gradient(circle, #ffe066 0%, #d4a020 100%);
-    border-radius: 50%;
-    box-shadow: 0 0 15px #ffd24a;
-    cursor: pointer; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    animation: coinFloat 2s ease-in-out infinite;
-  }
-  @keyframes coinFloat {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-  }
+  .coin { position: absolute; width: 32px; height: 32px; background: radial-gradient(circle, #ffe066 0%, #d4a020 100%); border-radius: 50%; box-shadow: 0 0 15px #ffd24a; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 16px; animation: coinFloat 2s ease-in-out infinite; }
+  @keyframes coinFloat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
   .coin.collected { animation: coinCollect 0.4s ease-out forwards; }
   @keyframes coinCollect { to { transform: scale(2) translateY(-60px); opacity: 0; } }
-  .explosion {
-    position: absolute; width: 240px; height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #fff 0%, #ffd24a 30%, #ff5c8a 60%, transparent 80%);
-    z-index: 20; pointer-events: none;
-    animation: explode 0.7s ease-out forwards;
-  }
-  @keyframes explode {
-    0% { transform: scale(0); opacity: 1; }
-    100% { transform: scale(2.5); opacity: 0; }
-  }
-  .bill-warning {
-    position: fixed; top: 40%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    z-index: 200;
-    padding: 22px 46px;
-    background: linear-gradient(135deg, #2a0a0a, #4a0a2a);
-    border: 3px solid #ffd24a;
-    border-radius: 16px;
-    color: #ffd24a; font-size: 22px; font-weight: 900;
-    letter-spacing: 4px; text-transform: uppercase;
-    text-align: center;
-    box-shadow: 0 0 50px rgba(255, 210, 74, 0.7);
-    pointer-events: none;
-    animation: billPop 3s ease-out forwards;
-  }
+  .explosion { position: absolute; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #ffd24a 30%, #ff5c8a 60%, transparent 80%); z-index: 20; pointer-events: none; animation: explode 0.7s ease-out forwards; }
+  @keyframes explode { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+  .bill-warning { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 200; padding: 22px 46px; background: linear-gradient(135deg, #2a0a0a, #4a0a2a); border: 3px solid #ffd24a; border-radius: 16px; color: #ffd24a; font-size: 22px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; text-align: center; box-shadow: 0 0 50px rgba(255, 210, 74, 0.7); pointer-events: none; animation: billPop 3s ease-out forwards; }
   @keyframes billPop {
     0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
     15% { transform: translate(-50%, -50%) scale(1.15) rotate(3deg); opacity: 1; }
@@ -182,18 +67,7 @@
     85% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 0; }
   }
-  .toast {
-    position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: rgba(20, 5, 15, 0.95);
-    border: 3px solid #ffd24a;
-    border-radius: 14px;
-    padding: 18px 32px; font-size: 18px; font-weight: 800;
-    color: #ffd24a; text-align: center; letter-spacing: 2px;
-    z-index: 200; pointer-events: none;
-    box-shadow: 0 0 40px rgba(255, 210, 74, 0.5);
-    max-width: 80vw;
-  }
+  .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(20, 5, 15, 0.95); border: 3px solid #ffd24a; border-radius: 14px; padding: 18px 32px; font-size: 18px; font-weight: 800; color: #ffd24a; text-align: center; letter-spacing: 2px; z-index: 200; pointer-events: none; box-shadow: 0 0 40px rgba(255, 210, 74, 0.5); max-width: 80vw; }
   .toast.show { animation: toastPop 2s ease-out forwards; }
   @keyframes toastPop {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
@@ -202,12 +76,7 @@
     85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.92);
-    display: none; align-items: center; justify-content: center;
-    flex-direction: column; z-index: 300;
-    padding: 20px; text-align: center;
-  }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 300; padding: 20px; text-align: center; }
   .overlay.show { display: flex; }
   .overlay h1 { font-size: 30px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; text-shadow: 0 0 25px rgba(255,210,74,0.6); }
   .overlay h1.lose { color: #ff5c8a; text-shadow: 0 0 25px rgba(255,92,138,0.6); }
@@ -243,7 +112,7 @@
   <div id="game">
     <div class="hud">
       <div class="stat hearts"><span class="icon">❤️</span><span id="heartsVal">3</span></div>
-      <div class="stat coins"><span class="icon">🪙</span><span id="coinsVal">50</span></div>
+      <div class="stat coins"><span class="icon">🪙</span><span id="coinsVal">100</span></div>
       <div class="stat score-info"><span class="icon">⭐</span><span id="scoreVal">0</span></div>
       <div class="stat wave-info"><span class="icon">🌊</span><span id="waveNum">1 / 8</span></div>
     </div>
@@ -270,50 +139,52 @@
       cols: 5,
       rows: 4,
       totalWaves: 8,
-      startingCoins: 50,
+      startingCoins: 100,
       startingHearts: 3,
-      coinDropInterval: 8000,
+      coinDropInterval: 4000,
       coinValue: 25,
       firstWaveDelay: 10000,
-      waveInterval: 25000,
-      baseEnemySpeed: 14.0,   // секунд на клетку — медленно
+      waveInterval: 22000,
+      baseEnemySpeed: 14.0,
     };
 
     // ================== ЗАЩИТНИКИ ==================
     const DEFENDER_TYPES = {
-      dipper: {
-        name: 'Стрелок', emoji: '🔵', cost: 100, hp: 6, attack: 20,
-        fireRate: 1400, projectileSpeed: 400, targetRows: 1
-      },
       mabel: {
-        name: 'Дневник', emoji: '🌸', cost: 50, hp: 5, attack: 0,
-        coinProduction: 24000
+        name: 'Дневник', emoji: '🌸', cost: 25, hp: 5, attack: 0,
+        coinProduction: 10000
+      },
+      dipper: {
+        name: 'Стрелок', emoji: '🔵', cost: 75, hp: 6, attack: 20,
+        fireRate: 1200, projectileSpeed: 400, targetRows: 1
       },
       shack: {
         name: 'Хижина', emoji: '🏠', cost: 50, hp: 4000, attack: 0
       },
       icecream: {
-        name: 'Мороженое', emoji: '🍦', cost: 75, hp: 1, attack: 0,
-        heal: 1
+        name: 'Мороженое', emoji: '🍦', cost: 50, hp: 1, attack: 0, heal: 1
       },
       gnome: {
-        name: 'Гномик', emoji: '🧙', cost: 175, hp: 6, attack: 20,
-        fireRate: 1200, projectileSpeed: 400, targetRows: 3
+        name: 'Гномик', emoji: '🧙', cost: 125, hp: 6, attack: 20,
+        fireRate: 1000, projectileSpeed: 400, targetRows: 3
       },
       bomb: {
-        name: 'Бомба', emoji: '💥', cost: 150, hp: 1, attack: 0, bomb: true
+        name: 'Бомба', emoji: '💥', cost: 100, hp: 1, attack: 0, bomb: true
       }
     };
 
-    // ================== ВРАГИ ==================
+    // ================== ВРАГИ (HP СНИЖЕН В 10 РАЗ) ==================
+    // Обычный гном — 27 HP. 27 / 20 = 2 горошины с одного стрелка.
+    // Мультиберал — 200 HP. 10 горошин.
+    // Билл — 1500 HP. 75 горошин.
     const ENEMY_TYPES = {
-      gnome: { emoji: '👺', hp: 270, speedMult: 1.0, damage: 4, weight: 1, coins: 10 },
-      zombie: { emoji: '🧟‍♀️', hp: 640, speedMult: 1.0, damage: 5, weight: 2, coins: 25 },
-      mummy: { emoji: '🧟', overlay: '🪦', hp: 1370, speedMult: 1.0, damage: 6, weight: 4, coins: 50 },
-      water: { emoji: '🐙', hp: 1670, speedMult: 1.88, damage: 4, weight: 6, coins: 75 },
-      multibear: { emoji: '🐻', overlay: '🧔', hp: 2700, speedMult: 1.0, damage: 8, weight: 10, coins: 150 },
-      vampire: { emoji: '🧛', hp: 900, speedMult: 1.27, damage: 5, weight: 3, coins: 40 },
-      bill: { emoji: '👁️', overlay: '🔺', hp: 15000, speedMult: 1.0, damage: 15, weight: 20, coins: 500, isBoss: true }
+      gnome: { emoji: '👺', hp: 27, speedMult: 1.0, damage: 4, weight: 1, coins: 15 },
+      vampire: { emoji: '🧛', hp: 45, speedMult: 1.27, damage: 5, weight: 2, coins: 25 },
+      zombie: { emoji: '🧟‍♀️', hp: 64, speedMult: 1.0, damage: 5, weight: 3, coins: 35 },
+      mummy: { emoji: '🧟', overlay: '🪦', hp: 90, speedMult: 0.9, damage: 6, weight: 5, coins: 50 },
+      water: { emoji: '🐙', hp: 130, speedMult: 1.5, damage: 5, weight: 7, coins: 75 },
+      multibear: { emoji: '🐻', overlay: '🧔', hp: 200, speedMult: 0.8, damage: 10, weight: 12, coins: 120 },
+      bill: { emoji: '👁️', overlay: '🔺', hp: 1500, speedMult: 0.7, damage: 15, weight: 30, coins: 500, isBoss: true }
     };
 
     // ================== СОСТОЯНИЕ ==================
@@ -333,13 +204,11 @@
       nextId: 1,
       lastCoinDrop: 0,
       lastWave: 0,
-      lastEnemySpawn: 0,
+      _lastSpawn: 0,
       waveSpawned: 0,
       waveTarget: 0,
       waveKilled: 0,
-      waveEnemiesTotal: 0,
-      firstPlaced: false,
-      _lastSpawn: 0
+      firstPlaced: false
     };
 
     // ================== DOM ==================
@@ -361,7 +230,6 @@
     let fieldRect = { width: 0, height: 0, cellW: 0, cellH: 0 };
     const seedCooldowns = {};
 
-    // ================== ЭКРАН СТАРТА ==================
     document.getElementById('startBtn').addEventListener('click', () => {
       titleScreen.classList.add('hidden');
       gameEl.classList.add('show');
@@ -379,7 +247,6 @@
       state.firstPlaced = false;
       state._lastSpawn = 0;
 
-      // очистка
       state.defenders.forEach(d => d.el.remove());
       state.enemies.forEach(e => { e.el.remove(); if (e.hpEl) e.hpEl.remove(); if (e.hpBgEl) e.hpBgEl.remove(); });
       state.bullets.forEach(b => b.el.remove());
@@ -402,7 +269,6 @@
       }, 100);
     }
 
-    // ================== ПОЛЕ ==================
     function calcField() {
       const wrap = fieldEl.parentElement;
       fieldRect.width = wrap.clientWidth;
@@ -433,7 +299,6 @@
       }
     }
 
-    // ================== СЕМЕНА UI ==================
     function buildSeedsUI() {
       seedsBar.innerHTML = '';
       for (const key in DEFENDER_TYPES) {
@@ -464,7 +329,6 @@
       });
     }
 
-    // ================== HUD ==================
     function updateHUD() {
       heartsVal.textContent = state.hearts;
       coinsVal.textContent = state.coins;
@@ -472,7 +336,6 @@
       waveNum.textContent = state.wave + ' / ' + CONFIG.totalWaves;
     }
 
-    // ================== РАЗМЕЩЕНИЕ ==================
     function tryPlaceAt(col, row) {
       if (state.defenders.find(d => d.col === col && d.row === row)) return false;
       const type = state.selectedDefender;
@@ -481,7 +344,6 @@
       if (state.coins < p.cost) { showToast('Мало монет'); return false; }
       if (Date.now() < (seedCooldowns[type] || 0)) { showToast('Перезарядка'); return false; }
 
-      // мороженое лечит
       if (p.heal) {
         state.hearts = Math.min(CONFIG.startingHearts, state.hearts + p.heal);
         state.coins -= p.cost;
@@ -493,7 +355,7 @@
       }
 
       state.coins -= p.cost;
-      seedCooldowns[type] = Date.now() + 3000;
+      seedCooldowns[type] = Date.now() + 2000;
       updateHUD();
 
       const center = cellCenter(col, row);
@@ -509,7 +371,7 @@
         id: state.nextId++, col, row, type, hp: p.hp, maxHp: p.hp,
         el, x: center.x, y: center.y,
         lastShot: Date.now(), lastCoin: Date.now(),
-        bomb: p.bomb && true, bombTime: p.bomb ? Date.now() + 1200 : 0,
+        bomb: !!p.bomb, bombTime: p.bomb ? Date.now() + 1200 : 0,
         def: p
       });
 
@@ -525,7 +387,6 @@
       if (i >= 0) state.defenders.splice(i, 1);
     }
 
-    // ================== ВРАГИ ==================
     function spawnEnemy(type) {
       const et = ENEMY_TYPES[type];
       if (!et) return;
@@ -583,7 +444,7 @@
         state.coins += Math.floor((e.coins || 10) / 2);
         updateHUD();
         updateSeedsUI();
-        // выпадает монета
+        // ГАРАНТИРОВАННАЯ монета с каждого врага
         spawnCoinAt(e.x, e.row);
         setTimeout(() => {
           e.el.remove();
@@ -593,9 +454,7 @@
       }
     }
 
-    // ================== МОНЕТЫ ==================
     function spawnCoinAt(x, row) {
-      if (Math.random() > 0.6) return;
       const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
       const el = document.createElement('div');
       el.className = 'coin';
@@ -645,7 +504,6 @@
       }, 400);
     }
 
-    // ================== ВЫСТРЕЛЫ ==================
     function spawnBullet(defender, targetRow) {
       const d = defender.def;
       const row = targetRow !== undefined ? targetRow : defender.row;
@@ -662,7 +520,6 @@
       });
     }
 
-    // ================== ВЗРЫВ ==================
     function explode(defender) {
       const el = document.createElement('div');
       el.className = 'explosion';
@@ -678,7 +535,6 @@
       });
     }
 
-    // ================== ИГРОВОЙ ЦИКЛ ==================
     function gameLoop(timestamp) {
       if (!state.running) return;
       if (!state.lastFrameTime) state.lastFrameTime = timestamp;
@@ -686,7 +542,6 @@
       state.lastFrameTime = timestamp;
       const now = Date.now();
 
-      // защитники
       state.defenders.forEach(d => {
         const def = d.def;
         if (d.bomb && now > d.bombTime) { explode(d); removeDefender(d); return; }
@@ -716,7 +571,6 @@
         }
       });
 
-      // пули
       state.bullets.forEach(b => {
         b.x += b.speed * dt;
         b.el.style.left = (b.x - 7) + 'px';
@@ -737,7 +591,6 @@
         }
       });
 
-      // враги
       state.enemies.forEach(e => {
         if (e.dead) return;
         const defenderHere = state.defenders.find(d =>
@@ -769,7 +622,6 @@
 
       state.enemies = state.enemies.filter(e => !e.dead || e.el.parentElement);
 
-      // монеты с неба
       if (now - state.lastCoinDrop > CONFIG.coinDropInterval) {
         state.lastCoinDrop = now;
         spawnFallingCoin();
@@ -779,7 +631,6 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // ================== ВОЛНЫ ==================
     function updateWaves(now) {
       if (state.lastWave === 0) {
         if (!state.firstPlaced || state.defenders.length === 0) return;
@@ -803,22 +654,22 @@
     }
 
     function startWave() {
-      const waveNum = state.wave;
+      const w = state.wave;
       let weight;
-      if (waveNum === 1) weight = 1;
-      else if (waveNum === 2) weight = 2;
-      else if (waveNum === 3) weight = 3;
-      else if (waveNum === 4) weight = 5;
-      else if (waveNum === 5) weight = 8;
-      else weight = Math.floor(8 + (waveNum - 5) * 2);
-      if (waveNum === CONFIG.totalWaves) weight = 25; // финал с боссом
+      if (w === 1) weight = 2;
+      else if (w === 2) weight = 3;
+      else if (w === 3) weight = 5;
+      else if (w === 4) weight = 7;
+      else if (w === 5) weight = 10;
+      else if (w === 6) weight = 12;
+      else if (w === 7) weight = 15;
+      else weight = 20;
+
       state.waveTarget = weight;
       state.waveSpawned = 0;
       state.waveKilled = 0;
-      state.waveEnemiesTotal = 0;
 
-      // БИЛЛ ШИФР
-      if (waveNum === CONFIG.totalWaves) {
+      if (w === CONFIG.totalWaves) {
         showBillWarning();
         setTimeout(() => {
           if (state.gameOver) return;
@@ -826,7 +677,7 @@
           state.waveSpawned++;
         }, 2000);
       }
-      showToast(waveNum === CONFIG.totalWaves ? '👁️ БИЛЛ ШИФР!' : 'Волна ' + waveNum);
+      showToast(w === CONFIG.totalWaves ? '👁️ БИЛЛ ШИФР!' : 'Волна ' + w);
     }
 
     function showBillWarning() {
@@ -843,25 +694,21 @@
       const alive = state.enemies.filter(e => !e.dead).length;
       if (alive >= 6 + state.wave) return;
       const now = Date.now();
-      if (state._lastSpawn && now - state._lastSpawn < 2500) return;
+      if (state._lastSpawn && now - state._lastSpawn < 2200) return;
       state._lastSpawn = now;
 
-      // выбор типа
       let pool;
       if (state.wave <= 1) pool = ['gnome'];
       else if (state.wave <= 2) pool = ['gnome', 'vampire'];
       else if (state.wave <= 3) pool = ['gnome', 'vampire', 'zombie'];
       else if (state.wave <= 5) pool = ['gnome', 'vampire', 'zombie', 'mummy'];
-      else if (state.wave < CONFIG.totalWaves) pool = ['gnome', 'vampire', 'zombie', 'mummy', 'water', 'multibear'];
       else pool = ['gnome', 'vampire', 'zombie', 'mummy', 'water', 'multibear'];
 
       const type = pool[Math.floor(Math.random() * pool.length)];
       spawnEnemy(type);
       state.waveSpawned++;
-      state.waveEnemiesTotal++;
     }
 
-    // ================== КЛИКИ ==================
     function handleFieldClick(e) {
       if (!state.running) return;
       const rect = fieldEl.getBoundingClientRect();
@@ -876,7 +723,6 @@
     fieldEl.addEventListener('click', handleFieldClick);
     fieldEl.addEventListener('contextmenu', e => e.preventDefault());
 
-    // ================== TOAST ==================
     function showToast(text) {
       toastEl.textContent = text;
       toastEl.classList.remove('show');
@@ -884,7 +730,6 @@
       toastEl.classList.add('show');
     }
 
-    // ================== ФИНАЛ ==================
     function endGame(won) {
       if (state.gameOver) return;
       state.gameOver = true;
