@@ -13,10 +13,8 @@
   .hud .hp { color: #ff5c8a; }
   .hud .pages { color: #5ecbff; }
   .hud .coins { color: #ffd24a; }
-  .hud .lvl { color: #a78bfa; }
   .hud .loc { color: #6ee37c; }
-  .quest-panel { position: fixed; top: 60px; left: 12px; background: rgba(0,0,0,0.7); border: 2px solid #ffd24a; border-radius: 12px; padding: 10px 14px; max-width: 260px; font-size: 12px; z-index: 10; pointer-events: none; display: none; }
-  .quest-panel.show { display: block; }
+  .quest-panel { position: fixed; top: 60px; left: 12px; background: rgba(0,0,0,0.75); border: 2px solid #ffd24a; border-radius: 12px; padding: 10px 14px; max-width: 260px; font-size: 12px; z-index: 10; pointer-events: none; }
   .quest-panel .q-title { color: #ffd24a; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
   .quest-panel .q-text { color: #d8d8e8; line-height: 1.4; }
   .weapon-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; background: rgba(10, 5, 16, 0.85); border: 2px solid #3a1a4a; border-radius: 16px; z-index: 15; max-width: 95vw; overflow-x: auto; scrollbar-width: none; }
@@ -56,15 +54,14 @@
 
   <div class="hud">
     <div class="stat hp"><span>❤️</span> <span id="hpVal">100</span></div>
-    <div class="stat lvl"><span>⭐</span> LVL <span id="lvlVal">1</span></div>
-    <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 5</span></div>
+    <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 3</span></div>
     <div class="stat coins"><span>🪙</span> <span id="coinsVal">0</span></div>
-    <div class="stat loc"><span>📍</span> <span id="locVal">Хижина Чудес</span></div>
+    <div class="stat loc"><span>📍</span> <span id="locVal">Хижина · 1 этаж</span></div>
   </div>
 
-  <div class="quest-panel show" id="questPanel">
+  <div class="quest-panel" id="questPanel">
     <div class="q-title">📜 ЗАДАНИЕ</div>
-    <div class="q-text" id="questText">Найди страницы Дневника №3</div>
+    <div class="q-text" id="questText">Поговори с Мэйбл в Хижине</div>
   </div>
 
   <div class="weapon-bar" id="weaponBar"></div>
@@ -97,6 +94,13 @@
     }
     window.addEventListener('resize', resize);
 
+    var TILE = 60;
+    var MAP_COLS = 25;
+    var MAP_ROWS = 18;
+
+    // ============================================================
+    // ОРУЖИЕ
+    // ============================================================
     var WEAPONS = [
       { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 400, color: '#5ecbff', size: 5 },
       { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 700, color: '#a78bfa', size: 10 },
@@ -105,123 +109,238 @@
       { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', size: 12 }
     ];
 
+    // ============================================================
+    // ВРАГИ
+    // ============================================================
     var ENEMY_TYPES = {
-      gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, xp: 10, coins: 15, radius: 16 },
-      vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, xp: 20, coins: 30, radius: 18 },
-      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 60, damage: 15, xp: 35, coins: 50, radius: 20 },
-      mummy: { emoji: '🧟', hp: 200, speed: 50, damage: 20, xp: 60, coins: 80, radius: 22 },
-      water: { emoji: '🐙', hp: 350, speed: 55, damage: 25, xp: 100, coins: 130, radius: 26 },
+      gnome: { emoji: '👺', hp: 40, speed: 60, damage: 8, xp: 10, coins: 15, radius: 16 },
+      vampire: { emoji: '🧛', hp: 80, speed: 75, damage: 12, xp: 20, coins: 30, radius: 18 },
+      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 50, damage: 15, xp: 35, coins: 50, radius: 20 },
+      mummy: { emoji: '🧟', hp: 200, speed: 45, damage: 20, xp: 60, coins: 80, radius: 22 },
+      water: { emoji: '🐙', hp: 350, speed: 50, damage: 25, xp: 100, coins: 130, radius: 26 },
       multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30 },
-      gideon: { emoji: '🧙', hp: 800, speed: 50, damage: 25, xp: 300, coins: 300, radius: 28, boss: true },
+      gideon: { emoji: '🧙', hp: 800, speed: 55, damage: 25, xp: 500, coins: 500, radius: 28, boss: true },
       bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, xp: 1500, coins: 1000, radius: 36, boss: true }
     };
 
-    var TILE = 60;
-    var ROWS = 15, COLS = 20;
-
-    function makeMap(walls) {
-      var map = [];
-      for (var y = 0; y < ROWS; y++) {
-        var row = [];
-        for (var x = 0; x < COLS; x++) {
-          if (x === 0 || x === COLS - 1 || y === 0 || y === ROWS - 1) row.push(1);
-          else row.push(0);
-        }
-        map.push(row);
-      }
-      for (var i = 0; i < walls.length; i++) {
-        var w = walls[i];
-        if (w.type === 'rect') {
-          for (var yy = w.y1; yy <= w.y2; yy++)
-            for (var xx = w.x1; xx <= w.x2; xx++)
-              if (map[yy] && map[yy][xx] !== undefined) map[yy][xx] = 1;
-        } else if (w.type === 'chest') {
-          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 2;
-        } else if (w.type === 'door') {
-          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 3;
-        }
-      }
-      return map;
-    }
-
+    // ============================================================
+    // ЛОКАЦИИ (8 зон)
+    // ============================================================
     var LOCATIONS = [
+      // 0. Хижина, 1 этаж
       {
-        id: 0, name: 'Хижина Чудес',
-        floorColor: '#1a0a2a', wallColor: '#6a3a8a',
+        name: 'Хижина · 1 этаж',
+        floorColor: '#3a1a2a',
+        wallColor: '#8a5a3a',
         walls: [
-          { type: 'rect', x1: 3, y1: 3, x2: 8, y2: 3 },
-          { type: 'rect', x1: 3, y1: 3, x2: 3, y2: 7 },
-          { type: 'rect', x1: 12, y1: 3, x2: 16, y2: 3 },
-          { type: 'rect', x1: 16, y1: 3, x2: 16, y2: 7 },
-          { type: 'rect', x1: 3, y1: 11, x2: 8, y2: 11 },
-          { type: 'rect', x1: 12, y1: 11, x2: 16, y2: 11 },
-          { type: 'chest', x: 5, y: 5 },
-          { type: 'chest', x: 14, y: 5 },
-          { type: 'door', x: 17, y: 7 }
-        ]
+          // стены комнат
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // внутренние стены
+          { x1: 8, y1: 1, x2: 8, y2: 6 },
+          { x1: 15, y1: 1, x2: 15, y2: 6 },
+          { x1: 8, y1: 8, x2: 15, y2: 8 },
+          { x1: 8, y1: 8, x2: 8, y2: 14 },
+          { x1: 15, y1: 8, x2: 15, y2: 14 }
+        ],
+        exits: [
+          // лестница на 2 этаж — вверху справа
+          { x: 20, y: 2, to: 1, spawnX: 20, spawnY: 15, label: '⬆️ Вверх' },
+          // дверь наружу — внизу слева
+          { x: 3, y: 15, to: 2, spawnX: 3, spawnY: 2, label: '🚪 Наружу' }
+        ],
+        enemies: [],
+        npcs: ['mabel', 'stan'],
+        spawn: { x: 12, y: 12 }
       },
+      // 1. Хижина, 2 этаж
       {
-        id: 1, name: 'Тёмный лес',
-        floorColor: '#061a06', wallColor: '#2a6a2a',
+        name: 'Хижина · 2 этаж',
+        floorColor: '#3a1a2a',
+        wallColor: '#8a5a3a',
         walls: [
-          { type: 'rect', x1: 4, y1: 4, x2: 5, y2: 4 },
-          { type: 'rect', x1: 8, y1: 3, x2: 8, y2: 5 },
-          { type: 'rect', x1: 12, y1: 4, x2: 13, y2: 4 },
-          { type: 'rect', x1: 15, y1: 6, x2: 15, y2: 8 },
-          { type: 'rect', x1: 4, y1: 8, x2: 4, y2: 10 },
-          { type: 'rect', x1: 7, y1: 9, x2: 9, y2: 9 },
-          { type: 'rect', x1: 12, y1: 10, x2: 12, y2: 12 },
-          { type: 'rect', x1: 16, y1: 10, x2: 17, y2: 10 },
-          { type: 'chest', x: 10, y: 5 },
-          { type: 'chest', x: 6, y: 12 },
-          { type: 'door', x: 17, y: 7 }
-        ]
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // две комнаты
+          { x1: 12, y1: 1, x2: 12, y2: 16 }
+        ],
+        exits: [
+          { x: 20, y: 15, to: 0, spawnX: 20, spawnY: 3, label: '⬇️ Вниз' }
+        ],
+        enemies: [],
+        npcs: ['wendy'],
+        spawn: { x: 20, y: 15 }
       },
+      // 2. Двор Хижины
       {
-        id: 2, name: 'Озеро',
-        floorColor: '#050f20', wallColor: '#3a6aa8',
+        name: 'Двор Хижины',
+        floorColor: '#1a3a1a',
+        wallColor: '#3a6a3a',
         walls: [
-          { type: 'rect', x1: 8, y1: 6, x2: 12, y2: 9 },
-          { type: 'rect', x1: 4, y1: 3, x2: 5, y2: 4 },
-          { type: 'rect', x1: 15, y1: 3, x2: 16, y2: 4 },
-          { type: 'rect', x1: 4, y1: 11, x2: 5, y2: 12 },
-          { type: 'rect', x1: 15, y1: 11, x2: 16, y2: 12 },
-          { type: 'chest', x: 3, y: 7 },
-          { type: 'chest', x: 17, y: 7 },
-          { type: 'door', x: 17, y: 7 }
-        ]
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // тотемные столбы
+          { x1: 10, y1: 5, x2: 10, y2: 5 },
+          { x1: 14, y1: 10, x2: 14, y2: 10 },
+          { x1: 8, y1: 11, x2: 8, y2: 11 }
+        ],
+        exits: [
+          { x: 3, y: 2, to: 0, spawnX: 3, spawnY: 14, label: '🚪 В Хижину' },
+          { x: 22, y: 15, to: 3, spawnX: 2, spawnY: 2, label: '🌲 В лес' }
+        ],
+        enemies: ['gnome'],
+        npcs: [],
+        spawn: { x: 3, y: 3 }
       },
+      // 3. Тёмный лес
       {
-        id: 3, name: 'Подземелье',
-        floorColor: '#0a0402', wallColor: '#6a3a1a',
+        name: 'Тёмный лес',
+        floorColor: '#0a1a0a',
+        wallColor: '#1a4a1a',
         walls: [
-          { type: 'rect', x1: 3, y1: 4, x2: 3, y2: 10 },
-          { type: 'rect', x1: 6, y1: 3, x2: 6, y2: 6 },
-          { type: 'rect', x1: 9, y1: 5, x2: 9, y2: 9 },
-          { type: 'rect', x1: 12, y1: 3, x2: 12, y2: 6 },
-          { type: 'rect', x1: 15, y1: 5, x2: 15, y2: 11 },
-          { type: 'rect', x1: 5, y1: 12, x2: 14, y2: 12 },
-          { type: 'chest', x: 10, y: 11 }
-        ]
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // деревья
+          { x1: 5, y1: 4, x2: 6, y2: 4 },
+          { x1: 10, y1: 3, x2: 10, y2: 5 },
+          { x1: 15, y1: 4, x2: 16, y2: 4 },
+          { x1: 4, y1: 9, x2: 4, y2: 11 },
+          { x1: 9, y1: 9, x2: 11, y2: 9 },
+          { x1: 15, y1: 10, x2: 15, y2: 12 },
+          { x1: 19, y1: 6, x2: 20, y2: 6 }
+        ],
+        exits: [
+          { x: 2, y: 2, to: 2, spawnX: 21, spawnY: 14, label: '↩️ К Хижине' },
+          { x: 22, y: 15, to: 4, spawnX: 2, spawnY: 2, label: '💧 К озеру' }
+        ],
+        enemies: ['gnome', 'vampire'],
+        npcs: ['zus'],
+        spawn: { x: 2, y: 2 }
+      },
+      // 4. Озеро
+      {
+        name: 'Озеро',
+        floorColor: '#0a1a3a',
+        wallColor: '#2a4a8a',
+        walls: [
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // вода в центре
+          { x1: 8, y1: 6, x2: 15, y2: 10 }
+        ],
+        exits: [
+          { x: 2, y: 2, to: 3, spawnX: 21, spawnY: 14, label: '↩️ В лес' },
+          { x: 22, y: 15, to: 5, spawnX: 2, spawnY: 2, label: '🕳️ К пещере' }
+        ],
+        enemies: ['zombie', 'mummy'],
+        npcs: [],
+        spawn: { x: 2, y: 2 }
+      },
+      // 5. Пещера
+      {
+        name: 'Пещера',
+        floorColor: '#1a0a05',
+        wallColor: '#4a2a10',
+        walls: [
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          { x1: 6, y1: 4, x2: 6, y2: 8 },
+          { x1: 12, y1: 3, x2: 12, y2: 7 },
+          { x1: 17, y1: 5, x2: 17, y2: 11 },
+          { x1: 8, y1: 11, x2: 14, y2: 11 }
+        ],
+        exits: [
+          { x: 2, y: 2, to: 4, spawnX: 21, spawnY: 14, label: '↩️ К озеру' },
+          { x: 22, y: 15, to: 6, spawnX: 2, spawnY: 2, label: '🏘️ В городок' }
+        ],
+        enemies: ['mummy', 'water'],
+        npcs: [],
+        spawn: { x: 2, y: 2 }
+      },
+      // 6. Гравити Фолз (городок)
+      {
+        name: 'Гравити Фолз',
+        floorColor: '#2a2a3a',
+        wallColor: '#6a6a7a',
+        walls: [
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // дома
+          { x1: 5, y1: 4, x2: 9, y2: 8 },
+          { x1: 14, y1: 4, x2: 18, y2: 8 },
+          { x1: 5, y1: 11, x2: 9, y2: 14 },
+          { x1: 14, y1: 11, x2: 18, y2: 14 }
+        ],
+        exits: [
+          { x: 2, y: 2, to: 5, spawnX: 21, spawnY: 14, label: '↩️ К пещере' },
+          { x: 22, y: 15, to: 7, spawnX: 2, spawnY: 2, label: '🏠 Дом Гидеона' }
+        ],
+        enemies: ['gnome', 'vampire', 'zombie'],
+        npcs: [],
+        spawn: { x: 2, y: 2 }
+      },
+      // 7. Дом Гидеона — финальная арена
+      {
+        name: 'Дом Гидеона',
+        floorColor: '#2a0a2a',
+        wallColor: '#8a2a8a',
+        walls: [
+          { x1: 1, y1: 1, x2: 23, y2: 1 },
+          { x1: 1, y1: 1, x2: 1, y2: 16 },
+          { x1: 23, y1: 1, x2: 23, y2: 16 },
+          { x1: 1, y1: 16, x2: 23, y2: 16 },
+          // алтарь
+          { x1: 10, y1: 7, x2: 14, y2: 7 },
+          { x1: 10, y1: 10, x2: 14, y2: 10 }
+        ],
+        exits: [
+          { x: 2, y: 2, to: 6, spawnX: 21, spawnY: 14, label: '↩️ В городок' }
+        ],
+        enemies: [],
+        npcs: [],
+        spawn: { x: 2, y: 2 }
       }
     ];
 
-    var NPCS = [
-      { location: 0, x: 5 * TILE + TILE / 2, y: 8 * TILE + TILE / 2, emoji: '👱‍♀️', name: 'Мэйбл', color: '#ff8ac4',
-        dialog: { text: 'Диппер! Ты нашёл ещё страницы? Где-то в лесу прячется Билл... Будь осторожен.',
-          choices: [ { text: 'Дай аптечку', action: 'heal' }, { text: 'Просто поговорить', action: 'close' } ] } },
-      { location: 0, x: 14 * TILE + TILE / 2, y: 8 * TILE + TILE / 2, emoji: '👨‍🦳', name: 'Стэн', color: '#c8a060',
-        dialog: { text: 'Псс, пацан. Хочешь новую пушку? Давай 100 монет — и она твоя.',
+    // ============================================================
+    // NPC
+    // ============================================================
+    var NPCS = {
+      mabel: { name: 'Мэйбл', emoji: '👱‍♀️', color: '#ff8ac4', x: 12, y: 10, location: 0,
+        dialog: { text: 'Диппер! В лесу спрятаны 3 страницы Дневника. Собери их — и найдёшь логово Гидеона!',
+          choices: [ { text: 'Дай аптечку', action: 'heal' }, { text: 'Понял', action: 'close' } ] } },
+      stan: { name: 'Стэн', emoji: '👨‍🦳', color: '#c8a060', x: 20, y: 10, location: 0,
+        dialog: { text: 'Псс, пацан. Хочешь новую пушку? 100 монет — и она твоя.',
           choices: [ { text: 'Купить за 100 🪙', action: 'buy' }, { text: 'Отказаться', action: 'close' } ] } },
-      { location: 1, x: 10 * TILE + TILE / 2, y: 12 * TILE + TILE / 2, emoji: '🧑‍🦱', name: 'Зус', color: '#9ad04a',
-        dialog: { text: 'Йо, Диппер! Слышал — в лесу гномы шастают. Хочешь, подлечу?',
-          choices: [ { text: 'Спасибо, Зус', action: 'heal' }, { text: 'Позже', action: 'close' } ] } }
-    ];
+      zus: { name: 'Зус', emoji: '🧑‍🦱', color: '#9ad04a', x: 12, y: 12, location: 3,
+        dialog: { text: 'Йо, Диппер! Осторожно в лесу — тут гномы. Хочешь, подлечу?',
+          choices: [ { text: 'Спасибо, Зус', action: 'heal' }, { text: 'Позже', action: 'close' } ] } },
+      wendy: { name: 'Венди', emoji: '👩‍🦰', color: '#ff6a3a', x: 12, y: 8, location: 1,
+        dialog: { text: 'Привет, Диппер! Ты уже нашёл страницы? Если да — иди в дом Гидеона. Это юго-восток карты.',
+          choices: [ { text: 'Спасибо!', action: 'close' } ] } }
+    };
 
+    // ============================================================
+    // СОСТОЯНИЕ
+    // ============================================================
     var state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0, level: 1, xp: 0, xpNext: 50, damageBonus: 0 },
       enemies: [], bullets: [], pickups: [], particles: [],
-      pages: 0, totalPages: 5, coins: 0,
+      pages: 0, totalPages: 3, coins: 0,
       selected: 0,
       unlocked: [true, false, false, false, false],
       keys: { w: 0, a: 0, s: 0, d: 0 },
@@ -232,67 +351,127 @@
       map: null,
       cam: { x: 0, y: 0 },
       chestsOpened: {},
-      waveTimer: 0, waveCount: 0,
+      enemyTimer: 0,
       nearestNpc: null,
       dialogOpen: false,
-      quest: 'Найди 5 страниц Дневника №3',
-      bossSpawned: false
+      quest: 'Поговори с Мэйбл в Хижине',
+      gideonDefeated: false
     };
 
     function getLocation() { return LOCATIONS[state.location]; }
 
-    function saveProgress() {
-      try {
-        localStorage.setItem('dipper_rpg', JSON.stringify({
-          pages: state.pages, coins: state.coins,
-          level: state.player.level, xp: state.player.xp,
-          maxHp: state.player.maxHp, unlocked: state.unlocked,
-          chestsOpened: state.chestsOpened
-        }));
-      } catch (e) {}
-    }
-
-    function findSafeStart() {
-      var cx = Math.floor(COLS / 2);
-      var cy = Math.floor(ROWS / 2);
-      for (var r = 0; r < 20; r++) {
+    function findSafeStart(locId, spawnX, spawnY) {
+      var loc = LOCATIONS[locId];
+      var map = makeMap(loc.walls);
+      // если клетка свободна — используем
+      if (map[spawnY] && map[spawnY][spawnX] === 0) {
+        return { x: spawnX, y: spawnY };
+      }
+      // иначе ищем ближайшую свободную
+      for (var r = 1; r < 15; r++) {
         for (var dy = -r; dy <= r; dy++) {
           for (var dx = -r; dx <= r; dx++) {
-            var x = cx + dx;
-            var y = cy + dy;
-            if (state.map[y] && state.map[y][x] === 0) {
-              return { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 };
-            }
+            var x = spawnX + dx;
+            var y = spawnY + dy;
+            if (map[y] && map[y][x] === 0) return { x: x, y: y };
           }
         }
       }
-      return { x: 3 * TILE + TILE / 2, y: 7 * TILE + TILE / 2 };
+      return { x: 2, y: 2 };
     }
 
+    function makeMap(walls) {
+      var map = [];
+      for (var y = 0; y < MAP_ROWS; y++) {
+        var row = [];
+        for (var x = 0; x < MAP_COLS; x++) {
+          row.push(0);
+        }
+        map.push(row);
+      }
+      // обрамление
+      for (var x = 0; x < MAP_COLS; x++) { map[0][x] = 1; map[MAP_ROWS-1][x] = 1; }
+      for (var y = 0; y < MAP_ROWS; y++) { map[y][0] = 1; map[y][MAP_COLS-1] = 1; }
+      // стены
+      for (var i = 0; i < walls.length; i++) {
+        var w = walls[i];
+        for (var yy = w.y1; yy <= w.y2; yy++) {
+          for (var xx = w.x1; xx <= w.x2; xx++) {
+            if (map[yy] && map[yy][xx] !== undefined) map[yy][xx] = 1;
+          }
+        }
+      }
+      return map;
+    }
+
+    // ============================================================
+    // ПЕРЕХОД МЕЖДУ ЛОКАЦИЯМИ
+    // ============================================================
+    function changeLocation(to, spawnX, spawnY) {
+      state.location = to;
+      var loc = getLocation();
+      state.map = makeMap(loc.walls);
+      var safe = findSafeStart(to, spawnX, spawnY);
+      state.player.x = safe.x * TILE + TILE / 2;
+      state.player.y = safe.y * TILE + TILE / 2;
+      state.enemies = [];
+      state.bullets = [];
+      state.pickups = [];
+      state.particles = [];
+      state.enemyTimer = 0;
+      // камера сразу на игрока
+      state.cam.x = state.player.x - W / 2;
+      state.cam.y = state.player.y - H / 2;
+      showToast('📍 ' + loc.name);
+      updateHud();
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
     function init() {
       resize();
       state.location = 0;
-      state.map = makeMap(getLocation().walls);
-      var start = findSafeStart();
-      state.player.x = start.x;
-      state.player.y = start.y;
+      var loc = getLocation();
+      state.map = makeMap(loc.walls);
+      state.player.x = loc.spawn.x * TILE + TILE / 2;
+      state.player.y = loc.spawn.y * TILE + TILE / 2;
       state.player.hp = state.player.maxHp;
       state.cam.x = state.player.x - W / 2;
       state.cam.y = state.player.y - H / 2;
-      state.enemies = []; state.bullets = []; state.pickups = []; state.particles = [];
-      state.pages = 0; state.coins = 0;
-      state.player.level = 1; state.player.xp = 0; state.player.xpNext = 50; state.player.damageBonus = 0;
+      state.enemies = [];
+      state.bullets = [];
+      state.pickups = [];
+      state.particles = [];
+      state.pages = 0;
+      state.coins = 0;
+      state.player.level = 1;
+      state.player.xp = 0;
+      state.player.xpNext = 50;
+      state.player.damageBonus = 0;
       state.selected = 0;
       state.unlocked = [true, false, false, false, false];
-      state.running = true; state.gameOver = false;
+      state.running = true;
+      state.gameOver = false;
       state.lastTime = performance.now();
-      state.waveTimer = 0; state.waveCount = 0;
+      state.enemyTimer = 20;
+      state.nearestNpc = null;
+      state.dialogOpen = false;
+      state.quest = 'Поговори с Мэйбл в Хижине';
+      state.gideonDefeated = false;
       state.chestsOpened = {};
-      state.nearestNpc = null; state.dialogOpen = false; state.bossSpawned = false;
-      state.quest = 'Найди 5 страниц Дневника №3';
+      // страницы в лесу, озере, пещере
+      spawnPages();
       buildWeapons();
       updateHud();
       requestAnimationFrame(loop);
+    }
+
+    function spawnPages() {
+      // 3 страницы в разных локациях
+      state.pickups.push({ type: 'page', x: 12 * TILE + TILE/2, y: 5 * TILE + TILE/2, radius: 18, collected: false, location: 3 });
+      state.pickups.push({ type: 'page', x: 18 * TILE + TILE/2, y: 12 * TILE + TILE/2, radius: 18, collected: false, location: 4 });
+      state.pickups.push({ type: 'page', x: 10 * TILE + TILE/2, y: 13 * TILE + TILE/2, radius: 18, collected: false, location: 5 });
     }
 
     function buildWeapons() {
@@ -319,7 +498,6 @@
 
     function updateHud() {
       document.getElementById('hpVal').textContent = Math.max(0, Math.round(state.player.hp));
-      document.getElementById('lvlVal').textContent = state.player.level;
       document.getElementById('pagesVal').textContent = state.pages + ' / ' + state.totalPages;
       document.getElementById('coinsVal').textContent = state.coins;
       document.getElementById('locVal').textContent = getLocation().name;
@@ -347,12 +525,15 @@
       return true;
     }
 
+    // ============================================================
+    // СПАВН ВРАГОВ (РЕДКО)
+    // ============================================================
     function spawnEnemy(type) {
       var et = ENEMY_TYPES[type];
       var tries = 0, ex = 0, ey = 0;
       while (tries < 60) {
-        ex = (1 + Math.random() * (state.map[0].length - 2)) * TILE;
-        ey = (1 + Math.random() * (state.map.length - 2)) * TILE;
+        ex = (1 + Math.random() * (MAP_COLS - 2)) * TILE;
+        ey = (1 + Math.random() * (MAP_ROWS - 2)) * TILE;
         var tx = Math.floor(ex / TILE);
         var ty = Math.floor(ey / TILE);
         if (state.map[ty] && state.map[ty][tx] === 0) {
@@ -371,26 +552,26 @@
     }
 
     function spawnPickupAt(x, y, type) {
-      state.pickups.push({ type: type, x: x, y: y, radius: 18, collected: false });
+      state.pickups.push({ type: type, x: x, y: y, radius: 18, collected: false, location: state.location });
     }
 
+    // ============================================================
+    // ИГРОВОЙ ЦИКЛ
+    // ============================================================
     function loop(now) {
       if (!state.running) return;
       var dt = Math.min(50, now - state.lastTime) / 1000;
       state.lastTime = now;
       if (!state.dialogOpen) update(dt, now);
 
-      // камера следит за игроком
-      var mapW = COLS * TILE;
-      var mapH = ROWS * TILE;
+      var mapW = MAP_COLS * TILE;
+      var mapH = MAP_ROWS * TILE;
       var targetCamX = state.player.x - W / 2;
       var targetCamY = state.player.y - H / 2;
-      // границы карты
       if (mapW > W) targetCamX = Math.max(0, Math.min(mapW - W, targetCamX));
       else targetCamX = (mapW - W) / 2;
       if (mapH > H) targetCamY = Math.max(0, Math.min(mapH - H, targetCamY));
       else targetCamY = (mapH - H) / 2;
-      // плавно
       state.cam.x += (targetCamX - state.cam.x) * 0.15;
       state.cam.y += (targetCamY - state.cam.y) * 0.15;
 
@@ -414,7 +595,7 @@
       if (canMoveTo(nx, p.y, p.radius)) p.x = nx;
       if (canMoveTo(p.x, ny, p.radius)) p.y = ny;
 
-      // цель
+      // цель для стрельбы
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -422,14 +603,15 @@
         var d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < best) { best = d; nearest = e; }
       }
-      if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+      if (nearest && best < 500) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
       var w = WEAPONS[state.selected];
-      if (nearest && now - state.lastShot > w.cooldown) {
+      if (nearest && best < 500 && now - state.lastShot > w.cooldown) {
         shoot(nearest, w);
         state.lastShot = now;
       }
 
+      // пули
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
         b.x += b.vx * dt;
@@ -450,13 +632,14 @@
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
+      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
         var ddx = p.x - e.x;
         var ddy = p.y - e.y;
         var dd = Math.hypot(ddx, ddy);
-        var slow = (e.slowUntil > now) ? 0.4 : 1;
+        var slow = (e.slowUntil > now) ? 0.5 : 1;
         if (dd > p.radius + e.radius - 4) {
           var enx = e.x + (ddx / dd) * e.speed * slow * dt;
           var eny = e.y + (ddy / dd) * e.speed * slow * dt;
@@ -468,82 +651,81 @@
         }
       }
 
+      // смерть врагов
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0 && !e.dead) {
           e.dead = true;
           state.coins += e.coins;
           addXp(e.xp);
-          if (Math.random() < 0.6) spawnPickupAt(e.x, e.y, 'coin');
-          if (e.boss && e.type === 'bill') setTimeout(function() { endGame(true); }, 500);
+          if (Math.random() < 0.7) spawnPickupAt(e.x, e.y, 'coin');
+          if (e.boss && e.type === 'gideon') {
+            setTimeout(function() { endGame(true); }, 500);
+          }
           updateHud();
         }
       }
       state.enemies = state.enemies.filter(function(e) { return !e.dead; });
 
+      // пикапы (только текущей локации)
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.collected) continue;
+        if (pk.location !== state.location) continue;
         if (Math.hypot(pk.x - p.x, pk.y - p.y) < p.radius + pk.radius) {
           pk.collected = true;
           if (pk.type === 'page') {
             state.pages++;
-            unlockWeapon();
             showToast('📖 Страница ' + state.pages + ' / ' + state.totalPages);
-            if (state.pages >= state.totalPages) setTimeout(spawnBoss, 1500);
+            if (state.pages >= state.totalPages) {
+              state.quest = 'Все страницы собраны! Иди в дом Гидеона (юго-восток карты)';
+              showToast('🎯 Иди в дом Гидеона!');
+            }
           } else if (pk.type === 'heal') {
             p.hp = Math.min(p.maxHp, p.hp + 30);
             showToast('🍦 +30 HP');
           } else if (pk.type === 'coin') {
             state.coins += 20;
-            showToast('🪙 +20');
           }
           updateHud();
-          saveProgress();
         }
       }
-      state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
+      // убираем собранные пикапы
+      state.pickups = state.pickups.filter(function(pk) {
+        if (pk.collected) {
+          pk.el && pk.el.remove && pk.el.remove();
+          return false;
+        }
+        return true;
+      });
 
+      // переходы между локациями
       var cx = Math.floor(p.x / TILE);
       var cy = Math.floor(p.y / TILE);
-
-      // сундуки
-      if (state.map[cy] && state.map[cy][cx] === 2) {
-        var key = cx + ',' + cy + ',' + state.location;
-        if (!state.chestsOpened[key]) {
-          state.chestsOpened[key] = true;
-          var roll = Math.random();
-          if (roll < 0.5) { state.coins += 50; showToast('🪙 Сундук: +50'); }
-          else if (roll < 0.8) { spawnPickupAt(p.x + 40, p.y, 'heal'); showToast('🎁 Аптечка'); }
-          else { spawnPickupAt(p.x + 40, p.y, 'page'); showToast('📖 Страница рядом'); }
-          updateHud();
-          saveProgress();
-        }
-      }
-
-      // двери
-      if (state.map[cy] && state.map[cy][cx] === 3) {
-        if (!state._doorCooldown || now - state._doorCooldown > 2000) {
-          state._doorCooldown = now;
-          if (state.location < LOCATIONS.length - 1) {
-            state.location++;
-            state.map = makeMap(getLocation().walls);
-            state.enemies = [];
-            state.bullets = [];
-            state.pickups = [];
-            var newStart = findSafeStart();
-            state.player.x = newStart.x;
-            state.player.y = newStart.y;
-            state.cam.x = state.player.x - W / 2;
-            state.cam.y = state.player.y - H / 2;
-            state.waveTimer = 2;
-            state.waveCount = 0;
-            showToast('📍 ' + getLocation().name);
-            updateHud();
+      var loc = getLocation();
+      for (var i = 0; i < loc.exits.length; i++) {
+        var ex = loc.exits[i];
+        if (cx === ex.x && cy === ex.y) {
+          if (!state._doorCooldown || now - state._doorCooldown > 1500) {
+            state._doorCooldown = now;
+            // проверка: если это дом Гидеона — надо иметь 3 страницы
+            if (ex.to === 7 && state.pages < state.totalPages) {
+              showToast('🔒 Нужно 3 страницы Дневника');
+              // отталкиваем игрока
+              p.x -= dx * 10;
+              p.y -= dy * 10;
+            } else {
+              changeLocation(ex.to, ex.spawnX, ex.spawnY);
+              // если это дом Гидеона — спавним босса
+              if (ex.to === 7 && !state.gideonDefeated) {
+                setTimeout(function() { spawnGideon(); }, 1000);
+              }
+            }
           }
         }
       }
 
+      // частицы
       for (var i = 0; i < state.particles.length; i++) {
         var pt = state.particles[i];
         pt.x += pt.vx * dt;
@@ -555,30 +737,29 @@
       // NPC
       state.nearestNpc = null;
       var bestNpcDist = 80;
-      for (var i = 0; i < NPCS.length; i++) {
-        var npc = NPCS[i];
+      for (var key in NPCS) {
+        var npc = NPCS[key];
         if (npc.location !== state.location) continue;
-        var d = Math.hypot(npc.x - p.x, npc.y - p.y);
-        if (d < bestNpcDist) { bestNpcDist = d; state.nearestNpc = npc; }
+        var nx2 = npc.x * TILE + TILE / 2;
+        var ny2 = npc.y * TILE + TILE / 2;
+        var d2 = Math.hypot(nx2 - p.x, ny2 - p.y);
+        if (d2 < bestNpcDist) {
+          bestNpcDist = d2;
+          state.nearestNpc = npc;
+        }
       }
       var ib = document.getElementById('interactBtn');
       if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
       else ib.classList.remove('show');
 
-      // волны
-      state.waveTimer -= dt;
-      if (state.waveTimer <= 0) {
-        state.waveTimer = 4 + Math.random() * 2;
-        state.waveCount++;
-        var count = Math.min(3, 1 + Math.floor(state.waveCount / 5));
-        for (var i = 0; i < count; i++) {
-          var loc = state.location;
-          var pool;
-          if (loc === 0) pool = ['gnome', 'vampire'];
-          else if (loc === 1) pool = ['gnome', 'vampire', 'zombie'];
-          else if (loc === 2) pool = ['zombie', 'mummy', 'water'];
-          else pool = ['mummy', 'water', 'multibear'];
-          spawnEnemy(pool[Math.floor(Math.random() * pool.length)]);
+      // редкий спавн врагов вне Хижины
+      var loc2 = getLocation();
+      if (loc2.enemies.length > 0) {
+        state.enemyTimer -= dt;
+        if (state.enemyTimer <= 0) {
+          state.enemyTimer = 40 + Math.random() * 20;
+          var type = loc2.enemies[Math.floor(Math.random() * loc2.enemies.length)];
+          spawnEnemy(type);
         }
       }
     }
@@ -593,7 +774,7 @@
         p.maxHp += 20;
         p.hp = p.maxHp;
         p.damageBonus += 5;
-        showToast('⬆️ УРОВЕНЬ ' + p.level + '! +20 HP');
+        showToast('⬆️ УРОВЕНЬ ' + p.level + '!');
       }
       updateHud();
     }
@@ -612,51 +793,38 @@
       });
     }
 
-    function unlockWeapon() {
-      for (var i = 0; i < state.unlocked.length; i++) {
-        if (!state.unlocked[i]) {
-          state.unlocked[i] = true;
-          showToast('🔫 Новое: ' + WEAPONS[i].name);
-          buildWeapons();
-          saveProgress();
-          return;
-        }
-      }
-    }
-
-    function spawnBoss() {
-      if (state.bossSpawned) return;
-      state.bossSpawned = true;
-      var et = ENEMY_TYPES['bill'];
+    function spawnGideon() {
+      var et = ENEMY_TYPES['gideon'];
       state.enemies.push({
-        type: 'bill', x: state.player.x + 200, y: state.player.y,
+        type: 'gideon', x: state.player.x + 150, y: state.player.y,
         hp: et.hp, maxHp: et.hp,
         speed: et.speed, damage: et.damage,
         radius: et.radius, xp: et.xp, coins: et.coins,
         slowUntil: 0, boss: true, dead: false
       });
-      showToast('👁️ БИЛЛ ШИФР!');
-      state.quest = 'Убей Билла Шифра!';
+      showToast('⚔️ ГИДЕОН!');
+      state.quest = 'Победи Гидеона!';
       updateHud();
     }
 
+    // ============================================================
+    // ОТРИСОВКА
+    // ============================================================
     function draw() {
       var loc = getLocation();
       ctx.fillStyle = loc.floorColor;
       ctx.fillRect(0, 0, W, H);
 
-      // сдвиг камеры
       ctx.save();
       ctx.translate(-Math.round(state.cam.x), -Math.round(state.cam.y));
 
+      // карта
       for (var y = 0; y < state.map.length; y++) {
         for (var x = 0; x < state.map[y].length; x++) {
           var px = x * TILE;
           var py = y * TILE;
-          // пропускаем то, что вне экрана
           if (px + TILE < state.cam.x || px > state.cam.x + W) continue;
           if (py + TILE < state.cam.y || py > state.cam.y + H) continue;
-
           var v = state.map[y][x];
           if (v === 1) {
             ctx.fillStyle = loc.wallColor;
@@ -664,55 +832,67 @@
             ctx.strokeStyle = 'rgba(0,0,0,0.4)';
             ctx.lineWidth = 2;
             ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
-          } else if (v === 2) {
-            ctx.font = '40px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('📦', px + TILE / 2, py + TILE / 2);
-          } else if (v === 3) {
-            ctx.fillStyle = '#ffd24a';
-            ctx.fillRect(px + 10, py + 10, TILE - 20, TILE - 20);
-            ctx.font = '30px serif';
-           ) ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🚪', px + TILE / 2, py + TILE / 2);
           } else {
             if ((x + y) % 2 === 0) {
-              ctx.fillStyle = 'rgba(255,255,255,0.03';
+              ctx.fillStyle = 'rgba(255,255,255,0.03)';
               ctx.fillRect(px, py, TILE, TILE);
             }
           }
         }
       }
 
-      for (var i = 0; i < NPCS.length; i++) {
-        var npc = NPCS[i];
+      // указатели переходов
+      var loc = getLocation();
+      for (var i = 0; i < loc.exits.length; i++) {
+        var ex = loc.exits[i];
+        var exX = ex.x * TILE + TILE / 2;
+        var exY = ex.y * TILE + TILE / 2;
+        ctx.fillStyle = 'rgba(255,210,74,0.3)';
+        ctx.fillRect(ex.x * TILE + 5, ex.y * TILE + 5, TILE - 10, TILE - 10);
+        ctx.strokeStyle = '#ffd24a';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(ex.x * TILE + 5, ex.y * TILE + 5, TILE - 10, TILE - 10);
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = '#ffd24a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(ex.label, exX, exY + 25);
+      }
+
+      // NPC
+      for (var key in NPCS) {
+        var npc = NPCS[key];
         if (npc.location !== state.location) continue;
+        var nx = npc.x * TILE + TILE / 2;
+        var ny = npc.y * TILE + TILE / 2;
         var bob = Math.sin(performance.now() / 300) * 3;
         ctx.font = '42px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(npc.emoji, npc.x, npc.y + bob);
-        ctx.font = '11px sans-serif';
+        ctx.fillText(npc.emoji, nx, ny + bob);
+        ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = npc.color;
-        ctx.fillText(npc.name, npc.x, npc.y + 40);
+        ctx.fillText(npc.name, nx, ny + 40);
         if (state.nearestNpc === npc) {
           ctx.font = '20px sans-serif';
           ctx.fillStyle = '#ffd24a';
-          ctx.fillText('💬', npc.x, npc.y - 40);
+          ctx.fillText('💬', nx, ny - 40);
         }
       }
 
+      // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
+        if (pk.location !== state.location) continue;
         var bob = Math.sin(performance.now() / 200) * 3;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if (pk.type === 'page') { ctx.font = '28px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
-        else if (pk.type === 'heal') { ctx.font = '26px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
-        else if (pk.type === 'coin') { ctx.font = '20px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
+        if (pk.type === 'page') { ctx.font = '32px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
+        else if (pk.type === 'heal') { ctx.font = '28px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
+        else if (pk.type === 'coin') { ctx.font = '22px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
       }
 
+      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         var et = ENEMY_TYPES[e.type];
@@ -729,6 +909,7 @@
         }
       }
 
+      // пули
       for (var i = 0; i < state.bullets.length; i++) {
         var b = state.bullets[i];
         ctx.fillStyle = b.color;
@@ -737,8 +918,9 @@
         ctx.fill();
       }
 
+      // игрок
       var p = state.player;
-      ctx.font = '40px serif';
+      ctx.font = '42px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🧢', p.x, p.y);
@@ -749,14 +931,14 @@
       ctx.fillRect(10, -3, 22, 6);
       ctx.restore();
 
-      ctx.restore(); // конец сдвига камеры
+      ctx.restore();
 
       drawMinimap();
     }
 
     function drawMinimap() {
       var mmSize = 110;
-      var cell = mmSize / Math.max(COLS, ROWS);
+      var cell = mmSize / Math.max(MAP_COLS, MAP_ROWS);
       var mmX = W - mmSize - 20;
       var mmY = 60;
 
@@ -769,12 +951,21 @@
       for (var y = 0; y < state.map.length; y++) {
         for (var x = 0; x < state.map[y].length; x++) {
           var v = state.map[y][x];
-          ctx.fillStyle = v === 1 ? '#6a3a8a' : v === 2 ? '#ffd24a' : v === 3 ? '#5ecbff' : 'rgba(255,255,255,0.1)';
+          ctx.fillStyle = v === 1 ? '#6a3a8a' : 'rgba(255,255,255,0.1)';
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
+      // NPC на миникарте
+      for (var key in NPCS) {
+        var npc = NPCS[key];
+        if (npc.location !== state.location) continue;
+        ctx.fillStyle = npc.color;
+        ctx.fillRect(mmX + npc.x * cell - 1, mmY + npc.y * cell - 1, 3, 3);
+      }
+      // игрок
       ctx.fillStyle = '#5ecbff';
       ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
+      // враги
       ctx.fillStyle = '#ff5c8a';
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -782,6 +973,9 @@
       }
     }
 
+    // ============================================================
+    // ДИАЛОГИ
+    // ============================================================
     function openDialog(npc) {
       state.dialogOpen = true;
       document.getElementById('dlgSpeaker').textContent = npc.name;
@@ -803,7 +997,6 @@
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
         showToast('❤️ +40 HP');
         updateHud();
-        saveProgress();
         closeDialog();
       } else if (action === 'buy') {
         if (state.coins >= 100) {
@@ -817,12 +1010,15 @@
             }
           }
           updateHud();
-          saveProgress();
         } else {
           showToast('🪙 Мало монет');
         }
         closeDialog();
       } else {
+        if (npc.name === 'Мэйбл' && state.quest === 'Поговори с Мэйбл в Хижине') {
+          state.quest = 'Найди 3 страницы Дневника в лесу, у озера и в пещере';
+          updateHud();
+        }
         closeDialog();
       }
     }
@@ -842,11 +1038,11 @@
       if (won) {
         t.textContent = '🏆 Победа!';
         t.classList.remove('lose');
-        x.innerHTML = 'Ты собрал все страницы Дневника №3 и победил Билла Шифра!<br>Уровень: ' + state.player.level + ' · Монеты: ' + state.coins;
+        x.innerHTML = 'Ты победил Гидеона и спас Гравити Фолз!<br>Уровень: ' + state.player.level + ' · Монеты: ' + state.coins;
       } else {
         t.textContent = '💀 Поражение';
         t.classList.add('lose');
-        x.innerHTML = 'Монстры одолели Диппера.<br>Страниц: ' + state.pages + ' / ' + state.totalPages + ' · Уровень: ' + state.player.level;
+        x.innerHTML = 'Монстры одолели Диппера.<br>Страниц: ' + state.pages + ' / ' + state.totalPages;
       }
       o.classList.add('show');
     }
@@ -859,7 +1055,9 @@
       el.classList.add('show');
     }
 
-    // клавиатура
+    // ============================================================
+    // УПРАВЛЕНИЕ
+    // ============================================================
     document.addEventListener('keydown', function(e) {
       var k = e.key.toLowerCase();
       if (k === 'w' || k === 'ц' || k === 'arrowup') state.keys.w = 1;
@@ -875,7 +1073,6 @@
       if (k === 'd' || k === 'в' || k === 'arrowright') state.keys.d = 0;
     });
 
-    // джойстик
     var joystick = document.getElementById('joystick');
     var knob = document.getElementById('knob');
     var joyId = null;
