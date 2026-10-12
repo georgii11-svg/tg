@@ -6,33 +6,147 @@
 <title>Гравити Фолз</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; touch-action: none; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; -webkit-user-select: none; touch-action: none; }
   #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; background: #1a0a20; touch-action: none; }
-  .hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 8px 12px; font-size: 13px; font-weight: 700; z-index: 10; pointer-events: none; gap: 6px; flex-wrap: wrap; }
-  .hud .stat { background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 20px; border: 1px solid #3a1a4a; }
+
+  .hud {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 13px; font-weight: 700;
+    z-index: 10;
+    pointer-events: none;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .hud .stat {
+    background: rgba(0,0,0,0.6);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid #3a1a4a;
+  }
   .hud .hp { color: #ff5c8a; }
   .hud .pages { color: #5ecbff; }
-  .hud .loc { color: #a78bfa; }
   .hud .coins { color: #ffd24a; }
-  .weapon-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; background: rgba(10, 5, 16, 0.85); border: 2px solid #3a1a4a; border-radius: 16px; z-index: 10; max-width: 95vw; overflow-x: auto; scrollbar-width: none; }
+  .hud .loc { color: #a78bfa; }
+
+  .weapon-bar {
+    position: fixed; bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 6px;
+    padding: 6px 10px;
+    background: rgba(10, 5, 16, 0.85);
+    border: 2px solid #3a1a4a;
+    border-radius: 16px;
+    z-index: 15;
+    max-width: 95vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
   .weapon-bar::-webkit-scrollbar { display: none; }
-  .weapon { flex-shrink: 0; width: 52px; height: 52px; background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%); border: 2px solid #3a1a4a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; position: relative; touch-action: manipulation; }
-  .weapon.selected { border-color: #ffd24a; box-shadow: 0 0 16px rgba(255,210,74,0.8); transform: translateY(-3px); }
+  .weapon {
+    flex-shrink: 0;
+    width: 52px; height: 52px;
+    background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
+    border: 2px solid #3a1a4a;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    position: relative;
+    touch-action: manipulation;
+  }
+  .weapon.selected {
+    border-color: #ffd24a;
+    box-shadow: 0 0 16px rgba(255,210,74,0.8);
+    transform: translateY(-3px);
+  }
   .weapon.locked { opacity: 0.3; }
   .weapon.locked::after { content: '🔒'; position: absolute; font-size: 18px; }
-  .joystick { position: fixed; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,210,74,0.08); border: 2px solid rgba(255,210,74,0.4); display: none; pointer-events: none; z-index: 20; }
-  .joystick .knob { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; border-radius: 50%; background: rgba(255,210,74,0.5); border: 2px solid #ffd24a; }
-  .shoot-btn { position: fixed; bottom: 80px; right: 20px; width: 78px; height: 78px; border-radius: 50%; background: linear-gradient(135deg, #ff5c8a, #8a2a4a); border: 3px solid #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 20; box-shadow: 0 0 30px rgba(255,92,138,0.6); touch-action: manipulation; }
+
+  .joystick {
+    position: fixed;
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.1);
+    border: 3px solid rgba(255,210,74,0.5);
+    display: none;
+    pointer-events: none;
+    z-index: 30;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 30px rgba(255,210,74,0.4);
+  }
+  .joystick .knob {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.6);
+    border: 3px solid #ffd24a;
+    box-shadow: 0 0 20px rgba(255,210,74,0.8);
+  }
+
+  .shoot-btn {
+    position: fixed;
+    bottom: 80px; right: 20px;
+    width: 78px; height: 78px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff5c8a, #8a2a4a);
+    border: 3px solid #ffd24a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    z-index: 20;
+    box-shadow: 0 0 30px rgba(255,92,138,0.6);
+    touch-action: manipulation;
+  }
   .shoot-btn:active { transform: scale(0.92); }
-  .toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(20, 5, 15, 0.95); border: 3px solid #ffd24a; border-radius: 14px; padding: 16px 30px; font-size: 15px; font-weight: 800; color: #ffd24a; text-align: center; z-index: 200; pointer-events: none; max-width: 80vw; }
+
+  .toast {
+    position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(20, 5, 15, 0.95);
+    border: 3px solid #ffd24a;
+    border-radius: 14px;
+    padding: 16px 30px;
+    font-size: 15px; font-weight: 800;
+    color: #ffd24a;
+    text-align: center;
+    z-index: 200;
+    pointer-events: none;
+    max-width: 80vw;
+  }
   .toast.show { animation: toastPop 2s ease-out forwards; }
-  @keyframes toastPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 30% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 85% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 300; padding: 20px; text-align: center; }
+  @keyframes toastPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  }
+
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 300;
+    padding: 20px;
+    text-align: center;
+  }
   .overlay.show { display: flex; }
   .overlay h1 { font-size: 28px; color: #ffd24a; margin-bottom: 16px; }
   .overlay h1.lose { color: #ff5c8a; }
   .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.6; max-width: 420px; margin-bottom: 20px; }
-  .overlay button { padding: 14px 36px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin: 4px; touch-action: manipulation; }
+  .overlay button {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px; color: #1a0a08;
+    font-family: inherit; font-size: 14px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer; margin: 4px;
+    touch-action: manipulation;
+  }
 </style>
 </head>
 <body>
@@ -90,15 +204,9 @@
       bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, coins: 1000, radius: 36, boss: true }
     };
 
-    // ============================================================
-    // КАРТЫ ЛОКАЦИЙ
-    // ============================================================
-    // tile: 0 — пол, 1 — стена, 2 — сундук, 3 — дверь
-    // каждый уровень — сетка 15 x 20 клеток, каждая клетка 60 x 60 px
     var TILE = 60;
 
     function makeMap(walls) {
-      // создаём пустую карту 20 x 15, обрамлённую стенами
       var rows = 15, cols = 20;
       var map = [];
       for (var y = 0; y < rows; y++) {
@@ -109,17 +217,14 @@
         }
         map.push(row);
       }
-      // добавляем стены
       for (var i = 0; i < walls.length; i++) {
         var w = walls[i];
         if (w.type === 'rect') {
-          for (var y = w.y1; y <= w.y2; y++)
-            for (var x = w.x1; x <= w.x2; x++)
-              if (map[y] && map[y][x] !== undefined) map[y][x] = 1;
+          for (var yy = w.y1; yy <= w.y2; yy++)
+            for (var xx = w.x1; xx <= w.x2; xx++)
+              if (map[yy] && map[yy][xx] !== undefined) map[yy][xx] = 1;
         } else if (w.type === 'chest') {
           if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 2;
-        } else if (w.type === 'door') {
-          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 3;
         }
       }
       return map;
@@ -128,11 +233,9 @@
     var LOCATIONS = [
       {
         name: 'Хижина Чудес',
-        bg: '#2a1040',
-        wallColor: '#6a3a8a',
         floorColor: '#1a0a2a',
+        wallColor: '#6a3a8a',
         walls: [
-          // несколько комнат
           { type: 'rect', x1: 3, y1: 3, x2: 8, y2: 3 },
           { type: 'rect', x1: 3, y1: 3, x2: 3, y2: 7 },
           { type: 'rect', x1: 12, y1: 3, x2: 16, y2: 3 },
@@ -146,11 +249,9 @@
       },
       {
         name: 'Тёмный лес',
-        bg: '#0a2a0a',
-        wallColor: '#2a6a2a',
         floorColor: '#061a06',
+        wallColor: '#2a6a2a',
         walls: [
-          // деревья — отдельные точки
           { type: 'rect', x1: 4, y1: 4, x2: 5, y2: 4 },
           { type: 'rect', x1: 8, y1: 3, x2: 8, y2: 5 },
           { type: 'rect', x1: 12, y1: 4, x2: 13, y2: 4 },
@@ -165,9 +266,8 @@
       },
       {
         name: 'Озеро',
-        bg: '#0a1a3a',
-        wallColor: '#3a6aa8',
         floorColor: '#050f20',
+        wallColor: '#3a6aa8',
         walls: [
           { type: 'rect', x1: 8, y1: 6, x2: 12, y2: 9 },
           { type: 'rect', x1: 4, y1: 3, x2: 5, y2: 4 },
@@ -180,9 +280,8 @@
       },
       {
         name: 'Подземелье',
-        bg: '#1a0a05',
-        wallColor: '#6a3a1a',
         floorColor: '#0a0402',
+        wallColor: '#6a3a1a',
         walls: [
           { type: 'rect', x1: 3, y1: 4, x2: 3, y2: 10 },
           { type: 'rect', x1: 6, y1: 3, x2: 6, y2: 6 },
@@ -195,9 +294,8 @@
       },
       {
         name: 'Комната Билла',
-        bg: '#2a0000',
-        wallColor: '#ff4040',
         floorColor: '#1a0000',
+        wallColor: '#ff4040',
         walls: [
           { type: 'rect', x1: 5, y1: 5, x2: 6, y2: 5 },
           { type: 'rect', x1: 14, y1: 5, x2: 15, y2: 5 },
@@ -209,7 +307,7 @@
     ];
 
     var state = {
-      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 200, angle: 0 },
+      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0 },
       enemies: [], bullets: [], pickups: [], particles: [],
       pages: 0, totalPages: 5, coins: 0,
       selected: 0,
@@ -228,6 +326,7 @@
 
     function init() {
       resize();
+      state.location = 0;
       state.map = makeMap(getLocation().walls);
       state.player.x = 3 * TILE + TILE / 2;
       state.player.y = 7 * TILE + TILE / 2;
@@ -240,8 +339,6 @@
       state.coins = 0;
       state.selected = 0;
       state.unlocked = [true, false, false, false, false];
-      state.location = 0;
-      state.map = makeMap(getLocation().walls);
       state.running = true;
       state.gameOver = false;
       state.lastTime = performance.now();
@@ -251,21 +348,6 @@
       buildWeapons();
       updateHud();
       requestAnimationFrame(loop);
-    }
-
-    function goToLocation(idx) {
-      state.location = idx;
-      state.map = makeMap(getLocation().walls);
-      state.enemies = [];
-      state.bullets = [];
-      state.pickups = [];
-      state.particles = [];
-      state.player.x = 3 * TILE + TILE / 2;
-      state.player.y = 7 * TILE + TILE / 2;
-      state.waveTimer = 2;
-      state.waveCount = 0;
-      showToast('📍 ' + getLocation().name);
-      updateHud();
     }
 
     function buildWeapons() {
@@ -279,7 +361,8 @@
           if (!state.unlocked[idx]) el.classList.add('locked');
           if (idx === state.selected) el.classList.add('selected');
           el.textContent = w.emoji;
-          el.onclick = function() {
+          el.onclick = function(ev) {
+            ev.stopPropagation();
             if (!state.unlocked[idx]) return;
             state.selected = idx;
             buildWeapons();
@@ -304,38 +387,31 @@
       return state.map[y][x] === 1;
     }
 
-    // проверка коллизии круг-стены
     function canMoveTo(nx, ny, r) {
-      // проверяем 4 угла вокруг игрока
-      var points = [
-        { x: nx - r, y: ny - r },
-        { x: nx + r, y: ny - r },
-        { x: nx - r, y: ny + r },
-        { x: nx + r, y: ny + r },
-        { x: nx, y: ny - r },
-        { x: nx, y: ny + r },
-        { x: nx - r, y: ny },
-        { x: nx + r, y: ny }
+      var pts = [
+        [nx - r, ny - r], [nx + r, ny - r],
+        [nx - r, ny + r], [nx + r, ny + r],
+        [nx, ny - r], [nx, ny + r],
+        [nx - r, ny], [nx + r, ny]
       ];
-      for (var i = 0; i < points.length; i++) {
-        if (isWallAt(points[i].x, points[i].y)) return false;
+      for (var i = 0; i < pts.length; i++) {
+        if (isWallAt(pts[i][0], pts[i][1])) return false;
       }
       return true;
     }
 
     function spawnEnemy(type) {
       var et = ENEMY_TYPES[type];
-      // спавн в случайной клетке пола далеко от игрока
       var tries = 0;
       var ex = 0, ey = 0;
-      while (tries < 50) {
+      while (tries < 60) {
         ex = (1 + Math.random() * (state.map[0].length - 2)) * TILE;
         ey = (1 + Math.random() * (state.map.length - 2)) * TILE;
         var tx = Math.floor(ex / TILE);
         var ty = Math.floor(ey / TILE);
         if (state.map[ty] && state.map[ty][tx] === 0) {
           var d = Math.hypot(ex - state.player.x, ey - state.player.y);
-          if (d > 200) break;
+          if (d > 250) break;
         }
         tries++;
       }
@@ -372,13 +448,11 @@
       var len = Math.hypot(dx, dy);
       if (len > 1) { dx /= len; dy /= len; }
 
-      // движение с коллизией
       var nx = p.x + dx * p.speed * dt;
       var ny = p.y + dy * p.speed * dt;
       if (canMoveTo(nx, p.y, p.radius)) p.x = nx;
       if (canMoveTo(p.x, ny, p.radius)) p.y = ny;
 
-      // цель
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -394,7 +468,6 @@
         state.lastShot = now;
       }
 
-      // пули
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
         b.x += b.vx * dt;
@@ -415,17 +488,16 @@
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
-      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
-        var dx2 = p.x - e.x;
-        var dy2 = p.y - e.y;
-        var d2 = Math.hypot(dx2, dy2);
+        var ddx = p.x - e.x;
+        var ddy = p.y - e.y;
+        var dd = Math.hypot(ddx, ddy);
         var slow = (e.slowUntil > now) ? 0.4 : 1;
-        if (d2 > p.radius + e.radius - 4) {
-          var enx = e.x + (dx2 / d2) * e.speed * slow * dt;
-          var eny = e.y + (dy2 / d2) * e.speed * slow * dt;
+        if (dd > p.radius + e.radius - 4) {
+          var enx = e.x + (ddx / dd) * e.speed * slow * dt;
+          var eny = e.y + (ddy / dd) * e.speed * slow * dt;
           if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
           if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
         } else {
@@ -434,7 +506,6 @@
         }
       }
 
-      // смерть врагов
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0 && !e.dead) {
@@ -442,11 +513,11 @@
           state.coins += Math.floor(e.coins / 2);
           if (Math.random() < 0.7) spawnPickupAt(e.x, e.y, 'coin');
           if (e.boss && e.type === 'bill') setTimeout(function() { endGame(true); }, 100);
+          updateHud();
         }
       }
       state.enemies = state.enemies.filter(function(e) { return !e.dead; });
 
-      // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.collected) continue;
@@ -469,7 +540,7 @@
       }
       state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
 
-      // сундуки и двери
+      // сундуки
       var cx = Math.floor(p.x / TILE);
       var cy = Math.floor(p.y / TILE);
       if (state.map[cy] && state.map[cy][cx] === 2) {
@@ -477,14 +548,13 @@
         if (!state.chestsOpened[key]) {
           state.chestsOpened[key] = true;
           var roll = Math.random();
-          if (roll < 0.5) { state.coins += 50; showToast('🪙 Сундук: +50 монет'); }
-          else if (roll < 0.8) { spawnPickupAt(p.x + 40, p.y, 'heal'); showToast('🎁 Сундук: аптечка рядом'); }
-          else { spawnPickupAt(p.x + 40, p.y, 'page'); showToast('📖 Сундук: страница рядом'); }
+          if (roll < 0.5) { state.coins += 50; showToast('🪙 Сундук: +50'); }
+          else if (roll < 0.8) { spawnPickupAt(p.x + 40, p.y, 'heal'); showToast('🎁 Аптечка рядом'); }
+          else { spawnPickupAt(p.x + 40, p.y, 'page'); showToast('📖 Страница рядом'); }
           updateHud();
         }
       }
 
-      // частицы
       for (var i = 0; i < state.particles.length; i++) {
         var pt = state.particles[i];
         pt.x += pt.vx * dt;
@@ -493,7 +563,6 @@
       }
       state.particles = state.particles.filter(function(pt) { return pt.life > 0; });
 
-      // волны
       state.waveTimer -= dt;
       if (state.waveTimer <= 0) {
         state.waveTimer = 3 + Math.random() * 2;
@@ -554,39 +623,26 @@
 
     function draw() {
       var loc = getLocation();
-      // фон поля
       ctx.fillStyle = loc.floorColor;
       ctx.fillRect(0, 0, W, H);
 
-      // карта
       for (var y = 0; y < state.map.length; y++) {
         for (var x = 0; x < state.map[y].length; x++) {
           var px = x * TILE;
           var py = y * TILE;
           var v = state.map[y][x];
           if (v === 1) {
-            // стена
             ctx.fillStyle = loc.wallColor;
             ctx.fillRect(px, py, TILE, TILE);
             ctx.strokeStyle = 'rgba(0,0,0,0.4)';
             ctx.lineWidth = 2;
             ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
           } else if (v === 2) {
-            // сундук
             ctx.font = '40px serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('📦', px + TILE / 2, py + TILE / 2);
-          } else if (v === 3) {
-            // дверь
-            ctx.fillStyle = '#ffd24a';
-            ctx.fillRect(px + 10, py + 10, TILE - 20, TILE - 20);
-            ctx.font = '30px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🚪', px + TILE / 2, py + TILE / 2);
           } else {
-            // пол — чередуем оттенки для сетки
             if ((x + y) % 2 === 0) {
               ctx.fillStyle = 'rgba(255,255,255,0.03)';
               ctx.fillRect(px, py, TILE, TILE);
@@ -595,7 +651,6 @@
         }
       }
 
-      // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         var bob = Math.sin(performance.now() / 200) * 3;
@@ -606,7 +661,6 @@
         else if (pk.type === 'coin') { ctx.font = '20px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
       }
 
-      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         var et = ENEMY_TYPES[e.type];
@@ -623,7 +677,6 @@
         }
       }
 
-      // пули
       for (var i = 0; i < state.bullets.length; i++) {
         var b = state.bullets[i];
         ctx.fillStyle = b.color;
@@ -632,7 +685,6 @@
         ctx.fill();
       }
 
-      // игрок
       var p = state.player;
       ctx.font = '40px serif';
       ctx.textAlign = 'center';
@@ -645,12 +697,11 @@
       ctx.fillRect(10, -3, 22, 6);
       ctx.restore();
 
-      // мини-карта в правом нижнем углу
       drawMinimap();
     }
 
     function drawMinimap() {
-      var mmSize = 120;
+      var mmSize = 110;
       var cell = mmSize / Math.max(state.map[0].length, state.map.length);
       var mmX = W - mmSize - 100;
       var mmY = H - mmSize - 10;
@@ -668,10 +719,8 @@
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
-      // игрок
       ctx.fillStyle = '#5ecbff';
       ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
-      // враги
       ctx.fillStyle = '#ff5c8a';
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -693,7 +742,7 @@
       } else {
         t.textContent = '💀 Поражение';
         t.classList.add('lose');
-        x.textContent = 'Монстры одолели Диппера. Страниц собрано: ' + state.pages + ' из ' + state.totalPages;
+        x.textContent = 'Монстры одолели Диппера. Страниц: ' + state.pages + ' / ' + state.totalPages;
       }
       o.classList.add('show');
     }
@@ -706,7 +755,7 @@
       el.classList.add('show');
     }
 
-    // ============ УПРАВЛЕНИЕ ============
+    // ============ КЛАВИАТУРА ============
     document.addEventListener('keydown', function(e) {
       var k = e.key.toLowerCase();
       if (k === 'w' || k === 'ц') state.keys.w = 1;
@@ -722,63 +771,102 @@
       if (k === 'd' || k === 'в') state.keys.d = 0;
     });
 
+    // ============ ДЖОЙСТИК ============
     var joystick = document.getElementById('joystick');
     var knob = document.getElementById('knob');
+    var joyPointerId = null;
 
-    function startJoy(x, y) {
+    function startJoy(x, y, pointerId) {
       state.joy.active = true;
       state.joy.cx = x;
       state.joy.cy = y;
       state.joy.dx = 0;
       state.joy.dy = 0;
-      joystick.style.left = (x - 60) + 'px';
-      joystick.style.top = (y - 60) + 'px';
+      joyPointerId = pointerId;
+      joystick.style.left = x + 'px';
+      joystick.style.top = y + 'px';
       joystick.style.display = 'block';
       knob.style.transform = 'translate(-50%, -50%)';
     }
+
     function moveJoy(x, y) {
       if (!state.joy.active) return;
       var dx = x - state.joy.cx;
       var dy = y - state.joy.cy;
       var len = Math.hypot(dx, dy);
-      var maxLen = 50;
+      var maxLen = 55;
       var kx = len > maxLen ? (dx / len) * maxLen : dx;
       var ky = len > maxLen ? (dy / len) * maxLen : dy;
       knob.style.transform = 'translate(calc(-50% + ' + kx + 'px), calc(-50% + ' + ky + 'px))';
       state.joy.dx = kx / maxLen;
       state.joy.dy = ky / maxLen;
     }
+
     function endJoy() {
       state.joy.active = false;
       state.joy.dx = 0;
       state.joy.dy = 0;
       joystick.style.display = 'none';
+      joyPointerId = null;
     }
 
-    canvas.addEventListener('touchstart', function(e) {
-      e.preventDefault();
+    // обработка касаний — на всём документе
+    document.addEventListener('touchstart', function(e) {
+      // игнорируем кнопки и панели
+      if (e.target.closest && (e.target.closest('.weapon-bar') || e.target.closest('.shoot-btn') || e.target.closest('.overlay'))) return;
       var t = e.changedTouches[0];
-      startJoy(t.clientX, t.clientY);
-    }, { passive: false });
-    canvas.addEventListener('touchmove', function(e) {
+      startJoy(t.clientX, t.clientY, t.identifier);
       e.preventDefault();
-      var t = e.changedTouches[0];
-      moveJoy(t.clientX, t.clientY);
     }, { passive: false });
-    canvas.addEventListener('touchend', function(e) { e.preventDefault(); endJoy(); }, { passive: false });
 
-    canvas.addEventListener('mousedown', function(e) { startJoy(e.clientX, e.clientY); });
-    canvas.addEventListener('mousemove', function(e) { if (state.joy.active) moveJoy(e.clientX, e.clientY); });
-    canvas.addEventListener('mouseup', endJoy);
-    canvas.addEventListener('mouseleave', endJoy);
+    document.addEventListener('touchmove', function(e) {
+      if (!state.joy.active) return;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (t.identifier === joyPointerId) {
+          moveJoy(t.clientX, t.clientY);
+          break;
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
 
-    document.getElementById('shootBtn').onclick = function() {
+    document.addEventListener('touchend', function(e) {
+      if (!state.joy.active) return;
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyPointerId) {
+          endJoy();
+          break;
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchcancel', function(e) { endJoy(); }, { passive: false });
+
+    // для компьютера
+    var mouseDown = false;
+    document.addEventListener('mousedown', function(e) {
+      if (e.target.closest && (e.target.closest('.weapon-bar') || e.target.closest('.shoot-btn') || e.target.closest('.overlay'))) return;
+      mouseDown = true;
+      startJoy(e.clientX, e.clientY, 'mouse');
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!mouseDown) return;
+      moveJoy(e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseup', function() {
+      if (mouseDown) { endJoy(); mouseDown = false; }
+    });
+
+    document.getElementById('shootBtn').onclick = function(e) {
+      e.stopPropagation();
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
-        var e = state.enemies[i];
-        if (e.hp <= 0) continue;
-        var d = Math.hypot(e.x - state.player.x, e.y - state.player.y);
-        if (d < best) { best = d; nearest = e; }
+        var en = state.enemies[i];
+        if (en.hp <= 0) continue;
+        var d = Math.hypot(en.x - state.player.x, en.y - state.player.y);
+        if (d < best) { best = d; nearest = en; }
       }
       if (nearest) shoot(nearest, WEAPONS[state.selected]);
     };
