@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Гравити Фолз · Тайна Хижины Чудес</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a0a20; color: #fff; user-select: none; touch-action: none; }
+  @media (orientation: portrait) {
+    body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #1a0a20; color: #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
+  }
+  .title-screen {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; z-index: 5000; text-align: center;
+  }
+  .title-screen.hidden { display: none; }
+  .title-screen h1 {
+    font-size: 42px; letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
+    margin-bottom: 8px; line-height: 1.1;
+  }
+  .title-screen .sub {
+    font-size: 14px; letter-spacing: 3px; color: #a78bfa;
+    margin-bottom: 30px; text-transform: uppercase;
+  }
+  .title-screen p {
+    font-size: 14px; color: #b8b8d8; line-height: 1.7;
+    max-width: 480px; margin-bottom: 20px;
+  }
+  .title-screen button {
+    padding: 16px 44px; margin-top: 16px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px; color: #1a0a08;
+    font-family: inherit; font-size: 16px; font-weight: 800;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
+    transition: all 0.15s;
+  }
+  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
+  .hint-block {
+    margin-top: 24px; font-size: 12px; color: #6a5a8a;
+    max-width: 400px; line-height: 1.6;
+  }
+  #game { position: fixed; inset: 0; display: none; flex-direction: column; }
+  #game.show { display: flex; }
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 8px;
+    background: linear-gradient(180deg, #1a0a20 0%, #0a0418 100%);
+    border-bottom: 2px solid #3a1a4a;
+    font-size: 11px; z-index: 50; gap: 5px;
+  }
+  .hud .stat {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.4);
+    padding: 3px 9px; border-radius: 20px;
+    border: 1px solid #3a1a4a;
+    font-weight: 700; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .hud .stat .icon { font-size: 13px; }
+  .hud .hearts { color: #ff5c8a; }
+  .hud .coins { color: #ffd24a; }
+  .hud .wave-info { color: #a78bfa; }
+  .hud .score-info { color: #5ecbff; }
+  .back-btn {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    z-index: 60; padding: 4px 14px;
+    background: rgba(0,0,0,0.6); border: 1px solid #3a1a4a;
+    border-radius: 20px; color: #a0a0c0;
+    font-family: inherit; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer;
+  }
+  .back-btn:hover { color: #fff; border-color: #ffd24a; }
+  .seeds {
+    display: flex; gap: 5px; padding: 5px 8px;
+    background: linear-gradient(180deg, #0a0418 0%, #05020f 100%);
+    overflow-x: auto; border-bottom: 2px solid #3a1a4a;
+    scrollbar-width: none; flex-shrink: 0; min-height: 86px;
+  }
+  .seeds::-webkit-scrollbar { display: none; }
+  .seed {
+    flex-shrink: 0; width: 60px; height: 76px;
+    background: linear-gradient(180deg, #ffd24a 0%, #b8924a 100%);
+    border: 3px solid #6a4a0a; border-radius: 10px;
+    padding: 3px; display: flex; flex-direction: column;
+    align-items: center; justify-content: space-between;
+    cursor: pointer; transition: all 0.15s ease;
+    position: relative; box-shadow: 0 4px 0 #4a3a0a;
+  }
+  .seed.selected {
+    border-color: #ffd24a;
+    box-shadow: 0 0 20px rgba(255, 210, 74, 0.8), 0 4px 0 #4a3a0a;
+    transform: translateY(-2px);
+  }
+  .seed.disabled { opacity: 0.35; cursor: not-allowed; }
+  .seed .seed-emoji { font-size: 24px; line-height: 1; }
+  .seed .seed-name { font-size: 6.5px; color: #1a0a08; font-weight: 800; text-align: center; text-transform: uppercase; line-height: 1.1; }
+  .seed .seed-cost { font-size: 10px; font-weight: 900; color: #1a0a08; background: rgba(255,255,255,0.4); padding: 1px 5px; border-radius: 8px; }
+  .seed .cooldown-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); border-radius: 8px; pointer-events: none; display: none; }
+  .seed .cooldown-overlay.show { display: block; }
+  .field-wrap { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #2a1040 0%, #0a0418 100%); }
+  #field { position: absolute; inset: 0; }
+  .grid-cell { position: absolute; border: 1px dashed rgba(255,255,255,0.06); box-sizing: border-box; }
+  .defender {
+    position: absolute; display: flex; align-items: center; justify-content: center;
+    font-size: 38px; line-height: 1; z-index: 5;
+    animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 50%;
+  }
+  @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+  .defender.shooting { animation: shoot 0.2s ease; }
+  @keyframes shoot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  .bullet {
+    position: absolute; width: 14px; height: 14px;
+    background: radial-gradient(circle at 30% 30%, #ffe88a, #d4a020);
+    border-radius: 50%; box-shadow: 0 0 12px #ffd24a;
+    z-index: 3; pointer-events: none;
+  }
+  .enemy {
+    position: absolute; font-size: 40px; line-height: 1;
+    z-index: 4; display: flex; align-items: center; justify-content: center;
+  }
+  .enemy.hit { filter: brightness(2.5) saturate(0); }
+  .enemy.dying { animation: die 0.6s ease-out forwards; }
+  @keyframes die {
+    0% { transform: rotate(0deg); opacity: 1; }
+    100% { transform: rotate(90deg) translateY(30px); opacity: 0; }
+  }
+  .enemy-hp { position: absolute; height: 4px; background: #ff4040; border-radius: 2px; z-index: 6; pointer-events: none; transition: width 0.15s; }
+  .enemy-hp-bg { position: absolute; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; z-index: 5; pointer-events: none; }
+  .coin {
+    position: absolute; width: 32px; height: 32px;
+    background: radial-gradient(circle, #ffe066 0%, #d4a020 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 15px #ffd24a;
+    cursor: pointer; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    animation: coinFloat 2s ease-in-out infinite;
+  }
+  @keyframes coinFloat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  .coin.collected { animation: coinCollect 0.4s ease-out forwards; }
+  @keyframes coinCollect { to { transform: scale(2) translateY(-60px); opacity: 0; } }
+  .explosion {
+    position: absolute; width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #ffd24a 30%, #ff5c8a 60%, transparent 80%);
+    z-index: 20; pointer-events: none;
+    animation: explode 0.7s ease-out forwards;
+  }
+  @keyframes explode {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+  .bill-warning {
+    position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 200;
+    padding: 22px 46px;
+    background: linear-gradient(135deg, #2a0a0a, #4a0a2a);
+    border: 3px solid #ffd24a;
+    border-radius: 16px;
+    color: #ffd24a; font-size: 22px; font-weight: 900;
+    letter-spacing: 4px; text-transform: uppercase;
+    text-align: center;
+    box-shadow: 0 0 50px rgba(255, 210, 74, 0.7);
+    pointer-events: none;
+    animation: billPop 3s ease-out forwards;
+  }
+  @keyframes billPop {
+    0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.15) rotate(3deg); opacity: 1; }
+    30% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); opacity: 1; }
+    85% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 0; }
+  }
+  .toast {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(20, 5, 15, 0.95);
+    border: 3px solid #ffd24a;
+    border-radius: 14px;
+    padding: 18px 32px; font-size: 18px; font-weight: 800;
+    color: #ffd24a; text-align: center; letter-spacing: 2px;
+    z-index: 200; pointer-events: none;
+    box-shadow: 0 0 40px rgba(255, 210, 74, 0.5);
+    max-width: 80vw;
+  }
+  .toast.show { animation: toastPop 2s ease-out forwards; }
+  @keyframes toastPop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 300;
+    padding: 20px; text-align: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay h1 { font-size: 30px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; text-shadow: 0 0 25px rgba(255,210,74,0.6); }
+  .overlay h1.lose { color: #ff5c8a; text-shadow: 0 0 25px rgba(255,92,138,0.6); }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.7; max-width: 440px; margin-bottom: 20px; }
+  .overlay .reward { font-size: 20px; color: #ffd24a; font-weight: 900; letter-spacing: 2px; margin: 10px 0 20px; }
+  .overlay button { padding: 12px 36px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 0 #8a2a4a; transition: all 0.15s; margin: 4px; }
+  .overlay button:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a2a4a; }
+  .overlay button.alt { background: transparent; border: 2px solid #ffd24a; color: #ffd24a; box-shadow: none; }
+  @media (max-width: 600px) {
+    .seed { width: 52px; height: 66px; padding: 2px; }
+    .seed .seed-emoji { font-size: 20px; }
+    .seed .seed-name { font-size: 5.5px; }
+    .seed .seed-cost { font-size: 9px; padding: 0 4px; }
+    .defender { font-size: 30px; }
+    .enemy { font-size: 32px; }
+    .hud { font-size: 9px; padding: 3px 5px; }
+    .hud .stat { padding: 2px 6px; }
+    .title-screen h1 { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="title-screen" id="titleScreen">
+    <h1>Гравити Фолз</h1>
+    <div class="sub">Тайна Хижины Чудес</div>
+    <p>Диппер и Мэйбл встают на защиту Хижины Чудес. Монстры Гравити Фолз идут волнами из леса. Ты ставишь защиту на клетки — не пусти их к дому.</p>
+    <p style="font-size:12px;color:#8a7ab8;">У тебя 3 сердца. Враги, дошедшие до левого края — отнимают сердце. Собирай монетки. Продержись 8 волн — и появится Билл Шифр.</p>
+    <button id="startBtn">Начать</button>
+    <div class="hint-block">Совет: сначала поставь Дневник Мэйбл 🌸 для монет, потом Стрелка Диппера 🔵 для атаки.</div>
+  </div>
+
+  <div id="game">
+    <div class="hud">
+      <div class="stat hearts"><span class="icon">❤️</span><span id="heartsVal">3</span></div>
+      <div class="stat coins"><span class="icon">🪙</span><span id="coinsVal">50</span></div>
+      <div class="stat score-info"><span class="icon">⭐</span><span id="scoreVal">0</span></div>
+      <div class="stat wave-info"><span class="icon">🌊</span><span id="waveNum">1 / 8</span></div>
+    </div>
+    <button class="back-btn" id="backBtn">← В меню</button>
+    <div class="seeds" id="seedsBar"></div>
+    <div class="field-wrap">
+      <div id="field"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="overlay" id="endOverlay">
+    <h1 id="endTitle">Победа!</h1>
+    <p id="endText"></p>
+    <div class="reward" id="endReward"></div>
+    <button id="restartBtn">Играть снова</button>
+    <button id="menuBtn" class="alt">В меню</button>
+  </div>
+
+  <script>
+    // ================== КОНФИГ ==================
+    const CONFIG = {
+      cols: 5,
+      rows: 4,
+      totalWaves: 8,
+      startingCoins: 50,
+      startingHearts: 3,
+      coinDropInterval: 8000,
+      coinValue: 25,
+      firstWaveDelay: 10000,
+      waveInterval: 25000,
+      baseEnemySpeed: 14.0,   // секунд на клетку — медленно
+    };
+
+    // ================== ЗАЩИТНИКИ ==================
+    const DEFENDER_TYPES = {
+      dipper: {
+        name: 'Стрелок', emoji: '🔵', cost: 100, hp: 6, attack: 20,
+        fireRate: 1400, projectileSpeed: 400, targetRows: 1
+      },
+      mabel: {
+        name: 'Дневник', emoji: '🌸', cost: 50, hp: 5, attack: 0,
+        coinProduction: 24000
+      },
+      shack: {
+        name: 'Хижина', emoji: '🏠', cost: 50, hp: 4000, attack: 0
+      },
+      icecream: {
+        name: 'Мороженое', emoji: '🍦', cost: 75, hp: 1, attack: 0,
+        heal: 1
+      },
+      gnome: {
+        name: 'Гномик', emoji: '🧙', cost: 175, hp: 6, attack: 20,
+        fireRate: 1200, projectileSpeed: 400, targetRows: 3
+      },
+      bomb: {
+        name: 'Бомба', emoji: '💥', cost: 150, hp: 1, attack: 0, bomb: true
+      }
+    };
+
+    // ================== ВРАГИ ==================
+    const ENEMY_TYPES = {
+      gnome: { emoji: '👺', hp: 270, speedMult: 1.0, damage: 4, weight: 1, coins: 10 },
+      zombie: { emoji: '🧟‍♀️', hp: 640, speedMult: 1.0, damage: 5, weight: 2, coins: 25 },
+      mummy: { emoji: '🧟', overlay: '🪦', hp: 1370, speedMult: 1.0, damage: 6, weight: 4, coins: 50 },
+      water: { emoji: '🐙', hp: 1670, speedMult: 1.88, damage: 4, weight: 6, coins: 75 },
+      multibear: { emoji: '🐻', overlay: '🧔', hp: 2700, speedMult: 1.0, damage: 8, weight: 10, coins: 150 },
+      vampire: { emoji: '🧛', hp: 900, speedMult: 1.27, damage: 5, weight: 3, coins: 40 },
+      bill: { emoji: '👁️', overlay: '🔺', hp: 15000, speedMult: 1.0, damage: 15, weight: 20, coins: 500, isBoss: true }
+    };
+
+    // ================== СОСТОЯНИЕ ==================
+    const state = {
+      hearts: CONFIG.startingHearts,
+      coins: CONFIG.startingCoins,
+      score: 0,
+      wave: 0,
+      running: false,
+      gameOver: false,
+      selectedDefender: null,
+      defenders: [],
+      enemies: [],
+      bullets: [],
+      coinsOnField: [],
+      lastFrameTime: 0,
+      nextId: 1,
+      lastCoinDrop: 0,
+      lastWave: 0,
+      lastEnemySpawn: 0,
+      waveSpawned: 0,
+      waveTarget: 0,
+      waveKilled: 0,
+      waveEnemiesTotal: 0,
+      firstPlaced: false,
+      _lastSpawn: 0
+    };
+
+    // ================== DOM ==================
+    const titleScreen = document.getElementById('titleScreen');
+    const gameEl = document.getElementById('game');
+    const fieldEl = document.getElementById('field');
+    const seedsBar = document.getElementById('seedsBar');
+    const heartsVal = document.getElementById('heartsVal');
+    const coinsVal = document.getElementById('coinsVal');
+    const scoreVal = document.getElementById('scoreVal');
+    const waveNum = document.getElementById('waveNum');
+    const toastEl = document.getElementById('toast');
+    const backBtn = document.getElementById('backBtn');
+    const endOverlay = document.getElementById('endOverlay');
+    const endTitle = document.getElementById('endTitle');
+    const endText = document.getElementById('endText');
+    const endReward = document.getElementById('endReward');
+
+    let fieldRect = { width: 0, height: 0, cellW: 0, cellH: 0 };
+    const seedCooldowns = {};
+
+    // ================== ЭКРАН СТАРТА ==================
+    document.getElementById('startBtn').addEventListener('click', () => {
+      titleScreen.classList.add('hidden');
+      gameEl.classList.add('show');
+      startGame();
+    });
+
+    function startGame() {
+      state.hearts = CONFIG.startingHearts;
+      state.coins = CONFIG.startingCoins;
+      state.score = 0;
+      state.wave = 0;
+      state.running = true;
+      state.gameOver = false;
+      state.selectedDefender = null;
+      state.firstPlaced = false;
+      state._lastSpawn = 0;
+
+      // очистка
+      state.defenders.forEach(d => d.el.remove());
+      state.enemies.forEach(e => { e.el.remove(); if (e.hpEl) e.hpEl.remove(); if (e.hpBgEl) e.hpBgEl.remove(); });
+      state.bullets.forEach(b => b.el.remove());
+      state.coinsOnField.forEach(c => c.el.remove());
+      state.defenders = []; state.enemies = []; state.bullets = []; state.coinsOnField = [];
+
+      state.lastCoinDrop = 0;
+      state.lastWave = 0;
+      state.lastFrameTime = 0;
+      Object.keys(seedCooldowns).forEach(k => delete seedCooldowns[k]);
+
+      updateHUD();
+      endOverlay.classList.remove('show');
+
+      setTimeout(() => {
+        calcField();
+        buildGrid();
+        buildSeedsUI();
+        requestAnimationFrame(gameLoop);
+      }, 100);
+    }
+
+    // ================== ПОЛЕ ==================
+    function calcField() {
+      const wrap = fieldEl.parentElement;
+      fieldRect.width = wrap.clientWidth;
+      fieldRect.height = wrap.clientHeight;
+      fieldRect.cellW = fieldRect.width / CONFIG.cols;
+      fieldRect.cellH = fieldRect.height / CONFIG.rows;
+    }
+
+    function cellCenter(col, row) {
+      return { x: fieldRect.cellW * col + fieldRect.cellW / 2, y: fieldRect.cellH * row + fieldRect.cellH / 2 };
+    }
+
+    function buildGrid() {
+      fieldEl.innerHTML = '';
+      for (let r = 0; r < CONFIG.rows; r++) {
+        for (let c = 0; c < CONFIG.cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell';
+          cell.dataset.col = c; cell.dataset.row = r;
+          cell.style.left = (c * fieldRect.cellW) + 'px';
+          cell.style.top = (r * fieldRect.cellH) + 'px';
+          cell.style.width = fieldRect.cellW + 'px';
+          cell.style.height = fieldRect.cellH + 'px';
+          const alt = (r + c) % 2 === 0;
+          cell.style.background = alt ? 'rgba(167, 139, 250, 0.12)' : 'rgba(167, 139, 250, 0.06)';
+          fieldEl.appendChild(cell);
+        }
+      }
+    }
+
+    // ================== СЕМЕНА UI ==================
+    function buildSeedsUI() {
+      seedsBar.innerHTML = '';
+      for (const key in DEFENDER_TYPES) {
+        const p = DEFENDER_TYPES[key];
+        const el = document.createElement('div');
+        el.className = 'seed'; el.dataset.type = key;
+        el.innerHTML = '<div class="seed-emoji">' + p.emoji + '</div><div class="seed-name">' + p.name + '</div><div class="seed-cost">🪙' + p.cost + '</div><div class="cooldown-overlay"></div>';
+        el.addEventListener('click', () => selectDefender(key));
+        seedsBar.appendChild(el);
+      }
+      updateSeedsUI();
+    }
+
+    function selectDefender(type) {
+      if (!state.running) return;
+      state.selectedDefender = state.selectedDefender === type ? null : type;
+      updateSeedsUI();
+    }
+
+    function updateSeedsUI() {
+      seedsBar.querySelectorAll('.seed').forEach(c => {
+        const type = c.dataset.type;
+        const p = DEFENDER_TYPES[type];
+        const onCd = Date.now() < (seedCooldowns[type] || 0);
+        c.classList.toggle('selected', state.selectedDefender === type);
+        c.classList.toggle('disabled', state.coins < p.cost || onCd);
+        c.querySelector('.cooldown-overlay').classList.toggle('show', onCd);
+      });
+    }
+
+    // ================== HUD ==================
+    function updateHUD() {
+      heartsVal.textContent = state.hearts;
+      coinsVal.textContent = state.coins;
+      scoreVal.textContent = state.score;
+      waveNum.textContent = state.wave + ' / ' + CONFIG.totalWaves;
+    }
+
+    // ================== РАЗМЕЩЕНИЕ ==================
+    function tryPlaceAt(col, row) {
+      if (state.defenders.find(d => d.col === col && d.row === row)) return false;
+      const type = state.selectedDefender;
+      if (!type) return false;
+      const p = DEFENDER_TYPES[type];
+      if (state.coins < p.cost) { showToast('Мало монет'); return false; }
+      if (Date.now() < (seedCooldowns[type] || 0)) { showToast('Перезарядка'); return false; }
+
+      // мороженое лечит
+      if (p.heal) {
+        state.hearts = Math.min(CONFIG.startingHearts, state.hearts + p.heal);
+        state.coins -= p.cost;
+        updateHUD();
+        showToast('🍦 +1 сердце!');
+        state.selectedDefender = null;
+        updateSeedsUI();
+        return true;
+      }
+
+      state.coins -= p.cost;
+      seedCooldowns[type] = Date.now() + 3000;
+      updateHUD();
+
+      const center = cellCenter(col, row);
+      const el = document.createElement('div');
+      el.className = 'defender';
+      el.textContent = p.emoji;
+      el.style.left = (center.x - 25) + 'px';
+      el.style.top = (center.y - 25) + 'px';
+      el.style.width = '50px'; el.style.height = '50px';
+      fieldEl.appendChild(el);
+
+      state.defenders.push({
+        id: state.nextId++, col, row, type, hp: p.hp, maxHp: p.hp,
+        el, x: center.x, y: center.y,
+        lastShot: Date.now(), lastCoin: Date.now(),
+        bomb: p.bomb && true, bombTime: p.bomb ? Date.now() + 1200 : 0,
+        def: p
+      });
+
+      state.selectedDefender = null;
+      updateSeedsUI();
+      if (!state.firstPlaced) state.firstPlaced = true;
+      return true;
+    }
+
+    function removeDefender(d) {
+      d.el.remove();
+      const i = state.defenders.indexOf(d);
+      if (i >= 0) state.defenders.splice(i, 1);
+    }
+
+    // ================== ВРАГИ ==================
+    function spawnEnemy(type) {
+      const et = ENEMY_TYPES[type];
+      if (!et) return;
+      const row = Math.floor(Math.random() * CONFIG.rows);
+      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
+      const el = document.createElement('div');
+      el.className = 'enemy';
+      el.textContent = et.emoji;
+      el.style.left = (fieldRect.width + 10) + 'px';
+      el.style.top = (cy - 25) + 'px';
+      el.style.width = '50px'; el.style.height = '50px';
+      fieldEl.appendChild(el);
+      if (et.overlay) {
+        const ov = document.createElement('div');
+        ov.textContent = et.overlay;
+        ov.style.position = 'absolute'; ov.style.top = '-8px'; ov.style.fontSize = '20px';
+        el.appendChild(ov);
+      }
+      const hpBg = document.createElement('div');
+      hpBg.className = 'enemy-hp-bg';
+      hpBg.style.width = '50px';
+      hpBg.style.left = (fieldRect.width + 15) + 'px';
+      hpBg.style.top = (cy + 30) + 'px';
+      fieldEl.appendChild(hpBg);
+      const hpEl = document.createElement('div');
+      hpEl.className = 'enemy-hp';
+      hpEl.style.width = '50px';
+      hpEl.style.left = (fieldRect.width + 15) + 'px';
+      hpEl.style.top = (cy + 30) + 'px';
+      fieldEl.appendChild(hpEl);
+      const baseSpeed = fieldRect.cellW / CONFIG.baseEnemySpeed;
+      state.enemies.push({
+        id: state.nextId++, x: fieldRect.width + 10, row, type,
+        hp: et.hp, maxHp: et.hp,
+        speed: baseSpeed * et.speedMult,
+        damage: et.damage,
+        el, hpEl, hpBgEl: hpBg,
+        eating: false, dead: false,
+        coins: et.coins, isBoss: !!et.isBoss
+      });
+    }
+
+    function damageEnemy(e, dmg) {
+      e.hp -= dmg;
+      e.el.classList.add('hit');
+      setTimeout(() => e.el.classList.remove('hit'), 100);
+      const ratio = Math.max(0, e.hp / e.maxHp);
+      e.hpEl.style.width = (50 * ratio) + 'px';
+      if (e.hp <= 0 && !e.dead) {
+        e.dead = true;
+        e.el.classList.add('dying');
+        e.hpEl.remove(); e.hpBgEl.remove();
+        state.score += e.coins || 10;
+        state.waveKilled++;
+        state.coins += Math.floor((e.coins || 10) / 2);
+        updateHUD();
+        updateSeedsUI();
+        // выпадает монета
+        spawnCoinAt(e.x, e.row);
+        setTimeout(() => {
+          e.el.remove();
+          const i = state.enemies.indexOf(e);
+          if (i >= 0) state.enemies.splice(i, 1);
+        }, 600);
+      }
+    }
+
+    // ================== МОНЕТЫ ==================
+    function spawnCoinAt(x, row) {
+      if (Math.random() > 0.6) return;
+      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
+      const el = document.createElement('div');
+      el.className = 'coin';
+      el.textContent = '🪙';
+      el.style.left = (x - 16) + 'px';
+      el.style.top = (cy - 16) + 'px';
+      fieldEl.appendChild(el);
+      const coin = { id: state.nextId++, el, collected: false, value: CONFIG.coinValue };
+      state.coinsOnField.push(coin);
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        collectCoin(coin);
+      });
+    }
+
+    function spawnFallingCoin() {
+      if (!state.running || state.gameOver) return;
+      const x = 40 + Math.random() * (fieldRect.width - 80);
+      const el = document.createElement('div');
+      el.className = 'coin';
+      el.textContent = '🪙';
+      el.style.left = x + 'px';
+      el.style.top = '-40px';
+      el.style.animation = 'none';
+      el.style.transition = 'top 8s linear';
+      fieldEl.appendChild(el);
+      setTimeout(() => { el.style.top = fieldRect.height + 'px'; }, 50);
+      const coin = { id: state.nextId++, el, collected: false, value: CONFIG.coinValue };
+      state.coinsOnField.push(coin);
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        collectCoin(coin);
+      });
+    }
+
+    function collectCoin(coin) {
+      if (coin.collected) return;
+      coin.collected = true;
+      state.coins += coin.value;
+      updateHUD();
+      updateSeedsUI();
+      coin.el.classList.add('collected');
+      setTimeout(() => {
+        coin.el.remove();
+        const i = state.coinsOnField.indexOf(coin);
+        if (i >= 0) state.coinsOnField.splice(i, 1);
+      }, 400);
+    }
+
+    // ================== ВЫСТРЕЛЫ ==================
+    function spawnBullet(defender, targetRow) {
+      const d = defender.def;
+      const row = targetRow !== undefined ? targetRow : defender.row;
+      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
+      const el = document.createElement('div');
+      el.className = 'bullet';
+      el.style.left = (defender.x - 7) + 'px';
+      el.style.top = (cy - 7) + 'px';
+      fieldEl.appendChild(el);
+      state.bullets.push({
+        id: state.nextId++, x: defender.x, y: cy, row,
+        dmg: d.attack || 20,
+        speed: d.projectileSpeed || 400, el
+      });
+    }
+
+    // ================== ВЗРЫВ ==================
+    function explode(defender) {
+      const el = document.createElement('div');
+      el.className = 'explosion';
+      el.style.left = (defender.x - 120) + 'px';
+      el.style.top = (defender.y - 120) + 'px';
+      fieldEl.appendChild(el);
+      setTimeout(() => el.remove(), 700);
+      state.enemies.forEach(e => {
+        if (e.dead) return;
+        const dx = Math.abs(e.x - defender.x);
+        const dy = Math.abs((fieldRect.cellH * e.row + fieldRect.cellH/2) - defender.y);
+        if (dx < fieldRect.cellW * 1.5 && dy < fieldRect.cellH * 1.5) damageEnemy(e, 3000);
+      });
+    }
+
+    // ================== ИГРОВОЙ ЦИКЛ ==================
+    function gameLoop(timestamp) {
+      if (!state.running) return;
+      if (!state.lastFrameTime) state.lastFrameTime = timestamp;
+      const dt = Math.min(50, timestamp - state.lastFrameTime) / 1000;
+      state.lastFrameTime = timestamp;
+      const now = Date.now();
+
+      // защитники
+      state.defenders.forEach(d => {
+        const def = d.def;
+        if (d.bomb && now > d.bombTime) { explode(d); removeDefender(d); return; }
+        if (def.coinProduction && now - d.lastCoin > def.coinProduction) {
+          d.lastCoin = now;
+          spawnCoinAt(d.x, d.row);
+        }
+        if (def.attack && now - d.lastShot > def.fireRate) {
+          let hasTarget = false;
+          if (def.targetRows === 3) {
+            for (let dr = -1; dr <= 1; dr++) {
+              const row = d.row + dr;
+              if (row < 0 || row >= CONFIG.rows) continue;
+              if (state.enemies.some(e => e.row === row && e.x > d.x && !e.dead)) {
+                hasTarget = true; spawnBullet(d, row);
+              }
+            }
+          } else {
+            hasTarget = state.enemies.some(e => e.row === d.row && e.x > d.x && !e.dead);
+            if (hasTarget) spawnBullet(d);
+          }
+          if (hasTarget) {
+            d.lastShot = now;
+            d.el.classList.add('shooting');
+            setTimeout(() => d.el.classList.remove('shooting'), 200);
+          }
+        }
+      });
+
+      // пули
+      state.bullets.forEach(b => {
+        b.x += b.speed * dt;
+        b.el.style.left = (b.x - 7) + 'px';
+        for (const e of state.enemies) {
+          if (e.dead || e.row !== b.row) continue;
+          if (Math.abs(e.x + 25 - b.x) < 25) {
+            damageEnemy(e, b.dmg);
+            b.el.remove();
+            const i = state.bullets.indexOf(b);
+            if (i >= 0) state.bullets.splice(i, 1);
+            return;
+          }
+        }
+        if (b.x > fieldRect.width + 20) {
+          b.el.remove();
+          const i = state.bullets.indexOf(b);
+          if (i >= 0) state.bullets.splice(i, 1);
+        }
+      });
+
+      // враги
+      state.enemies.forEach(e => {
+        if (e.dead) return;
+        const defenderHere = state.defenders.find(d =>
+          d.row === e.row && Math.abs(d.x - e.x) < fieldRect.cellW * 0.7 && d.x < e.x && !d.bomb
+        );
+        if (defenderHere) {
+          e.eating = true;
+          defenderHere.hp -= e.damage * dt;
+          defenderHere.el.style.transform = 'scale(' + (0.9 + 0.1 * (defenderHere.hp / defenderHere.maxHp)) + ')';
+          if (defenderHere.hp <= 0) { removeDefender(defenderHere); e.eating = false; }
+        } else {
+          e.eating = false;
+          e.x -= e.speed * dt;
+          e.el.style.left = (e.x - 25) + 'px';
+          e.hpEl.style.left = (e.x - 25) + 'px';
+          e.hpBgEl.style.left = (e.x - 25) + 'px';
+        }
+        if (e.x < 0) {
+          e.dead = true;
+          e.el.remove();
+          if (e.hpEl) e.hpEl.remove();
+          if (e.hpBgEl) e.hpBgEl.remove();
+          state.hearts -= e.isBoss ? 3 : 1;
+          updateHUD();
+          showToast(e.isBoss ? 'БИЛЛ ПРОРВАЛСЯ! -3 ❤️' : 'Прорыв! -1 ❤️');
+          if (state.hearts <= 0) endGame(false);
+        }
+      });
+
+      state.enemies = state.enemies.filter(e => !e.dead || e.el.parentElement);
+
+      // монеты с неба
+      if (now - state.lastCoinDrop > CONFIG.coinDropInterval) {
+        state.lastCoinDrop = now;
+        spawnFallingCoin();
+      }
+
+      updateWaves(now);
+      requestAnimationFrame(gameLoop);
+    }
+
+    // ================== ВОЛНЫ ==================
+    function updateWaves(now) {
+      if (state.lastWave === 0) {
+        if (!state.firstPlaced || state.defenders.length === 0) return;
+        state.lastWave = now + CONFIG.firstWaveDelay;
+        showToast('Первая волна через 10 секунд!');
+        return;
+      }
+      if (now > state.lastWave) {
+        if (state.wave >= CONFIG.totalWaves) {
+          const alive = state.enemies.filter(e => !e.dead).length;
+          if (alive === 0) { endGame(true); return; }
+          state.lastWave = now + 1000;
+          return;
+        }
+        state.wave++;
+        updateHUD();
+        startWave();
+        state.lastWave = now + CONFIG.waveInterval;
+      }
+      spawnWaveEnemies();
+    }
+
+    function startWave() {
+      const waveNum = state.wave;
+      let weight;
+      if (waveNum === 1) weight = 1;
+      else if (waveNum === 2) weight = 2;
+      else if (waveNum === 3) weight = 3;
+      else if (waveNum === 4) weight = 5;
+      else if (waveNum === 5) weight = 8;
+      else weight = Math.floor(8 + (waveNum - 5) * 2);
+      if (waveNum === CONFIG.totalWaves) weight = 25; // финал с боссом
+      state.waveTarget = weight;
+      state.waveSpawned = 0;
+      state.waveKilled = 0;
+      state.waveEnemiesTotal = 0;
+
+      // БИЛЛ ШИФР
+      if (waveNum === CONFIG.totalWaves) {
+        showBillWarning();
+        setTimeout(() => {
+          if (state.gameOver) return;
+          spawnEnemy('bill');
+          state.waveSpawned++;
+        }, 2000);
+      }
+      showToast(waveNum === CONFIG.totalWaves ? '👁️ БИЛЛ ШИФР!' : 'Волна ' + waveNum);
+    }
+
+    function showBillWarning() {
+      const el = document.createElement('div');
+      el.className = 'bill-warning';
+      el.textContent = '👁️ БИЛЛ ШИФР ИДЁТ 👁️';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    function spawnWaveEnemies() {
+      if (!state.running || state.gameOver) return;
+      if (state.waveSpawned >= state.waveTarget) return;
+      const alive = state.enemies.filter(e => !e.dead).length;
+      if (alive >= 6 + state.wave) return;
+      const now = Date.now();
+      if (state._lastSpawn && now - state._lastSpawn < 2500) return;
+      state._lastSpawn = now;
+
+      // выбор типа
+      let pool;
+      if (state.wave <= 1) pool = ['gnome'];
+      else if (state.wave <= 2) pool = ['gnome', 'vampire'];
+      else if (state.wave <= 3) pool = ['gnome', 'vampire', 'zombie'];
+      else if (state.wave <= 5) pool = ['gnome', 'vampire', 'zombie', 'mummy'];
+      else if (state.wave < CONFIG.totalWaves) pool = ['gnome', 'vampire', 'zombie', 'mummy', 'water', 'multibear'];
+      else pool = ['gnome', 'vampire', 'zombie', 'mummy', 'water', 'multibear'];
+
+      const type = pool[Math.floor(Math.random() * pool.length)];
+      spawnEnemy(type);
+      state.waveSpawned++;
+      state.waveEnemiesTotal++;
+    }
+
+    // ================== КЛИКИ ==================
+    function handleFieldClick(e) {
+      if (!state.running) return;
+      const rect = fieldEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const col = Math.floor(x / fieldRect.cellW);
+      const row = Math.floor(y / fieldRect.cellH);
+      if (col < 0 || col >= CONFIG.cols || row < 0 || row >= CONFIG.rows) return;
+      if (state.selectedDefender) tryPlaceAt(col, row);
+    }
+
+    fieldEl.addEventListener('click', handleFieldClick);
+    fieldEl.addEventListener('contextmenu', e => e.preventDefault());
+
+    // ================== TOAST ==================
+    function showToast(text) {
+      toastEl.textContent = text;
+      toastEl.classList.remove('show');
+      void toastEl.offsetWidth;
+      toastEl.classList.add('show');
+    }
+
+    // ================== ФИНАЛ ==================
+    function endGame(won) {
+      if (state.gameOver) return;
+      state.gameOver = true;
+      state.running = false;
+      if (won) {
+        endTitle.textContent = '🏆 Победа!';
+        endTitle.classList.remove('lose');
+        endText.innerHTML = 'Ты отбил все ' + CONFIG.totalWaves + ' волн и прогнал Билла Шифра обратно в его измерение!<br>Гравити Фолз спасён. Диппер и Мэйбл гордятся тобой.';
+        endReward.innerHTML = 'Монеты: ' + state.coins + '<br>Очки: ' + state.score;
+      } else {
+        endTitle.textContent = '💀 Поражение';
+        endTitle.classList.add('lose');
+        endText.innerHTML = 'Монстры прорвались в Хижину Чудес.<br>Ты продержался ' + state.wave + ' из ' + CONFIG.totalWaves + ' волн.';
+        endReward.innerHTML = 'Очки: ' + state.score;
+      }
+      endOverlay.classList.add('show');
+    }
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      endOverlay.classList.remove('show');
+      startGame();
+    });
+
+    document.getElementById('menuBtn').addEventListener('click', () => {
+      endOverlay.classList.remove('show');
+      gameEl.classList.remove('show');
+      titleScreen.classList.remove('hidden');
+      state.running = false;
+    });
+
+    backBtn.addEventListener('click', () => {
+      if (confirm('Выйти в меню?')) {
+        state.running = false;
+        gameEl.classList.remove('show');
+        titleScreen.classList.remove('hidden');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (state.running) { calcField(); buildGrid(); }
+    });
+
+    setInterval(() => { if (state.running) updateSeedsUI(); }, 200);
+  </script>
+</body>
+</html>
