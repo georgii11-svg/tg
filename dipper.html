@@ -106,14 +106,17 @@
       { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 800, color: '#ff5c8a', size: 16 }
     ];
 
+    // canShoot — враг стреляет в Диппера
     var ENEMY_TYPES = {
       gnome: { emoji: '👺', hp: 40, speed: 60, damage: 12, xp: 10, coins: 15, radius: 16 },
       vampire: { emoji: '🧛', hp: 80, speed: 75, damage: 15, xp: 20, coins: 30, radius: 18 },
       zombie: { emoji: '🧟‍♀️', hp: 120, speed: 50, damage: 18, xp: 35, coins: 50, radius: 20 },
       mummy: { emoji: '🧟', hp: 200, speed: 45, damage: 22, xp: 60, coins: 80, radius: 22 },
       water: { emoji: '🐙', hp: 350, speed: 50, damage: 25, xp: 100, coins: 130, radius: 26 },
-      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30 },
-      gideon: { emoji: '🧙', hp: 1200, speed: 55, damage: 30, xp: 500, coins: 500, radius: 30, boss: true }
+      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30,
+        canShoot: true, shootDamage: 25, shootCooldown: 1500, bulletColor: '#ff8a3a', bulletSize: 10 },
+      gideon: { emoji: '🧙', hp: 1200, speed: 55, damage: 30, xp: 500, coins: 500, radius: 30, boss: true,
+        canShoot: true, shootDamage: 40, shootCooldown: 1000, bulletColor: '#ff2a6a', bulletSize: 14 }
     };
 
     var LOCATIONS = [
@@ -244,7 +247,7 @@
 
     var state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0, level: 1, xp: 0, xpNext: 50, damageBonus: 0 },
-      enemies: [], bullets: [], pickups: [], particles: [],
+      enemies: [], bullets: [], enemyBullets: [], pickups: [], particles: [],
       pages: 0, totalPages: 5, coins: 0,
       selected: 0,
       unlocked: [true, false, false, false, false],
@@ -255,7 +258,7 @@
       location: 0,
       map: null,
       cam: { x: 0, y: 0 },
-      enemyTimer: 20,
+      enemyTimer: 15,
       nearestNpc: null,
       dialogOpen: false,
       questStage: 0,
@@ -311,8 +314,9 @@
       state.player.y = safe.y * TILE + TILE / 2;
       state.enemies = [];
       state.bullets = [];
+      state.enemyBullets = [];
       state.particles = [];
-      state.enemyTimer = 15;
+      state.enemyTimer = 10;
       state.cam.x = state.player.x - W / 2;
       state.cam.y = state.player.y - H / 2;
       showToast('📍 ' + loc.name);
@@ -334,6 +338,7 @@
       state.cam.y = state.player.y - H / 2;
       state.enemies = [];
       state.bullets = [];
+      state.enemyBullets = [];
       state.pickups = [];
       state.particles = [];
       state.pages = 0;
@@ -347,7 +352,7 @@
       state.running = true;
       state.gameOver = false;
       state.lastTime = performance.now();
-      state.enemyTimer = 20;
+      state.enemyTimer = 15;
       state.nearestNpc = null;
       state.dialogOpen = false;
       state.questStage = 0;
@@ -440,7 +445,13 @@
         hp: et.hp, maxHp: et.hp,
         speed: et.speed, damage: et.damage,
         radius: et.radius, xp: et.xp, coins: et.coins,
-        slowUntil: 0, boss: !!et.boss, dead: false
+        slowUntil: 0, boss: !!et.boss, dead: false,
+        canShoot: !!et.canShoot,
+        shootDamage: et.shootDamage || 0,
+        shootCooldown: et.shootCooldown || 9999,
+        bulletColor: et.bulletColor || '#ff4040',
+        bulletSize: et.bulletSize || 10,
+        lastShot: 0
       });
     }
 
@@ -491,7 +502,7 @@
       }
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
-      // ПУЛИ — без проверки стены
+      // ПУЛИ игрока
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
         b.x += b.vx * dt;
@@ -512,6 +523,24 @@
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
+      // ПУЛИ ВРАГОВ (мультиберал, Гидеон)
+      for (var i = state.enemyBullets.length - 1; i >= 0; i--) {
+        var eb = state.enemyBullets[i];
+        eb.x += eb.vx * dt;
+        eb.y += eb.vy * dt;
+        eb.life -= dt;
+        var distP = Math.hypot(p.x - eb.x, p.y - eb.y);
+        if (distP < p.radius + eb.radius + 10) {
+          p.hp -= eb.damage;
+          showToast('💥 -' + eb.damage + ' HP');
+          updateHud();
+          if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
+          eb.life = 0;
+        }
+        if (eb.x < -200 || eb.x > MAP_COLS * TILE + 200 || eb.y < -200 || eb.y > MAP_ROWS * TILE + 200) eb.life = 0;
+      }
+      state.enemyBullets = state.enemyBullets.filter(function(b) { return b.life > 0; });
+
       // ВРАГИ
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -520,15 +549,35 @@
         var ddy = p.y - e.y;
         var dd = Math.hypot(ddx, ddy);
         var slow = (e.slowUntil > now) ? 0.5 : 1;
+
+        // движение к игроку
         if (dd > p.radius + e.radius - 4) {
           var enx = e.x + (ddx / dd) * e.speed * slow * dt;
           var eny = e.y + (ddy / dd) * e.speed * slow * dt;
           if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
           if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
         }
+
+        // атака вплотную
         if (dd < p.radius + e.radius + 15) {
           p.hp -= e.damage * dt;
           if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
+        }
+
+        // СТРЕЛЬБА (мультиберал, Гидеон)
+        if (e.canShoot && now - e.lastShot > e.shootCooldown) {
+          e.lastShot = now;
+          var angle = Math.atan2(p.y - e.y, p.x - e.x);
+          var speed = 400;
+          state.enemyBullets.push({
+            x: e.x, y: e.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            damage: e.shootDamage,
+            radius: e.bulletSize,
+            color: e.bulletColor,
+            life: 3.0
+          });
         }
       }
 
@@ -588,14 +637,6 @@
         }
       }
 
-      for (var i = 0; i < state.particles.length; i++) {
-        var pt = state.particles[i];
-        pt.x += pt.vx * dt;
-        pt.y += pt.vy * dt;
-        pt.life -= dt;
-      }
-      state.particles = state.particles.filter(function(pt) { return pt.life > 0; });
-
       state.nearestNpc = null;
       var bestNpcDist = 90;
       for (var key in NPCS) {
@@ -610,17 +651,18 @@
       if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
       else ib.classList.remove('show');
 
+      // СПАВН ВРАГОВ — чаще
       var loc2 = getLocation();
       if (loc2.enemies.length > 0) {
         state.enemyTimer -= dt;
         if (state.enemyTimer <= 0) {
-          state.enemyTimer = 8 + Math.random() * 5;
+          state.enemyTimer = 5 + Math.random() * 3;
           var type = loc2.enemies[Math.floor(Math.random() * loc2.enemies.length)];
           spawnEnemy(type);
-          if (Math.random() < 0.3) {
+          if (Math.random() < 0.4) {
             setTimeout(function() {
               if (state.running && !state.gameOver) spawnEnemy(type);
-            }, 500);
+            }, 400);
           }
         }
       }
@@ -685,7 +727,13 @@
         hp: et.hp, maxHp: et.hp,
         speed: et.speed, damage: et.damage,
         radius: et.radius, xp: et.xp, coins: et.coins,
-        slowUntil: 0, boss: true, dead: false
+        slowUntil: 0, boss: true, dead: false,
+        canShoot: true,
+        shootDamage: et.shootDamage,
+        shootCooldown: et.shootCooldown,
+        bulletColor: et.bulletColor,
+        bulletSize: et.bulletSize,
+        lastShot: 0
       });
       showToast('⚔️ ГИДЕОН!');
       state.quest = 'Победи Гидеона!';
@@ -805,7 +853,7 @@
         }
       }
 
-      // ПУЛИ — рисуем КРУПНО и ЯРКО
+      // ПУЛИ игрока
       for (var i = 0; i < state.bullets.length; i++) {
         var b = state.bullets[i];
         ctx.save();
@@ -815,11 +863,28 @@
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
-        // белый центр — ярче
         ctx.fillStyle = '#ffffff';
         ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // ПУЛИ врагов — красные квадраты
+      for (var i = 0; i < state.enemyBullets.length; i++) {
+        var eb = state.enemyBullets[i];
+        ctx.save();
+        ctx.fillStyle = eb.color;
+        ctx.shadowColor = eb.color;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, eb.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, eb.radius * 0.4, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
