@@ -5,46 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Гравити Фолз · Дневник №3</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { min-height: 100%; overflow-y: auto; overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: rgba(255,210,74,0.3); }
+  html, body { min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; }
 
+  /* ===== ЭКРАН МЕНЮ ===== */
   .title-screen {
-    min-height: 100vh;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px 20px 40px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 20px;
     text-align: center;
     overflow-y: auto;
+    z-index: 100;
+    transition: opacity 0.3s;
   }
-  .title-screen.hidden { display: none; }
+  .title-screen.hidden {
+    display: none;
+  }
   .title-screen h1 {
     font-size: 34px; letter-spacing: 3px; text-transform: uppercase;
     background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
     margin-bottom: 6px;
+    font-weight: 900;
   }
-  .title-screen .sub { font-size: 13px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 24px; text-transform: uppercase; }
-  .title-screen p { font-size: 13px; color: #b8b8d8; line-height: 1.6; max-width: 400px; margin-bottom: 12px; }
-  .title-screen button {
-    padding: 16px 44px; margin-top: 20px;
+  .title-screen .sub {
+    font-size: 13px; letter-spacing: 3px; color: #a78bfa;
+    margin-bottom: 24px; text-transform: uppercase;
+  }
+  .title-screen p {
+    font-size: 13px; color: #b8b8d8; line-height: 1.6;
+    max-width: 400px; margin-bottom: 12px;
+  }
+  .start-btn {
+    display: block;
+    padding: 18px 50px;
+    margin-top: 24px;
     background: linear-gradient(135deg, #ffd24a, #ff5c8a);
-    border: none; border-radius: 40px; color: #1a0a08;
-    font-family: inherit; font-size: 16px; font-weight: 800;
-    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    border: none;
+    border-radius: 50px;
+    color: #1a0a08;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
     box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
+    position: relative;
+    z-index: 101;
+    touch-action: manipulation;
+    -webkit-appearance: none;
   }
-  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
+  .start-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #8a2a4a;
+  }
 
-  #game { position: fixed; inset: 0; display: none; flex-direction: column; overflow: hidden; }
-  #canvas { flex: 1; display: block; width: 100%; background: #1a0a20; touch-action: none; }
+  /* ===== ИГРА ===== */
+  #game {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 10;
+  }
+  #game.show {
+    display: flex;
+  }
+  #canvas {
+    flex: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #1a0a20;
+    touch-action: none;
+  }
 
+  /* HUD */
   .hud {
     position: absolute; top: 0; left: 0; right: 0;
     display: flex; justify-content: space-between; align-items: center;
     padding: 6px 10px;
     background: linear-gradient(180deg, rgba(10,5,16,0.9) 0%, rgba(10,5,16,0) 100%);
     font-size: 12px; z-index: 10; gap: 6px; flex-wrap: wrap;
+    pointer-events: none;
   }
   .hud .stat {
     display: flex; align-items: center; gap: 4px;
@@ -54,10 +103,10 @@
     font-weight: 700; letter-spacing: 0.5px;
   }
   .hud .hp { color: #ff5c8a; }
-  .hud .ammo { color: #ffd24a; }
   .hud .pages { color: #5ecbff; }
   .hud .location { color: #a78bfa; }
 
+  /* Панель оружия */
   .weapon-bar {
     position: absolute; bottom: 8px; left: 50%;
     transform: translateX(-50%);
@@ -74,15 +123,16 @@
   .weapon-bar::-webkit-scrollbar { display: none; }
   .weapon {
     flex-shrink: 0;
-    width: 56px; height: 56px;
+    width: 52px; height: 52px;
     background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
     border: 2px solid #3a1a4a;
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
+    font-size: 24px;
     cursor: pointer;
     transition: all 0.15s;
     position: relative;
+    touch-action: manipulation;
   }
   .weapon.selected {
     border-color: #ffd24a;
@@ -93,17 +143,19 @@
   .weapon.locked::after {
     content: '🔒';
     position: absolute;
-    font-size: 20px;
+    font-size: 18px;
   }
 
+  /* Джойстик */
   .joystick {
-    position: fixed; z-index: 20;
+    position: absolute;
     width: 120px; height: 120px;
     border-radius: 50%;
     background: rgba(255,210,74,0.08);
     border: 2px solid rgba(255,210,74,0.3);
     display: none;
     pointer-events: none;
+    z-index: 20;
   }
   .joystick .knob {
     position: absolute;
@@ -114,9 +166,11 @@
     background: rgba(255,210,74,0.4);
     border: 2px solid rgba(255,210,74,0.7);
   }
+
+  /* Кнопка выстрела */
   .shoot-btn {
-    position: fixed;
-    bottom: 90px; right: 20px;
+    position: absolute;
+    bottom: 80px; right: 20px;
     width: 80px; height: 80px;
     border-radius: 50%;
     background: linear-gradient(135deg, #ff5c8a, #8a2a4a);
@@ -126,9 +180,11 @@
     z-index: 20;
     box-shadow: 0 0 30px rgba(255,92,138,0.6);
     cursor: pointer;
+    touch-action: manipulation;
   }
   .shoot-btn:active { transform: scale(0.92); }
 
+  /* Toast */
   .toast {
     position: fixed; top: 40%; left: 50%;
     transform: translate(-50%, -50%) scale(0);
@@ -154,10 +210,16 @@
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
 
+  /* Оверлей победы */
   .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.92);
-    display: none; align-items: center; justify-content: center;
-    flex-direction: column; z-index: 300; padding: 20px; text-align: center;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 300;
+    padding: 20px;
+    text-align: center;
   }
   .overlay.show { display: flex; }
   .overlay h1 { font-size: 30px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; }
@@ -166,12 +228,15 @@
   .overlay button {
     padding: 14px 36px;
     background: linear-gradient(135deg, #ffd24a, #ff5c8a);
-    border: none; border-radius: 40px; color: #1a0a08;
+    border: none; border-radius: 40px;
+    color: #1a0a08;
     font-family: inherit; font-size: 14px; font-weight: 800;
-    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
-    box-shadow: 0 5px 0 #8a2a4a; margin: 4px;
+    letter-spacing: 2px; text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #8a2a4a;
+    margin: 4px;
+    touch-action: manipulation;
   }
-  .overlay button.alt { background: transparent; border: 2px solid #ffd24a; color: #ffd24a; box-shadow: none; }
 </style>
 </head>
 <body>
@@ -179,22 +244,20 @@
   <div class="title-screen" id="titleScreen">
     <h1>Гравити Фолз</h1>
     <div class="sub">Дневник №3</div>
-    <p>Ты — Диппер Пайнс. Собирай страницы Дневника, отбивайся от монстров и найди Билла Шифра.</p>
-    <p style="font-size:12px;color:#8a7ab8;">Держи палец на экране, чтобы идти. Диппер стреляет сам. Открывай новое оружие по мере сбора страниц.</p>
-    <button id="startBtn">Играть</button>
+    <p>Ты — Диппер Пайнс. Собирай страницы Дневника и отбивайся от монстров.</p>
+    <button class="start-btn" id="startBtn" type="button">Играть</button>
   </div>
 
   <div id="game">
     <canvas id="canvas"></canvas>
     <div class="hud">
       <div class="stat hp"><span>❤️</span><span id="hudHp">100</span></div>
-      <div class="stat ammo"><span>⚡</span><span id="hudAmmo">∞</span></div>
       <div class="stat pages"><span>📖</span><span id="hudPages">0 / 5</span></div>
       <div class="stat location"><span>📍</span><span id="hudLoc">Хижина Чудес</span></div>
     </div>
     <div class="weapon-bar" id="weaponBar"></div>
     <div class="joystick" id="joystick"><div class="knob" id="knob"></div></div>
-    <button class="shoot-btn" id="shootBtn">💥</button>
+    <button class="shoot-btn" id="shootBtn" type="button">💥</button>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -202,20 +265,21 @@
   <div class="overlay" id="winOverlay">
     <h1 id="winTitle">🏆 Победа!</h1>
     <p id="winText"></p>
-    <button onclick="restart()">Играть снова</button>
+    <button onclick="restart()" type="button">Играть снова</button>
   </div>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let W = 0, H = 0;
+
     function resize() {
-      W = canvas.width = canvas.clientWidth;
-      H = canvas.height = canvas.clientHeight;
+      const rect = canvas.getBoundingClientRect();
+      W = canvas.width = rect.width || window.innerWidth;
+      H = canvas.height = rect.height || window.innerHeight;
     }
     window.addEventListener('resize', resize);
 
-    // ========== ОРУЖИЕ ==========
     const WEAPONS = [
       { id: 'blaster', name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 400, color: '#5ecbff', bulletSize: 5 },
       { id: 'gravity', name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 800, color: '#a78bfa', bulletSize: 10 },
@@ -224,7 +288,6 @@
       { id: 'rocket', name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', bulletSize: 12, explode: true }
     ];
 
-    // ========== ВРАГИ ==========
     const ENEMY_TYPES = {
       gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, coins: 15, radius: 16 },
       vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, coins: 30, radius: 18 },
@@ -238,20 +301,14 @@
 
     const state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 18, speed: 200, angle: 0 },
-      enemies: [],
-      bullets: [],
-      pickups: [],
-      particles: [],
-      pages: 0,
-      totalPages: 5,
+      enemies: [], bullets: [], pickups: [], particles: [],
+      pages: 0, totalPages: 5,
       selectedWeapon: 0,
       unlocked: [true, false, false, false, false],
       keys: { w: 0, a: 0, s: 0, d: 0 },
       joystick: { active: false, cx: 0, cy: 0, dx: 0, dy: 0 },
-      running: false,
-      gameOver: false,
-      lastTime: 0,
-      lastShot: 0,
+      running: false, gameOver: false,
+      lastTime: 0, lastShot: 0,
       location: 0,
       locations: [
         { name: 'Хижина Чудес', bg: '#2a1040', wall: '#4a2a6a' },
@@ -260,34 +317,30 @@
         { name: 'Подземелье', bg: '#1a0a05', wall: '#3a1a0a' },
         { name: 'Комната Билла', bg: '#2a0000', wall: '#ff4040' }
       ],
-      waveTimer: 0,
-      waveCount: 0,
-      bossAlive: false
+      waveTimer: 0, waveCount: 0
     };
 
     function initGame() {
-      resize();
-      state.player.x = W / 2;
-      state.player.y = H / 2;
-      state.player.hp = state.player.maxHp;
-      state.enemies = [];
-      state.bullets = [];
-      state.pickups = [];
-      state.particles = [];
-      state.pages = 0;
-      state.selectedWeapon = 0;
-      state.unlocked = [true, false, false, false, false];
-      state.location = 0;
-      state.running = true;
-      state.gameOver = false;
-      state.lastTime = performance.now();
-      state.waveTimer = 0;
-      state.waveCount = 0;
-      state.bossAlive = false;
-      buildWeaponBar();
-      updateHud();
-      spawnPageOnMap();
-      requestAnimationFrame(loop);
+      setTimeout(() => {
+        resize();
+        state.player.x = W / 2;
+        state.player.y = H / 2;
+        state.player.hp = state.player.maxHp;
+        state.enemies = []; state.bullets = []; state.pickups = []; state.particles = [];
+        state.pages = 0;
+        state.selectedWeapon = 0;
+        state.unlocked = [true, false, false, false, false];
+        state.location = 0;
+        state.running = true;
+        state.gameOver = false;
+        state.lastTime = performance.now();
+        state.waveTimer = 0;
+        state.waveCount = 0;
+        buildWeaponBar();
+        updateHud();
+        spawnPageOnMap();
+        requestAnimationFrame(loop);
+      }, 50);
     }
 
     function restart() {
@@ -338,19 +391,25 @@
     }
 
     function spawnPageOnMap() {
-      const x = 80 + Math.random() * (W - 160);
-      const y = 80 + Math.random() * (H - 160);
-      state.pickups.push({ type: 'page', x, y, radius: 20, collected: false });
+      state.pickups.push({
+        type: 'page',
+        x: 80 + Math.random() * (W - 160),
+        y: 80 + Math.random() * (H - 160),
+        radius: 20, collected: false
+      });
     }
 
     function spawnHealOnMap() {
-      const x = 80 + Math.random() * (W - 160);
-      const y = 80 + Math.random() * (H - 160);
-      state.pickups.push({ type: 'heal', x, y, radius: 18, collected: false });
+      state.pickups.push({
+        type: 'heal',
+        x: 80 + Math.random() * (W - 160),
+        y: 80 + Math.random() * (H - 160),
+        radius: 18, collected: false
+      });
     }
 
     function spawnCoinOnMap(x, y) {
-      state.pickups.push({ type: 'coin', x, y, radius: 14, collected: false, value: 20 });
+      state.pickups.push({ type: 'coin', x, y, radius: 14, collected: false });
     }
 
     function loop(now) {
@@ -389,7 +448,6 @@
         state.lastShot = now;
       }
 
-      // пули
       state.bullets.forEach(b => {
         b.x += b.vx * dt;
         b.y += b.vy * dt;
@@ -404,7 +462,7 @@
                 if (e2.hp <= 0) continue;
                 if (Math.hypot(e2.x - b.x, e2.y - b.y) < 100) e2.hp -= b.damage;
               });
-              for (let i = 0; i < 12; i++) {
+              for (let i = 0; i < 10; i++) {
                 state.particles.push({
                   x: b.x, y: b.y,
                   vx: (Math.random() - 0.5) * 300,
@@ -421,7 +479,6 @@
       });
       state.bullets = state.bullets.filter(b => b.life > 0);
 
-      // враги
       state.enemies.forEach(e => {
         if (e.hp <= 0) return;
         const dx2 = p.x - e.x;
@@ -433,21 +490,19 @@
           e.y += (dy2 / d) * e.speed * slow * dt;
         } else {
           p.hp -= e.damage * dt;
-          if (p.hp <= 0) { p.hp = 0; endGame(false); return; }
+          if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
         }
       });
 
-      // мёртвые
       state.enemies.forEach(e => {
         if (e.hp <= 0 && !e.dead) {
           e.dead = true;
           if (Math.random() < 0.5) spawnCoinOnMap(e.x, e.y);
-          if (e.isBoss && e.type === 'bill') { endGame(true); return; }
+          if (e.isBoss && e.type === 'bill') { setTimeout(() => endGame(true), 100); }
         }
       });
       state.enemies = state.enemies.filter(e => !e.dead);
 
-      // пикапы
       state.pickups.forEach(pk => {
         if (pk.collected) return;
         if (Math.hypot(pk.x - p.x, pk.y - p.y) < p.radius + pk.radius) {
@@ -467,13 +522,12 @@
             showToast('🍦 +30 HP!');
             updateHud();
           } else if (pk.type === 'coin') {
-            showToast('🪙 +' + pk.value);
+            showToast('🪙 +20');
           }
         }
       });
       state.pickups = state.pickups.filter(pk => !pk.collected);
 
-      // частицы
       state.particles.forEach(pt => {
         pt.x += pt.vx * dt;
         pt.y += pt.vy * dt;
@@ -483,7 +537,6 @@
       });
       state.particles = state.particles.filter(pt => pt.life > 0);
 
-      // волны
       state.waveTimer -= dt;
       if (state.waveTimer <= 0) {
         state.waveTimer = 3 + Math.random() * 2;
@@ -496,8 +549,7 @@
           else if (loc === 1) pool = ['gnome', 'vampire', 'zombie'];
           else if (loc === 2) pool = ['zombie', 'mummy', 'water'];
           else pool = ['mummy', 'water', 'multibear'];
-          const t = pool[Math.floor(Math.random() * pool.length)];
-          spawnEnemy(t);
+          spawnEnemy(pool[Math.floor(Math.random() * pool.length)]);
         }
         if (Math.random() < 0.15) spawnHealOnMap();
       }
@@ -553,7 +605,6 @@
         radius: et.radius, coins: et.coins,
         slowUntil: 0, isBoss: true, dead: false
       });
-      state.bossAlive = true;
       showToast('⚔️ БОСС: ' + bossType.toUpperCase() + '!');
     }
 
@@ -573,7 +624,6 @@
       }
       ctx.globalAlpha = 1;
 
-      // пикапы
       state.pickups.forEach(pk => {
         const bob = Math.sin(performance.now() / 200) * 3;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -582,7 +632,6 @@
         else if (pk.type === 'coin') { ctx.font = '22px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
       });
 
-      // враги
       state.enemies.forEach(e => {
         const et = ENEMY_TYPES[e.type];
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
@@ -606,7 +655,6 @@
         }
       });
 
-      // пули
       state.bullets.forEach(b => {
         ctx.fillStyle = b.color;
         ctx.shadowColor = b.color;
@@ -615,7 +663,6 @@
         ctx.shadowBlur = 0;
       });
 
-      // частицы
       state.particles.forEach(pt => {
         ctx.globalAlpha = pt.life / pt.maxLife;
         ctx.fillStyle = pt.color;
@@ -623,7 +670,6 @@
       });
       ctx.globalAlpha = 1;
 
-      // игрок
       const p = state.player;
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.beginPath();
@@ -647,7 +693,6 @@
       }
     }
 
-    // ========== КЛАВИАТУРА ==========
     document.addEventListener('keydown', (e) => {
       const k = e.key.toLowerCase();
       if (k === 'w' || k === 'ц') state.keys.w = 1;
@@ -663,7 +708,6 @@
       if (k === 'd' || k === 'в') state.keys.d = 0;
     });
 
-    // ========== ДЖОЙСТИК ==========
     const joystick = document.getElementById('joystick');
     const knob = document.getElementById('knob');
 
@@ -715,10 +759,7 @@
       const t = e.changedTouches[0];
       moveJoystick(t.clientX, t.clientY);
     }, { passive: false });
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      endJoystick();
-    }, { passive: false });
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); endJoystick(); }, { passive: false });
 
     canvas.addEventListener('mousedown', (e) => startJoystick(e.clientX, e.clientY));
     canvas.addEventListener('mousemove', (e) => { if (state.joystick.active) moveJoystick(e.clientX, e.clientY); });
@@ -740,7 +781,7 @@
       if (won) {
         title.textContent = '🏆 Победа!';
         title.classList.remove('lose');
-        text.innerHTML = 'Ты собрал все страницы Дневника №3 и уничтожил Билла Шифра! Гравити Фолз спасён.';
+        text.innerHTML = 'Ты собрал все страницы Дневника №3 и уничтожил Билла Шифра!';
       } else {
         title.textContent = '💀 Поражение';
         title.classList.add('lose');
@@ -749,11 +790,24 @@
       overlay.classList.add('show');
     }
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      document.getElementById('titleScreen').classList.add('hidden');
-      document.getElementById('game').style.display = 'flex';
-      resize();
-      initGame();
+    // ===== СТАРТ ИГРЫ =====
+    const startBtn = document.getElementById('startBtn');
+    const titleScreen = document.getElementById('titleScreen');
+    const gameEl = document.getElementById('game');
+
+    function startGame() {
+      titleScreen.classList.add('hidden');
+      gameEl.classList.add('show');
+      setTimeout(() => {
+        resize();
+        initGame();
+      }, 100);
+    }
+
+    startBtn.addEventListener('click', startGame);
+    startBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      startGame();
     });
 
     function showToast(text) {
