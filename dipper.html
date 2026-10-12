@@ -99,11 +99,11 @@
     var MAP_ROWS = 18;
 
     var WEAPONS = [
-      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 250, color: '#5ecbff', size: 8 },
-      { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 500, color: '#a78bfa', size: 10 },
-      { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 7, short: true },
-      { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 400, color: '#5ecbff', size: 8, slow: true },
-      { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 800, color: '#ff5c8a', size: 14 }
+      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 250, color: '#5ecbff', size: 12 },
+      { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 500, color: '#a78bfa', size: 14 },
+      { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 10, short: true },
+      { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 400, color: '#5ecbff', size: 12, slow: true },
+      { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 800, color: '#ff5c8a', size: 16 }
     ];
 
     var ENEMY_TYPES = {
@@ -238,7 +238,7 @@
         dialog: { text: 'Йо, Диппер! В лесу неспокойно. Хочешь, подлечу?',
           choices: [ { text: 'Спасибо, Зус', action: 'heal' }, { text: 'Позже', action: 'close' } ] } },
       mcgucket: { name: 'МакГаккет', emoji: '👴', color: '#b8a060', x: 5, y: 14, location: 4,
-        dialog: { text: 'Я помню! Помню Гидеона! Стреляй в него чаще — у него щит, который сбивается от выстрелов!',
+        dialog: { text: 'Я помню! Помню Гидеона! Стреляй в него чаще — у него щит сбивается от выстрелов!',
           choices: [ { text: 'Спасибо, старик', action: 'close' } ] } }
     };
 
@@ -449,6 +449,7 @@
       var dt = Math.min(50, now - state.lastTime) / 1000;
       state.lastTime = now;
       if (!state.dialogOpen) update(dt, now);
+      updateHud();
 
       var mapW = MAP_COLS * TILE;
       var mapH = MAP_ROWS * TILE;
@@ -490,32 +491,28 @@
       }
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
-      // пули
+      // ПУЛИ — без проверки стены
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
-        if (b.noWallFrames && b.noWallFrames > 0) {
-          b.noWallFrames--;
-        } else {
-          if (isWallAt(b.x, b.y)) b.life = 0;
-        }
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         b.life -= dt;
         for (var j = 0; j < state.enemies.length; j++) {
           var e = state.enemies[j];
           if (e.hp <= 0) continue;
-          if (Math.hypot(e.x - b.x, e.y - b.y) < e.radius + b.radius) {
+          var dist = Math.hypot(e.x - b.x, e.y - b.y);
+          if (dist < e.radius + b.radius + 15) {
             e.hp -= b.damage + p.damageBonus;
             if (b.slow) e.slowUntil = now + 2000;
             b.life = 0;
             break;
           }
         }
-        if (b.x < -100 || b.x > W + 100 || b.y < -100 || b.y > H + 100) b.life = 0;
+        if (b.x < -200 || b.x > MAP_COLS * TILE + 200 || b.y < -200 || b.y > MAP_ROWS * TILE + 200) b.life = 0;
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
-      // ВРАГИ АТАКУЮТ
+      // ВРАГИ
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
@@ -523,15 +520,13 @@
         var ddy = p.y - e.y;
         var dd = Math.hypot(ddx, ddy);
         var slow = (e.slowUntil > now) ? 0.5 : 1;
-        // двигаются к игроку
         if (dd > p.radius + e.radius - 4) {
           var enx = e.x + (ddx / dd) * e.speed * slow * dt;
           var eny = e.y + (ddy / dd) * e.speed * slow * dt;
           if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
           if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
         }
-        // если в зоне удара — бьют
-        if (dd < p.radius + e.radius + 6) {
+        if (dd < p.radius + e.radius + 15) {
           p.hp -= e.damage * dt;
           if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
         }
@@ -545,7 +540,6 @@
           addXp(e.xp);
           if (Math.random() < 0.7) state.pickups.push({ type: 'coin', x: e.x, y: e.y, radius: 16, collected: false, location: state.location });
           if (e.boss && e.type === 'gideon') setTimeout(function() { endGame(true); }, 500);
-          updateHud();
         }
       }
       state.enemies = state.enemies.filter(function(e) { return !e.dead; });
@@ -571,7 +565,6 @@
             state.coins += 20;
             showToast('🪙 +20');
           }
-          updateHud();
         }
       }
       state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
@@ -645,7 +638,6 @@
         p.damageBonus += 5;
         showToast('⬆️ УРОВЕНЬ ' + p.level + '!');
       }
-      updateHud();
     }
 
     function playerShoot() {
@@ -671,15 +663,17 @@
       }
       p.angle = angle;
       state.lastShot = now;
-      var speed = w.short ? 500 : 900;
+      var speed = w.short ? 600 : 1200;
       state.bullets.push({
-        x: p.x, y: p.y,
+        x: p.x,
+        y: p.y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        damage: w.damage, radius: w.size,
-        color: w.color, slow: w.slow,
-        life: w.short ? 0.3 : 2.0,
-        noWallFrames: 4
+        damage: w.damage,
+        radius: w.size,
+        color: w.color,
+        slow: w.slow,
+        life: w.short ? 0.3 : 3.0
       });
     }
 
@@ -695,7 +689,6 @@
       });
       showToast('⚔️ ГИДЕОН!');
       state.quest = 'Победи Гидеона!';
-      updateHud();
     }
 
     function draw() {
@@ -745,7 +738,6 @@
         ctx.fillText(ex.label, exX, exY + 25);
       }
 
-      // NPC
       for (var key in NPCS) {
         var npc = NPCS[key];
         if (npc.location !== state.location) continue;
@@ -766,7 +758,6 @@
         }
       }
 
-      // ПИКАПЫ
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location) continue;
@@ -798,7 +789,6 @@
         }
       }
 
-      // ВРАГИ
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         var et = ENEMY_TYPES[e.type];
@@ -815,16 +805,23 @@
         }
       }
 
-      // пули
+      // ПУЛИ — рисуем КРУПНО и ЯРКО
       for (var i = 0; i < state.bullets.length; i++) {
         var b = state.bullets[i];
+        ctx.save();
         ctx.fillStyle = b.color;
         ctx.shadowColor = b.color;
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 20;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
+        // белый центр — ярче
+        ctx.fillStyle = '#ffffff';
         ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
 
       var p = state.player;
@@ -863,23 +860,19 @@
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
-      // NPC — видны на карте
       for (var key in NPCS) {
         var npc = NPCS[key];
         if (npc.location !== state.location) continue;
         ctx.fillStyle = npc.color;
         ctx.fillRect(mmX + npc.x * cell - 1.5, mmY + npc.y * cell - 1.5, 4, 4);
       }
-      // игрок
       ctx.fillStyle = '#5ecbff';
       ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
-      // враги
       ctx.fillStyle = '#ff5c8a';
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         ctx.fillRect(mmX + (e.x / TILE) * cell - 1, mmY + (e.y / TILE) * cell - 1, 2, 2);
       }
-      // СТРАНИЦЫ НА КАРТЕ НЕ ОТОБРАЖАЮТСЯ
     }
 
     function openDialog(npc) {
@@ -912,14 +905,12 @@
         state.questStage = 3;
         state.quest = '📖 Найди 5 страниц: Двор, Лес, Озеро, Пещера, Городок';
       }
-      updateHud();
     }
 
     function handleChoice(action, npc) {
       if (action === 'heal') {
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
         showToast('❤️ +40 HP');
-        updateHud();
         advanceQuest(npc);
         closeDialog();
       } else if (action === 'buy') {
@@ -933,13 +924,9 @@
               break;
             }
           }
-          updateHud();
         } else {
           showToast('🪙 Нужно 300 монет');
         }
-        advanceQuest(npc);
-        closeDialog();
-      } else if (action === 'quest') {
         advanceQuest(npc);
         closeDialog();
       } else {
