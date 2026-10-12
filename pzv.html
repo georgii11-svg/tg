@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>PvZ Prototype</title>
+<style>
+  html,body{margin:0;padding:0;background:#1a2a1a;font-family:Arial,sans-serif;overflow:hidden;height:100%;}
+  #game{display:block;margin:0 auto;background:#7cb342;cursor:pointer;}
+  #hud{position:absolute;top:8px;left:0;width:100%;text-align:center;color:#fff;pointer-events:none;}
+  #cards{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:10;}
+  .card{width:64px;height:88px;background:#d4b483;border:2px solid #6b4f2a;border-radius:6px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        cursor:pointer;user-select:none;font-size:11px;color:#000;position:relative;transition:.1s;}
+  .card:hover{transform:translateY(-3px);}
+  .card.selected{border-color:#ffdd00;box-shadow:0 0 12px #ffdd00;}
+  .card.disabled{filter:grayscale(1) brightness(.6);cursor:not-allowed;}
+  .card .icon{font-size:26px;line-height:1;}
+  .card .cost{background:#fff8;padding:0 4px;border-radius:3px;margin-top:2px;font-weight:bold;}
+  .card .cd{position:absolute;bottom:0;left:0;width:100%;background:#000a;height:0;transition:height .1s;}
+  #sunCounter{position:absolute;top:10px;right:20px;font-size:20px;color:#fff;font-weight:bold;
+              background:#0006;padding:6px 14px;border-radius:8px;z-index:10;}
+  #msg{position:absolute;top:45%;width:100%;text-align:center;font-size:48px;color:#fff;
+       text-shadow:2px 2px 8px #000;pointer-events:none;z-index:20;opacity:0;transition:.3s;}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="sunCounter">☀ 50</div>
+<div id="cards"></div>
+<div id="msg"></div>
+
+<script>
+/* =========================================================
+   PvZ — ПРОТОТИП С ЧЕСТНЫМИ ЧИСЛАМИ
+   ========================================================= */
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const CELL_W = 80, CELL_H = 100;
+const COLS = 9, ROWS = 5;
+const GRID_X = 100, GRID_Y = 100;   // отступ слева (газонокосилки) и сверху
+canvas.width = GRID_X + COLS*CELL_W + 40;
+canvas.height = GRID_Y + ROWS*CELL_H + 20;
+
+/* ---------- ЧЕСТНЫЕ ПАРАМЕТРЫ ИЗ PvZ WIKI ---------- */
+const CONFIG = {
+  sunStart: 50,
+  sunFromSkyInterval: 10,      // сек, солнце с неба (в оригинале ~10)
+  sunflowerProduceInterval: 24,// сек (в оригинале ~24.25)
+  sunflowerFirstProduce: 7,    // сек до первого солнца
+  peaShootInterval: 1.4,       // сек между выстрелами гороха (в оригинале ~1.4)
+  peaDamage: 20,
+  peaSpeed: 300,               // px/сек (условно)
+  snowDamage: 20,
+  snowSlowDuration: 3,         // сек замедления
+  snowSlowFactor: 0.5,         // вдвое медленнее
+  zombieHP: 270,               // 200 тело + 70 голова
+  zombieSpeed: CELL_W / 4.7,   // 1 клетка / 4.7 сек (≈17 px/сек)
+  zombieDamage: 100,           // HP/сек (съедает орех 4000 HP за 40 сек)
+  coneZombieHP: 570,           // 370 + 200
+  cherryDamage: 1800,          // вишня — мгновенный урон 1800 на 3x3
+  wallnutHP: 4000,
+  plantHP: 300,
+};
+
+/* ---------- РАСТЕНИЯ ---------- */
+const PLANTS = [
+  {id:'sunflower', name:'Подсолнух', cost:50,  cd:7.5,  hp:300, color:'#ffd54f', icon:'🌻', key:'1'},
+  {id:'peashooter',name:'Горохострел',cost:100,cd:7.5,  hp:300, color:'#66bb6a', icon:'🌱', key:'2'},
+  {id:'snowpea',   name:'Снежок',     cost:175,cd:7.5,  hp:300, color:'#4fc3f7', icon:'❄️', key:'3'},
+  {id:'wallnut',   name:'Орех',       cost:50, cd:30,   hp:4000,color:'#a1887f', icon:'🥜', key:'4'},
+  {id:'cherry',    name:'Вишня',      cost:150,cd:50,   hp:300, color:'#e53935', icon:'🍒', key:'5'},
+];
+
+/* ---------- СОСТОЯНИЕ ---------- */
+let sun = CONFIG.sunStart;
+let selectedPlant = null;
+let cooldowns = {};        // id -> оставшееся время
+let plants = [];
+let zombies = [];
+let projectiles = [];
+let suns = [];             // падающие и выпавшие солнца
+let particles = [];
+let skySunTimer = CONFIG.sunFromSkyInterval;
+let gameTime = 0;
+let waveTimer = 0;
+let waveNum = 0;
+let gameOver = false;
+
+PLANTS.forEach(p => cooldowns[p.id] = 0);
+
+/* ---------- HUD ---------- */
+const cardsEl = document.getElementById('cards');
+const sunEl = document.getElementById('sunCounter');
+const msgEl = document.getElementById('msg');
+
+function buildCards(){
+  cardsEl.innerHTML = '';
+  PLANTS.forEach(p=>{
+    const d = document.createElement('div');
+    d.className='card'; d.dataset.id=p.id;
+    d.innerHTML = `<div class="icon">${p.icon}</div><div>${p.name}</div>
+                   <div class="cost">${p.cost}☀</div><div class="cd"></div>`;
+    d.onclick = ()=>{
+      if(cooldowns[p.id]>0 || sun<p.cost) return;
+      selectedPlant = (selectedPlant===p.id)?null:p.id;
+      refreshCards();
+    };
+    cardsEl.appendChild(d);
+  });
+}
+function refreshCards(){
+  document.querySelectorAll('.card').forEach(el=>{
+    const p = PLANTS.find(x=>x.id===el.dataset.id);
+    el.classList.toggle('selected', selectedPlant===p.id);
+    el.classList.toggle('disabled', cooldowns[p.id]>0 || sun<p.cost);
+    el.querySelector('.cd').style.height = (cooldowns[p.id]/p.cd*100)+'%';
+  });
+}
+buildCards();
+
+/* ---------- УТИЛИТЫ ---------- */
+function showMsg(txt, ms=1500){
+  msgEl.textContent = txt; msgEl.style.opacity=1;
+  setTimeout(()=>msgEl.style.opacity=0, ms);
+}
+function cellCenter(r,c){ return {x: GRID_X + c*CELL_W + CELL_W/2, y: GRID_Y + r*CELL_H + CELL_H/2}; }
+function posToCell(x,y){
+  const c = Math.floor((x-GRID_X)/CELL_W);
+  const r = Math.floor((y-GRID_Y)/CELL_H);
+  if(r<0||r>=ROWS||c<0||c>=COLS) return null;
+  return {r,c};
+}
+function plantAt(r,c){ return plants.find(p=>p.r===r&&p.c===c&&p.alive); }
+
+/* ---------- СОЛНЦЕ С НЕБА ---------- */
+function spawnSkySun(){
+  const x = GRID_X + Math.random()*(COLS*CELL_W);
+  const targetY = GRID_Y + 40 + Math.random()*(ROWS*CELL_H-80);
+  suns.push({x, y:-30, targetY, vy:40, value:25, life:12, collected:false});
+}
+
+/* ---------- ИГРОВОЙ ЦИКЛ ---------- */
+let lastT = performance.now();
+function loop(now){
+  const dt = Math.min((now-lastT)/1000, 0.05);
+  lastT = now;
+  if(!gameOver) update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function update(dt){
+  gameTime += dt;
+
+  // кулдауны
+  for(const p of PLANTS){
+    if(cooldowns[p.id]>0){ cooldowns[p.id]-=dt; if(cooldowns[p.id]<0) cooldowns[p.id]=0; }
+  }
+  refreshCards();
+
+  // солнце с неба
+  skySunTimer -= dt;
+  if(skySunTimer<=0){ skySunTimer = CONFIG.sunFromSkyInterval; spawnSkySun(); }
+
+  // падающие солнца
+  for(let i=suns.length-1;i>=0;i--){
+    const s = suns[i];
+    if(s.collected){ suns.splice(i,1); continue; }
+    if(s.y < s.targetY){
+      s.y += s.vy*dt;
+      if(s.y>s.targetY) s.y=s.targetY;
+    } else {
+      s.life -= dt;
+      if(s.life<=0) suns.splice(i,1);
+    }
+  }
+
+  // растения: производство и стрельба
+  for(const p of plants){
+    if(!p.alive) continue;
+    if(p.id==='sunflower'){
+      p.timer -= dt;
+      if(p.timer<=0){
+        p.timer = CONFIG.sunflowerProduceInterval;
+        const c = cellCenter(p.r,p.c);
+        suns.push({x:c.x, y:c.y, targetY:c.y, vy:0, value:25, life:10, collected:false});
+      }
+    }
+    if(p.id==='peashooter' || p.id==='snowpea'){
+      // стреляем, если в ряду есть зомби правее
+      const enemy = zombies.find(z=>z.r===p.r && z.x > cellCenter(p.r,p.c).x - 20 && z.alive);
+      p.timer -= dt;
+      if(enemy && p.timer<=0){
+        p.timer = CONFIG.peaShootInterval;
+        const c = cellCenter(p.r,p.c);
+        projectiles.push({
+          x:c.x+20, y:c.y-10, r:p.r, vx:CONFIG.peaSpeed,
+          damage: CONFIG.peaDamage,
+          slow: p.id==='snowpea',
+          color: p.id==='snowpea' ? '#4fc3f7' : '#66bb6a'
+        });
+      }
+    }
+    if(p.id==='cherry'){
+      p.fuse -= dt;
+      if(p.fuse<=0){
+        // взрыв 3x3
+        const cx = p.c, cr = p.r;
+        for(const z of zombies){
+          if(!z.alive) continue;
+          if(Math.abs(z.r-cr)<=1 && Math.abs(z.cellCol-cx)<=1){
+            z.hp -= CONFIG.cherryDamage;
+            if(z.hp<=0) killZombie(z);
+          }
+        }
+        // частицы
+        for(let i=0;i<30;i++){
+          particles.push({
+            x:cellCenter(p.r,p.c).x, y:cellCenter(p.r,p.c).y,
+            vx:(Math.random()-.5)*400, vy:(Math.random()-.5)*400,
+            life:0.6, color:'#ff5722'
+          });
+        }
+        p.alive = false;
+      }
+    }
+  }
+  plants = plants.filter(p=>p.alive);
+
+  // снаряды
+  for(let i=projectiles.length-1;i>=0;i--){
+    const pr = projectiles[i];
+    pr.x += pr.vx*dt;
+    // попадание
+    const hit = zombies.find(z=>z.alive && z.r===pr.r && Math.abs(z.x-pr.x)<28);
+    if(hit){
+      hit.hp -= pr.damage;
+      if(pr.slow){ hit.slow = CONFIG.snowSlowDuration; }
+      if(hit.hp<=0) killZombie(hit);
+      projectiles.splice(i,1); continue;
+    }
+    if(pr.x > canvas.width) projectiles.splice(i,1);
+  }
+
+  // зомби
+  for(const z of zombies){
+    if(!z.alive) continue;
+    // замедление
+    let speed = CONFIG.zombieSpeed;
+    if(z.slow>0){ speed *= CONFIG.snowSlowFactor; z.slow -= dt; }
+
+    // есть ли перед ним растение?
+    const cell = posToCell(z.x - 20, z.r*CELL_H + GRID_Y + CELL_H/2);
+    let target = null;
+    if(cell){
+      target = plantAt(z.r, cell.c);
+    }
+    if(target){
+      // грызёт
+      target.hp -= CONFIG.zombieDamage * dt;
+      if(target.hp<=0){ target.alive=false; }
+    } else {
+      z.x -= speed*dt;
+    }
+
+    // проигрыш
+    if(z.x < GRID_X - 30){ triggerGameOver(); }
+  }
+  zombies = zombies.filter(z=>z.alive);
+
+  // частицы
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt;
+    if(p.life<=0) particles.splice(i,1);
+  }
+
+  // волны
+  waveTimer += dt;
+  const waveInterval = 25;   // сек между волнами
+  if(waveTimer > waveInterval){
+    waveTimer = 0;
+    waveNum++;
+    spawnWave(waveNum);
+  }
+}
+
+function spawnWave(n){
+  const count = 1 + Math.floor(n*0.8);
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      if(gameOver) return;
+      const r = Math.floor(Math.random()*ROWS);
+      const isCone = n>=3 && Math.random()<0.3;
+      zombies.push({
+        r, x: canvas.width + 20,
+        hp: isCone ? CONFIG.coneZombieHP : CONFIG.zombieHP,
+        maxHp: isCone ? CONFIG.coneZombieHP : CONFIG.zombieHP,
+        speed: CONFIG.zombieSpeed,
+        slow: 0,
+        alive: true,
+        cellCol: COLS-1,
+        isCone
+      });
+    }, i*700);
+  }
+  if(n>1) showMsg('ВОЛНА '+n, 1200);
+}
+
+function killZombie(z){
+  z.alive = false;
+  for(let i=0;i<8;i++){
+    particles.push({
+      x:z.x, y:z.r*CELL_H+GRID_Y+CELL_H/2,
+      vx:(Math.random()-.5)*200, vy:(Math.random()-.5)*200,
+      life:0.5, color:'#8d6e63'
+    });
+  }
+}
+
+function triggerGameOver(){
+  gameOver = true;
+  showMsg('ЗОМБИ СЪЕЛИ ТВОИ МОЗГИ 🧟', 5000);
+}
+
+/* ---------- КЛИКИ ---------- */
+canvas.addEventListener('click', e=>{
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // сбор солнца
+  for(let i=suns.length-1;i>=0;i--){
+    const s = suns[i];
+    if(Math.hypot(s.x-mx, s.y-my) < 30 && !s.collected){
+      s.collected = true;
+      sun += s.value;
+      sunEl.textContent = '☀ '+sun;
+      refreshCards();
+      return;
+    }
+  }
+
+  // посадка
+  if(selectedPlant){
+    const cell = posToCell(mx, my);
+    if(cell && !plantAt(cell.r, cell.c)){
+      const def = PLANTS.find(p=>p.id===selectedPlant);
+      if(sun >= def.cost && cooldowns[def.id]<=0){
+        plants.push({
+          id:def.id, r:cell.r, c:cell.c, hp:def.hp, maxHp:def.hp,
+          alive:true,
+          timer: def.id==='sunflower' ? CONFIG.sunflowerFirstProduce : 0,
+          fuse: def.id==='cherry' ? 1.0 : 0
+        });
+        sun -= def.cost;
+        cooldowns[def.id] = def.cd;
+        sunEl.textContent = '☀ '+sun;
+        selectedPlant = null;
+        refreshCards();
+      }
+    }
+  }
+});
+
+/* ---------- ОТРИСОВКА ---------- */
+function render(){
+  // газон
+  ctx.fillStyle = '#7cb342';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      ctx.fillStyle = ((r+c)%2===0) ? '#8bc34a' : '#7cb342';
+      ctx.fillRect(GRID_X+c*CELL_W, GRID_Y+r*CELL_H, CELL_W, CELL_H);
+    }
+  }
+  // рамка газона
+  ctx.strokeStyle = '#33691e';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(GRID_X, GRID_Y, COLS*CELL_W, ROWS*CELL_H);
+
+  // газонокосилки
+  for(let r=0;r<ROWS;r++){
+    ctx.fillStyle = '#555';
+    ctx.fillRect(GRID_X-60, GRID_Y+r*CELL_H+30, 50, 40);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(GRID_X-55, GRID_Y+r*CELL_H+35, 40, 10);
+  }
+
+  // растения
+  for(const p of plants){
+    const c = cellCenter(p.r,p.c);
+    const def = PLANTS.find(x=>x.id===p.id);
+    ctx.font = '40px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, c.x, c.y);
+    // полоска HP если повреждён
+    if(p.hp < p.maxHp){
+      ctx.fillStyle = '#0008';
+      ctx.fillRect(c.x-25, c.y+30, 50, 5);
+      ctx.fillStyle = '#e53935';
+      ctx.fillRect(c.x-25, c.y+30, 50*(p.hp/p.maxHp), 5);
+    }
+    // вишня — мигает
+    if(p.id==='cherry' && Math.floor(p.fuse*10)%2===0){
+      ctx.fillStyle='#ff000066';
+      ctx.beginPath(); ctx.arc(c.x,c.y,35,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  // снаряды
+  for(const pr of projectiles){
+    ctx.fillStyle = pr.color;
+    ctx.beginPath(); ctx.arc(pr.x, pr.y, 7, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#0006'; ctx.stroke();
+  }
+
+  // зомби
+  for(const z of zombies){
+    const y = GRID_Y + z.r*CELL_H + CELL_H/2;
+    ctx.font = '42px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    if(z.slow>0){
+      ctx.fillStyle='#4fc3f7';
+      ctx.beginPath(); ctx.arc(z.x, y, 26, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillText(z.isCone ? '🧟‍♂️' : '🧟', z.x, y);
+    if(z.isCone){ ctx.font='20px serif'; ctx.fillText('🔺', z.x, y-30); }
+    // HP бар
+    ctx.fillStyle='#0008';
+    ctx.fillRect(z.x-22, y-34, 44, 5);
+    ctx.fillStyle = z.hp/z.maxHp>0.5?'#4caf50':'#e53935';
+    ctx.fillRect(z.x-22, y-34, 44*(z.hp/z.maxHp), 5);
+  }
+
+  // солнца
+  for(const s of suns){
+    const pulse = 1 + Math.sin(gameTime*6)*0.08;
+    ctx.fillStyle='#ffeb3b';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 22*pulse, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#fbc02d'; ctx.lineWidth=3; ctx.stroke();
+    ctx.font='16px serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('☀', s.x, s.y);
+  }
+
+  // частицы
+  for(const p of particles){
+    ctx.globalAlpha = Math.max(0,p.life*1.6);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x-3, p.y-3, 6, 6);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ---------- КЛАВИАТУРА ---------- */
+document.addEventListener('keydown', e=>{
+  const p = PLANTS.find(x=>x.key===e.key);
+  if(p && cooldowns[p.id]<=0 && sun>=p.cost){
+    selectedPlant = p.id; refreshCards();
+  }
+  if(e.key==='Escape'){ selectedPlant=null; refreshCards(); }
+});
+</script>
+</body>
+</html>
