@@ -3,71 +3,140 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Гравити Фолз · Тайна Хижины Чудес</title>
+<title>Гравити Фолз · Дневник №3</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1a0a20; color: #fff; user-select: none; touch-action: none; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; touch-action: none; }
   @media (orientation: portrait) {
-    body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #1a0a20; color: #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
+    body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #0a0510; color: #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
   }
-  .title-screen { position: fixed; inset: 0; background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; z-index: 5000; text-align: center; }
-  .title-screen.hidden { display: none; }
-  .title-screen h1 { font-size: 42px; letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 30px rgba(255, 210, 74, 0.5); margin-bottom: 8px; line-height: 1.1; }
-  .title-screen .sub { font-size: 14px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 30px; text-transform: uppercase; }
-  .title-screen p { font-size: 14px; color: #b8b8d8; line-height: 1.7; max-width: 480px; margin-bottom: 20px; }
-  .title-screen button { padding: 16px 44px; margin-top: 16px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 16px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4); transition: all 0.15s; }
-  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
-  .hint-block { margin-top: 24px; font-size: 12px; color: #6a5a8a; max-width: 400px; line-height: 1.6; }
-  #game { position: fixed; inset: 0; display: none; flex-direction: column; }
-  #game.show { display: flex; }
-  .hud { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: linear-gradient(180deg, #1a0a20 0%, #0a0418 100%); border-bottom: 2px solid #3a1a4a; font-size: 11px; z-index: 50; gap: 5px; }
-  .hud .stat { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 3px 9px; border-radius: 20px; border: 1px solid #3a1a4a; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; }
-  .hud .stat .icon { font-size: 13px; }
-  .hud .hearts { color: #ff5c8a; }
-  .hud .coins { color: #ffd24a; }
-  .hud .wave-info { color: #a78bfa; }
-  .hud .score-info { color: #5ecbff; }
-  .back-btn { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 60; padding: 4px 14px; background: rgba(0,0,0,0.6); border: 1px solid #3a1a4a; border-radius: 20px; color: #a0a0c0; font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; }
-  .back-btn:hover { color: #fff; border-color: #ffd24a; }
-  .seeds { display: flex; gap: 5px; padding: 5px 8px; background: linear-gradient(180deg, #0a0418 0%, #05020f 100%); overflow-x: auto; border-bottom: 2px solid #3a1a4a; scrollbar-width: none; flex-shrink: 0; min-height: 86px; }
-  .seeds::-webkit-scrollbar { display: none; }
-  .seed { flex-shrink: 0; width: 60px; height: 76px; background: linear-gradient(180deg, #ffd24a 0%, #b8924a 100%); border: 3px solid #6a4a0a; border-radius: 10px; padding: 3px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s ease; position: relative; box-shadow: 0 4px 0 #4a3a0a; }
-  .seed.selected { border-color: #ffd24a; box-shadow: 0 0 20px rgba(255, 210, 74, 0.8), 0 4px 0 #4a3a0a; transform: translateY(-2px); }
-  .seed.disabled { opacity: 0.35; cursor: not-allowed; }
-  .seed .seed-emoji { font-size: 24px; line-height: 1; }
-  .seed .seed-name { font-size: 6.5px; color: #1a0a08; font-weight: 800; text-align: center; text-transform: uppercase; line-height: 1.1; }
-  .seed .seed-cost { font-size: 10px; font-weight: 900; color: #1a0a08; background: rgba(255,255,255,0.4); padding: 1px 5px; border-radius: 8px; }
-  .seed .cooldown-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.75); border-radius: 8px; pointer-events: none; display: none; }
-  .seed .cooldown-overlay.show { display: block; }
-  .field-wrap { flex: 1; position: relative; overflow: hidden; background: linear-gradient(180deg, #2a1040 0%, #0a0418 100%); }
-  #field { position: absolute; inset: 0; }
-  .grid-cell { position: absolute; border: 1px dashed rgba(255,255,255,0.06); box-sizing: border-box; }
-  .defender { position: absolute; display: flex; align-items: center; justify-content: center; font-size: 38px; line-height: 1; z-index: 5; animation: pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 50%; }
-  @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-  .defender.shooting { animation: shoot 0.2s ease; }
-  @keyframes shoot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-  .bullet { position: absolute; width: 14px; height: 14px; background: radial-gradient(circle at 30% 30%, #ffe88a, #d4a020); border-radius: 50%; box-shadow: 0 0 12px #ffd24a; z-index: 3; pointer-events: none; }
-  .enemy { position: absolute; font-size: 40px; line-height: 1; z-index: 4; display: flex; align-items: center; justify-content: center; }
-  .enemy.hit { filter: brightness(2.5) saturate(0); }
-  .enemy.dying { animation: die 0.6s ease-out forwards; }
-  @keyframes die { 0% { transform: rotate(0deg); opacity: 1; } 100% { transform: rotate(90deg) translateY(30px); opacity: 0; } }
-  .enemy-hp { position: absolute; height: 4px; background: #ff4040; border-radius: 2px; z-index: 6; pointer-events: none; transition: width 0.15s; }
-  .enemy-hp-bg { position: absolute; height: 4px; background: rgba(0,0,0,0.5); border-radius: 2px; z-index: 5; pointer-events: none; }
-  .coin { position: absolute; width: 32px; height: 32px; background: radial-gradient(circle, #ffe066 0%, #d4a020 100%); border-radius: 50%; box-shadow: 0 0 15px #ffd24a; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 16px; animation: coinFloat 2s ease-in-out infinite; }
-  @keyframes coinFloat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-  .coin.collected { animation: coinCollect 0.4s ease-out forwards; }
-  @keyframes coinCollect { to { transform: scale(2) translateY(-60px); opacity: 0; } }
-  .explosion { position: absolute; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, #fff 0%, #ffd24a 30%, #ff5c8a 60%, transparent 80%); z-index: 20; pointer-events: none; animation: explode 0.7s ease-out forwards; }
-  @keyframes explode { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
-  .bill-warning { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 200; padding: 22px 46px; background: linear-gradient(135deg, #2a0a0a, #4a0a2a); border: 3px solid #ffd24a; border-radius: 16px; color: #ffd24a; font-size: 22px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; text-align: center; box-shadow: 0 0 50px rgba(255, 210, 74, 0.7); pointer-events: none; animation: billPop 3s ease-out forwards; }
-  @keyframes billPop {
-    0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
-    15% { transform: translate(-50%, -50%) scale(1.15) rotate(3deg); opacity: 1; }
-    30% { transform: translate(-50%, -50%) scale(1) rotate(-2deg); opacity: 1; }
-    85% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 0; }
+  #game { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+  #canvas {
+    flex: 1;
+    display: block;
+    width: 100%;
+    background: #1a0a20;
+    touch-action: none;
   }
-  .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(20, 5, 15, 0.95); border: 3px solid #ffd24a; border-radius: 14px; padding: 18px 32px; font-size: 18px; font-weight: 800; color: #ffd24a; text-align: center; letter-spacing: 2px; z-index: 200; pointer-events: none; box-shadow: 0 0 40px rgba(255, 210, 74, 0.5); max-width: 80vw; }
+  .hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, rgba(10,5,16,0.9) 0%, rgba(10,5,16,0) 100%);
+    font-size: 12px; z-index: 10; gap: 6px; flex-wrap: wrap;
+  }
+  .hud .stat {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px 10px; border-radius: 20px;
+    border: 1px solid #3a1a4a;
+    font-weight: 700; letter-spacing: 0.5px;
+  }
+  .hud .hp { color: #ff5c8a; }
+  .hud .ammo { color: #ffd24a; }
+  .hud .pages { color: #5ecbff; }
+  .hud .location { color: #a78bfa; }
+
+  .weapon-bar {
+    position: absolute; bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 6px;
+    padding: 6px 10px;
+    background: rgba(10, 5, 16, 0.85);
+    border: 2px solid #3a1a4a;
+    border-radius: 16px;
+    z-index: 10;
+    max-width: 95vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .weapon-bar::-webkit-scrollbar { display: none; }
+  .weapon {
+    flex-shrink: 0;
+    width: 56px; height: 56px;
+    background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
+    border: 2px solid #3a1a4a;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .weapon.selected {
+    border-color: #ffd24a;
+    box-shadow: 0 0 16px rgba(255,210,74,0.8);
+    transform: translateY(-3px);
+  }
+  .weapon.locked {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .weapon.locked::after {
+    content: '🔒';
+    position: absolute;
+    font-size: 20px;
+  }
+  .weapon .cost {
+    position: absolute;
+    bottom: -2px; right: 2px;
+    font-size: 9px;
+    font-weight: 900;
+    color: #ffd24a;
+    background: rgba(0,0,0,0.8);
+    padding: 0 4px;
+    border-radius: 6px;
+  }
+
+  .joystick {
+    position: absolute; z-index: 20;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.08);
+    border: 2px solid rgba(255,210,74,0.3);
+    display: none;
+    pointer-events: none;
+  }
+  .joystick .knob {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: rgba(255,210,74,0.4);
+    border: 2px solid rgba(255,210,74,0.7);
+  }
+  .shoot-btn {
+    position: absolute;
+    bottom: 90px; right: 20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff5c8a, #8a2a4a);
+    border: 3px solid #ffd24a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    z-index: 20;
+    box-shadow: 0 0 30px rgba(255,92,138,0.6);
+    cursor: pointer;
+  }
+  .shoot-btn:active { transform: scale(0.92); }
+
+  .toast {
+    position: fixed; top: 40%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(20, 5, 15, 0.95);
+    border: 3px solid #ffd24a;
+    border-radius: 14px;
+    padding: 16px 30px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #ffd24a;
+    text-align: center;
+    letter-spacing: 2px;
+    z-index: 200;
+    pointer-events: none;
+    max-width: 80vw;
+  }
   .toast.show { animation: toastPop 2s ease-out forwards; }
   @keyframes toastPop {
     0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
@@ -76,703 +145,799 @@
     85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 300; padding: 20px; text-align: center; }
-  .overlay.show { display: flex; }
-  .overlay h1 { font-size: 30px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; text-shadow: 0 0 25px rgba(255,210,74,0.6); }
-  .overlay h1.lose { color: #ff5c8a; text-shadow: 0 0 25px rgba(255,92,138,0.6); }
-  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.7; max-width: 440px; margin-bottom: 20px; }
-  .overlay .reward { font-size: 20px; color: #ffd24a; font-weight: 900; letter-spacing: 2px; margin: 10px 0 20px; }
-  .overlay button { padding: 12px 36px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; box-shadow: 0 5px 0 #8a2a4a; transition: all 0.15s; margin: 4px; }
-  .overlay button:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a2a4a; }
-  .overlay button.alt { background: transparent; border: 2px solid #ffd24a; color: #ffd24a; box-shadow: none; }
-  @media (max-width: 600px) {
-    .seed { width: 52px; height: 66px; padding: 2px; }
-    .seed .seed-emoji { font-size: 20px; }
-    .seed .seed-name { font-size: 5.5px; }
-    .seed .seed-cost { font-size: 9px; padding: 0 4px; }
-    .defender { font-size: 30px; }
-    .enemy { font-size: 32px; }
-    .hud { font-size: 9px; padding: 3px 5px; }
-    .hud .stat { padding: 2px 6px; }
-    .title-screen h1 { font-size: 30px; }
+
+  .title-screen {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; z-index: 5000; text-align: center;
   }
+  .title-screen.hidden { display: none; }
+  .title-screen h1 {
+    font-size: 42px; letter-spacing: 4px; text-transform: uppercase;
+    background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
+    margin-bottom: 8px;
+  }
+  .title-screen .sub { font-size: 14px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 30px; text-transform: uppercase; }
+  .title-screen p { font-size: 14px; color: #b8b8d8; line-height: 1.7; max-width: 520px; margin-bottom: 18px; }
+  .title-screen button {
+    padding: 16px 44px; margin-top: 16px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px; color: #1a0a08;
+    font-family: inherit; font-size: 16px; font-weight: 800;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
+  }
+  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; z-index: 300; padding: 20px; text-align: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay h1 { font-size: 32px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; }
+  .overlay h1.lose { color: #ff5c8a; }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.7; max-width: 440px; margin-bottom: 20px; }
+  .overlay button {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px; color: #1a0a08;
+    font-family: inherit; font-size: 14px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 5px 0 #8a2a4a; margin: 4px;
+  }
+  .overlay button.alt { background: transparent; border: 2px solid #ffd24a; color: #ffd24a; box-shadow: none; }
 </style>
 </head>
 <body>
 
   <div class="title-screen" id="titleScreen">
     <h1>Гравити Фолз</h1>
-    <div class="sub">Тайна Хижины Чудес</div>
-    <p>Диппер и Мэйбл встают на защиту Хижины Чудес. Монстры Гравити Фолз идут волнами из леса. Ты ставишь защиту на клетки — не пусти их к дому.</p>
-    <p style="font-size:12px;color:#8a7ab8;">У тебя 3 сердца. Враги, дошедшие до левого края — отнимают сердце. Собирай монетки. Продержись 8 волн — и появится Билл Шифр.</p>
-    <button id="startBtn">Начать</button>
-    <div class="hint-block">Совет: сначала поставь Дневник Мэйбл 🌸 для монет, потом Стрелка Диппера 🔵 для атаки.</div>
+    <div class="sub">Дневник №3</div>
+    <p>Ты — Диппер Пайнс. Хижина Чудес, лес, озеро, подземелье — четыре локации. Каждая охраняется монстрами.</p>
+    <p>Собери <b>5 страниц Дневника</b>, чтобы открыть новые пушки. Найди логово <b>Билла Шифра</b> и уничтожь его.</p>
+    <p style="font-size:12px;color:#8a7ab8;">Ходьба — тап по экрану или джойстик. Стрельба — автоматически по врагам. Оружие — кнопки внизу. Боссы — Гидеон, мультиберал, водяной, Билл.</p>
+    <button id="startBtn">Играть</button>
   </div>
 
-  <div id="game">
+  <div id="game" style="display:none;">
+    <canvas id="canvas"></canvas>
+
     <div class="hud">
-      <div class="stat hearts"><span class="icon">❤️</span><span id="heartsVal">3</span></div>
-      <div class="stat coins"><span class="icon">🪙</span><span id="coinsVal">100</span></div>
-      <div class="stat score-info"><span class="icon">⭐</span><span id="scoreVal">0</span></div>
-      <div class="stat wave-info"><span class="icon">🌊</span><span id="waveNum">1 / 8</span></div>
+      <div class="stat hp"><span>❤️</span><span id="hudHp">100</span></div>
+      <div class="stat ammo"><span>⚡</span><span id="hudAmmo">∞</span></div>
+      <div class="stat pages"><span>📖</span><span id="hudPages">0 / 5</span></div>
+      <div class="stat location"><span>📍</span><span id="hudLoc">Хижина Чудес</span></div>
     </div>
-    <button class="back-btn" id="backBtn">← В меню</button>
-    <div class="seeds" id="seedsBar"></div>
-    <div class="field-wrap">
-      <div id="field"></div>
+
+    <div class="weapon-bar" id="weaponBar"></div>
+
+    <div class="joystick" id="joystick">
+      <div class="knob" id="knob"></div>
     </div>
+
+    <button class="shoot-btn" id="shootBtn">💥</button>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <div class="overlay" id="endOverlay">
-    <h1 id="endTitle">Победа!</h1>
-    <p id="endText"></p>
-    <div class="reward" id="endReward"></div>
-    <button id="restartBtn">Играть снова</button>
-    <button id="menuBtn" class="alt">В меню</button>
+  <div class="overlay" id="winOverlay">
+    <h1 id="winTitle">🏆 Победа!</h1>
+    <p id="winText"></p>
+    <button onclick="restart()">Играть снова</button>
   </div>
 
   <script>
-    // ================== КОНФИГ ==================
-    const CONFIG = {
-      cols: 5,
-      rows: 4,
-      totalWaves: 8,
-      startingCoins: 100,
-      startingHearts: 3,
-      coinDropInterval: 4000,
-      coinValue: 25,
-      firstWaveDelay: 10000,
-      waveInterval: 22000,
-      baseEnemySpeed: 14.0,
-    };
+    // ============================================================
+    // ИГРА · ГРАВИТИ ФОЛЗ · ДНЕВНИК №3
+    // ============================================================
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
 
-    // ================== ЗАЩИТНИКИ ==================
-    const DEFENDER_TYPES = {
-      mabel: {
-        name: 'Дневник', emoji: '🌸', cost: 25, hp: 5, attack: 0,
-        coinProduction: 10000
-      },
-      dipper: {
-        name: 'Стрелок', emoji: '🔵', cost: 75, hp: 6, attack: 20,
-        fireRate: 1200, projectileSpeed: 400, targetRows: 1
-      },
-      shack: {
-        name: 'Хижина', emoji: '🏠', cost: 50, hp: 4000, attack: 0
-      },
-      icecream: {
-        name: 'Мороженое', emoji: '🍦', cost: 50, hp: 1, attack: 0, heal: 1
-      },
-      gnome: {
-        name: 'Гномик', emoji: '🧙', cost: 125, hp: 6, attack: 20,
-        fireRate: 1000, projectileSpeed: 400, targetRows: 3
-      },
-      bomb: {
-        name: 'Бомба', emoji: '💥', cost: 100, hp: 1, attack: 0, bomb: true
-      }
-    };
+    let W = 0, H = 0;
+    function resize() {
+      W = canvas.width = canvas.clientWidth;
+      H = canvas.height = canvas.clientHeight;
+    }
+    window.addEventListener('resize', resize);
 
-    // ================== ВРАГИ (HP СНИЖЕН В 10 РАЗ) ==================
-    // Обычный гном — 27 HP. 27 / 20 = 2 горошины с одного стрелка.
-    // Мультиберал — 200 HP. 10 горошин.
-    // Билл — 1500 HP. 75 горошин.
+    // ============================================================
+    // ОРУЖИЕ
+    // ============================================================
+    const WEAPONS = [
+      { id: 'blaster', name: 'Бластер', emoji: '🔫', cost: 0, damage: 25, cooldown: 400, color: '#5ecbff', bulletSize: 5 },
+      { id: 'gravity', name: 'Гравипушка', emoji: '🌀', cost: 2, damage: 15, cooldown: 800, color: '#a78bfa', bulletSize: 10, push: true },
+      { id: 'flame', name: 'Огнемёт', emoji: '🔥', cost: 3, damage: 8, cooldown: 100, color: '#ff8000', bulletSize: 6, short: true },
+      { id: 'ice', name: 'Ледяная', emoji: '❄️', cost: 3, damage: 20, cooldown: 600, color: '#5ecbff', bulletSize: 7, slow: true },
+      { id: 'rocket', name: 'Ракетница', emoji: '🚀', cost: 5, damage: 60, cooldown: 1200, color: '#ff5c8a', bulletSize: 12, explode: true }
+    ];
+
+    // ============================================================
+    // ВРАГИ
+    // ============================================================
     const ENEMY_TYPES = {
-      gnome: { emoji: '👺', hp: 27, speedMult: 1.0, damage: 4, weight: 1, coins: 15 },
-      vampire: { emoji: '🧛', hp: 45, speedMult: 1.27, damage: 5, weight: 2, coins: 25 },
-      zombie: { emoji: '🧟‍♀️', hp: 64, speedMult: 1.0, damage: 5, weight: 3, coins: 35 },
-      mummy: { emoji: '🧟', overlay: '🪦', hp: 90, speedMult: 0.9, damage: 6, weight: 5, coins: 50 },
-      water: { emoji: '🐙', hp: 130, speedMult: 1.5, damage: 5, weight: 7, coins: 75 },
-      multibear: { emoji: '🐻', overlay: '🧔', hp: 200, speedMult: 0.8, damage: 10, weight: 12, coins: 120 },
-      bill: { emoji: '👁️', overlay: '🔺', hp: 1500, speedMult: 0.7, damage: 15, weight: 30, coins: 500, isBoss: true }
+      gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, color: '#8a5a3a', coins: 15, radius: 16 },
+      vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, color: '#4a0a5a', coins: 30, radius: 18 },
+      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 60, damage: 15, color: '#3a5a3a', coins: 50, radius: 20 },
+      mummy: { emoji: '🧟', hp: 200, speed: 50, damage: 20, color: '#6a5a4a', coins: 80, radius: 22 },
+      water: { emoji: '🐙', hp: 350, speed: 55, damage: 25, color: '#2a5a8a', coins: 130, radius: 26 },
+      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, color: '#6a3a1a', coins: 200, radius: 30 },
+      gideon: { emoji: '🧙', hp: 800, speed: 50, damage: 25, color: '#a07aff', coins: 300, radius: 28, isBoss: true },
+      bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, color: '#ffd24a', coins: 1000, radius: 36, isBoss: true }
     };
 
-    // ================== СОСТОЯНИЕ ==================
+    // ============================================================
+    // СОСТОЯНИЕ
+    // ============================================================
     const state = {
-      hearts: CONFIG.startingHearts,
-      coins: CONFIG.startingCoins,
-      score: 0,
-      wave: 0,
-      running: false,
-      gameOver: false,
-      selectedDefender: null,
-      defenders: [],
+      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 18, speed: 200, angle: 0 },
       enemies: [],
       bullets: [],
-      coinsOnField: [],
-      lastFrameTime: 0,
-      nextId: 1,
-      lastCoinDrop: 0,
-      lastWave: 0,
-      _lastSpawn: 0,
-      waveSpawned: 0,
-      waveTarget: 0,
-      waveKilled: 0,
-      firstPlaced: false
+      pickups: [],
+      particles: [],
+      pages: 0,
+      totalPages: 5,
+      selectedWeapon: 0,
+      unlocked: [true, false, false, false, false],
+      keys: { w: 0, a: 0, s: 0, d: 0, up: 0, down: 0, left: 0, right: 0 },
+      joystick: { active: false, cx: 0, cy: 0, dx: 0, dy: 0, id: null },
+      running: false,
+      gameOver: false,
+      lastTime: 0,
+      lastShot: 0,
+      location: 0,          // 0 хижина, 1 лес, 2 озеро, 3 подземелье, 4 билл
+      locations: [
+        { name: 'Хижина Чудес', bg: '#2a1040', wall: '#4a2a6a', pagesToNext: 1 },
+        { name: 'Тёмный лес', bg: '#0a2a0a', wall: '#1a5a1a', pagesToNext: 2 },
+        { name: 'Озеро', bg: '#0a1a3a', wall: '#1a3a6a', pagesToNext: 3 },
+        { name: 'Подземелье', bg: '#1a0a05', wall: '#3a1a0a', pagesToNext: 4 },
+        { name: 'Комната Билла', bg: '#2a0000', wall: '#ff4040', pagesToNext: 5 }
+      ],
+      waveTimer: 0,
+      waveCount: 0,
+      spawnedBosses: {}
     };
 
-    // ================== DOM ==================
-    const titleScreen = document.getElementById('titleScreen');
-    const gameEl = document.getElementById('game');
-    const fieldEl = document.getElementById('field');
-    const seedsBar = document.getElementById('seedsBar');
-    const heartsVal = document.getElementById('heartsVal');
-    const coinsVal = document.getElementById('coinsVal');
-    const scoreVal = document.getElementById('scoreVal');
-    const waveNum = document.getElementById('waveNum');
-    const toastEl = document.getElementById('toast');
-    const backBtn = document.getElementById('backBtn');
-    const endOverlay = document.getElementById('endOverlay');
-    const endTitle = document.getElementById('endTitle');
-    const endText = document.getElementById('endText');
-    const endReward = document.getElementById('endReward');
-
-    let fieldRect = { width: 0, height: 0, cellW: 0, cellH: 0 };
-    const seedCooldowns = {};
-
-    document.getElementById('startBtn').addEventListener('click', () => {
-      titleScreen.classList.add('hidden');
-      gameEl.classList.add('show');
-      startGame();
-    });
-
-    function startGame() {
-      state.hearts = CONFIG.startingHearts;
-      state.coins = CONFIG.startingCoins;
-      state.score = 0;
-      state.wave = 0;
+    // ============================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
+    function initGame() {
+      resize();
+      state.player.x = W / 2;
+      state.player.y = H / 2;
+      state.player.hp = state.player.maxHp;
+      state.enemies = [];
+      state.bullets = [];
+      state.pickups = [];
+      state.particles = [];
+      state.pages = 0;
+      state.selectedWeapon = 0;
+      state.unlocked = [true, false, false, false, false];
+      state.location = 0;
       state.running = true;
       state.gameOver = false;
-      state.selectedDefender = null;
-      state.firstPlaced = false;
-      state._lastSpawn = 0;
-
-      state.defenders.forEach(d => d.el.remove());
-      state.enemies.forEach(e => { e.el.remove(); if (e.hpEl) e.hpEl.remove(); if (e.hpBgEl) e.hpBgEl.remove(); });
-      state.bullets.forEach(b => b.el.remove());
-      state.coinsOnField.forEach(c => c.el.remove());
-      state.defenders = []; state.enemies = []; state.bullets = []; state.coinsOnField = [];
-
-      state.lastCoinDrop = 0;
-      state.lastWave = 0;
-      state.lastFrameTime = 0;
-      Object.keys(seedCooldowns).forEach(k => delete seedCooldowns[k]);
-
-      updateHUD();
-      endOverlay.classList.remove('show');
-
-      setTimeout(() => {
-        calcField();
-        buildGrid();
-        buildSeedsUI();
-        requestAnimationFrame(gameLoop);
-      }, 100);
+      state.lastTime = performance.now();
+      state.waveTimer = 0;
+      state.waveCount = 0;
+      state.spawnedBosses = {};
+      buildWeaponBar();
+      updateHud();
+      spawnPageOnMap();
+      requestAnimationFrame(loop);
     }
 
-    function calcField() {
-      const wrap = fieldEl.parentElement;
-      fieldRect.width = wrap.clientWidth;
-      fieldRect.height = wrap.clientHeight;
-      fieldRect.cellW = fieldRect.width / CONFIG.cols;
-      fieldRect.cellH = fieldRect.height / CONFIG.rows;
+    function restart() {
+      document.getElementById('winOverlay').classList.remove('show');
+      initGame();
     }
+    window.restart = restart;
 
-    function cellCenter(col, row) {
-      return { x: fieldRect.cellW * col + fieldRect.cellW / 2, y: fieldRect.cellH * row + fieldRect.cellH / 2 };
-    }
-
-    function buildGrid() {
-      fieldEl.innerHTML = '';
-      for (let r = 0; r < CONFIG.rows; r++) {
-        for (let c = 0; c < CONFIG.cols; c++) {
-          const cell = document.createElement('div');
-          cell.className = 'grid-cell';
-          cell.dataset.col = c; cell.dataset.row = r;
-          cell.style.left = (c * fieldRect.cellW) + 'px';
-          cell.style.top = (r * fieldRect.cellH) + 'px';
-          cell.style.width = fieldRect.cellW + 'px';
-          cell.style.height = fieldRect.cellH + 'px';
-          const alt = (r + c) % 2 === 0;
-          cell.style.background = alt ? 'rgba(167, 139, 250, 0.12)' : 'rgba(167, 139, 250, 0.06)';
-          fieldEl.appendChild(cell);
-        }
-      }
-    }
-
-    function buildSeedsUI() {
-      seedsBar.innerHTML = '';
-      for (const key in DEFENDER_TYPES) {
-        const p = DEFENDER_TYPES[key];
+    // ============================================================
+    // ОРУЖИЕ UI
+    // ============================================================
+    function buildWeaponBar() {
+      const bar = document.getElementById('weaponBar');
+      bar.innerHTML = '';
+      WEAPONS.forEach((w, i) => {
         const el = document.createElement('div');
-        el.className = 'seed'; el.dataset.type = key;
-        el.innerHTML = '<div class="seed-emoji">' + p.emoji + '</div><div class="seed-name">' + p.name + '</div><div class="seed-cost">🪙' + p.cost + '</div><div class="cooldown-overlay"></div>';
-        el.addEventListener('click', () => selectDefender(key));
-        seedsBar.appendChild(el);
-      }
-      updateSeedsUI();
-    }
-
-    function selectDefender(type) {
-      if (!state.running) return;
-      state.selectedDefender = state.selectedDefender === type ? null : type;
-      updateSeedsUI();
-    }
-
-    function updateSeedsUI() {
-      seedsBar.querySelectorAll('.seed').forEach(c => {
-        const type = c.dataset.type;
-        const p = DEFENDER_TYPES[type];
-        const onCd = Date.now() < (seedCooldowns[type] || 0);
-        c.classList.toggle('selected', state.selectedDefender === type);
-        c.classList.toggle('disabled', state.coins < p.cost || onCd);
-        c.querySelector('.cooldown-overlay').classList.toggle('show', onCd);
+        el.className = 'weapon';
+        el.dataset.i = i;
+        const locked = !state.unlocked[i];
+        if (locked) el.classList.add('locked');
+        if (i === state.selectedWeapon) el.classList.add('selected');
+        el.innerHTML = w.emoji + (locked ? '' : '<span class="cost">' + w.damage + '</span>');
+        el.addEventListener('click', () => {
+          if (!state.unlocked[i]) return;
+          state.selectedWeapon = i;
+          buildWeaponBar();
+        });
+        bar.appendChild(el);
       });
     }
 
-    function updateHUD() {
-      heartsVal.textContent = state.hearts;
-      coinsVal.textContent = state.coins;
-      scoreVal.textContent = state.score;
-      waveNum.textContent = state.wave + ' / ' + CONFIG.totalWaves;
+    // ============================================================
+    // HUD
+    // ============================================================
+    function updateHud() {
+      document.getElementById('hudHp').textContent = Math.max(0, Math.round(state.player.hp));
+      document.getElementById('hudAmmo').textContent = '∞';
+      document.getElementById('hudPages').textContent = state.pages + ' / ' + state.totalPages;
+      document.getElementById('hudLoc').textContent = state.locations[state.location].name;
     }
 
-    function tryPlaceAt(col, row) {
-      if (state.defenders.find(d => d.col === col && d.row === row)) return false;
-      const type = state.selectedDefender;
-      if (!type) return false;
-      const p = DEFENDER_TYPES[type];
-      if (state.coins < p.cost) { showToast('Мало монет'); return false; }
-      if (Date.now() < (seedCooldowns[type] || 0)) { showToast('Перезарядка'); return false; }
+    // ============================================================
+    // СПАВН ВРАГОВ
+    // ============================================================
+    function spawnEnemy(typeId) {
+      const et = ENEMY_TYPES[typeId];
+      // спавним на краю
+      let x, y;
+      const side = Math.floor(Math.random() * 4);
+      if (side === 0) { x = -50; y = Math.random() * H; }
+      else if (side === 1) { x = W + 50; y = Math.random() * H; }
+      else if (side === 2) { x = Math.random() * W; y = -50; }
+      else { x = Math.random() * W; y = H + 50; }
 
-      if (p.heal) {
-        state.hearts = Math.min(CONFIG.startingHearts, state.hearts + p.heal);
-        state.coins -= p.cost;
-        updateHUD();
-        showToast('🍦 +1 сердце!');
-        state.selectedDefender = null;
-        updateSeedsUI();
-        return true;
-      }
-
-      state.coins -= p.cost;
-      seedCooldowns[type] = Date.now() + 2000;
-      updateHUD();
-
-      const center = cellCenter(col, row);
-      const el = document.createElement('div');
-      el.className = 'defender';
-      el.textContent = p.emoji;
-      el.style.left = (center.x - 25) + 'px';
-      el.style.top = (center.y - 25) + 'px';
-      el.style.width = '50px'; el.style.height = '50px';
-      fieldEl.appendChild(el);
-
-      state.defenders.push({
-        id: state.nextId++, col, row, type, hp: p.hp, maxHp: p.hp,
-        el, x: center.x, y: center.y,
-        lastShot: Date.now(), lastCoin: Date.now(),
-        bomb: !!p.bomb, bombTime: p.bomb ? Date.now() + 1200 : 0,
-        def: p
-      });
-
-      state.selectedDefender = null;
-      updateSeedsUI();
-      if (!state.firstPlaced) state.firstPlaced = true;
-      return true;
-    }
-
-    function removeDefender(d) {
-      d.el.remove();
-      const i = state.defenders.indexOf(d);
-      if (i >= 0) state.defenders.splice(i, 1);
-    }
-
-    function spawnEnemy(type) {
-      const et = ENEMY_TYPES[type];
-      if (!et) return;
-      const row = Math.floor(Math.random() * CONFIG.rows);
-      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
-      const el = document.createElement('div');
-      el.className = 'enemy';
-      el.textContent = et.emoji;
-      el.style.left = (fieldRect.width + 10) + 'px';
-      el.style.top = (cy - 25) + 'px';
-      el.style.width = '50px'; el.style.height = '50px';
-      fieldEl.appendChild(el);
-      if (et.overlay) {
-        const ov = document.createElement('div');
-        ov.textContent = et.overlay;
-        ov.style.position = 'absolute'; ov.style.top = '-8px'; ov.style.fontSize = '20px';
-        el.appendChild(ov);
-      }
-      const hpBg = document.createElement('div');
-      hpBg.className = 'enemy-hp-bg';
-      hpBg.style.width = '50px';
-      hpBg.style.left = (fieldRect.width + 15) + 'px';
-      hpBg.style.top = (cy + 30) + 'px';
-      fieldEl.appendChild(hpBg);
-      const hpEl = document.createElement('div');
-      hpEl.className = 'enemy-hp';
-      hpEl.style.width = '50px';
-      hpEl.style.left = (fieldRect.width + 15) + 'px';
-      hpEl.style.top = (cy + 30) + 'px';
-      fieldEl.appendChild(hpEl);
-      const baseSpeed = fieldRect.cellW / CONFIG.baseEnemySpeed;
       state.enemies.push({
-        id: state.nextId++, x: fieldRect.width + 10, row, type,
+        type: typeId,
+        x, y,
         hp: et.hp, maxHp: et.hp,
-        speed: baseSpeed * et.speedMult,
+        speed: et.speed,
         damage: et.damage,
-        el, hpEl, hpBgEl: hpBg,
-        eating: false, dead: false,
-        coins: et.coins, isBoss: !!et.isBoss
+        radius: et.radius,
+        coins: et.coins,
+        slowUntil: 0,
+        isBoss: !!et.isBoss
+      });
+    }
+
+    // ============================================================
+    // СТРАНИЦЫ
+    // ============================================================
+    function spawnPageOnMap() {
+      // Кладём страницу в случайное место
+      const x = 100 + Math.random() * (W - 200);
+      const y = 100 + Math.random() * (H - 200);
+      state.pickups.push({ type: 'page', x, y, radius: 20, collected: false });
+    }
+
+    function spawnHealOnMap() {
+      const x = 100 + Math.random() * (W - 200);
+      const y = 100 + Math.random() * (H - 200);
+      state.pickups.push({ type: 'heal', x, y, radius: 18, collected: false });
+    }
+
+    function spawnCoinOnMap(x, y) {
+      state.pickups.push({ type: 'coin', x, y, radius: 14, collected: false, value: 20 });
+    }
+
+    // ============================================================
+    // ИГРОВОЙ ЦИКЛ
+    // ============================================================
+    function loop(now) {
+      if (!state.running) return;
+      const dt = Math.min(50, now - state.lastTime) / 1000;
+      state.lastTime = now;
+
+      update(dt, now);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt, now) {
+      const p = state.player;
+
+      // движение игрока (клавиатура + джойстик)
+      let dx = 0, dy = 0;
+      if (state.keys.w || state.keys.up) dy -= 1;
+      if (state.keys.s || state.keys.down) dy += 1;
+      if (state.keys.a || state.keys.left) dx -= 1;
+      if (state.keys.d || state.keys.right) dx += 1;
+      if (state.joystick.active) {
+        dx += state.joystick.dx;
+        dy += state.joystick.dy;
+      }
+      const len = Math.hypot(dx, dy);
+      if (len > 1) { dx /= len; dy /= len; }
+      p.x += dx * p.speed * dt;
+      p.y += dy * p.speed * dt;
+      // границы
+      p.x = Math.max(p.radius, Math.min(W - p.radius, p.x));
+      p.y = Math.max(p.radius, Math.min(H - p.radius, p.y));
+      // поворот к ближайшему врагу
+      const nearest = findNearestEnemy();
+      if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+
+      // стрельба автоматическая
+      const w = WEAPONS[state.selectedWeapon];
+      if (now - state.lastShot > w.cooldown && nearest) {
+        shoot(nearest, w, now);
+        state.lastShot = now;
+      }
+
+      // пули
+      state.bullets.forEach(b => {
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.life -= dt;
+        // попадание
+        for (const e of state.enemies) {
+          if (e.hp <= 0) continue;
+          const d = Math.hypot(e.x - b.x, e.y - b.y);
+          if (d < e.radius + b.radius) {
+            damageEnemy(e, b.damage);
+            if (b.slow) e.slowUntil = now + 2000;
+            if (b.explode) {
+              // взрыв
+              for (const e2 of state.enemies) {
+                if (e2.hp <= 0) continue;
+                if (Math.hypot(e2.x - b.x, e2.y - b.y) < 100) damageEnemy(e2, b.damage);
+              }
+              for (let i = 0; i < 12; i++) {
+                state.particles.push({
+                  x: b.x, y: b.y,
+                  vx: (Math.random() - 0.5) * 300,
+                  vy: (Math.random() - 0.5) * 300,
+                  life: 0.6, maxLife: 0.6,
+                  color: '#ff8000'
+                });
+              }
+            }
+            b.life = 0;
+            break;
+          }
+        }
+        if (b.x < -50 || b.x > W + 50 || b.y < -50 || b.y > H + 50) b.life = 0;
+      });
+      state.bullets = state.bullets.filter(b => b.life > 0);
+
+      // враги
+      state.enemies.forEach(e => {
+        if (e.hp <= 0) return;
+        const et = ENEMY_TYPES[e.type];
+        const dx = p.x - e.x;
+        const dy = p.y - e.y;
+        const d = Math.hypot(dx, dy);
+        const slow = (e.slowUntil > now) ? 0.4 : 1;
+        if (d > p.radius + e.radius - 4) {
+          e.x += (dx / d) * e.speed * slow * dt;
+          e.y += (dy / d) * e.speed * slow * dt;
+        } else {
+          // атака
+          p.hp -= e.damage * dt;
+          if (p.hp <= 0) { p.hp = 0; endGame(false); return; }
+        }
+      });
+
+      // удаление мёртвых врагов
+      state.enemies.forEach(e => {
+        if (e.hp <= 0 && !e.dead) {
+          e.dead = true;
+          if (Math.random() < 0.4) spawnCoinOnMap(e.x, e.y);
+        }
+      });
+      state.enemies = state.enemies.filter(e => !e.dead);
+
+      // пикапы
+      state.pickups.forEach(pk => {
+        if (pk.collected) return;
+        const d = Math.hypot(pk.x - p.x, pk.y - p.y);
+        if (d < p.radius + pk.radius) {
+          pk.collected = true;
+          if (pk.type === 'page') {
+            state.pages++;
+            unlockNextWeapon();
+            showToast('📖 Страница найдена! ' + state.pages + ' / ' + state.totalPages);
+            updateHud();
+            if (state.pages < state.totalPages) {
+              setTimeout(spawnPageOnMap, 500);
+            } else {
+              setTimeout(() => spawnBoss(), 2000);
+            }
+          } else if (pk.type === 'heal') {
+            p.hp = Math.min(p.maxHp, p.hp + 30);
+            showToast('🍦 +30 HP!');
+            updateHud();
+          } else if (pk.type === 'coin') {
+            // монеты просто собираем — здесь не тратятся
+            showToast('🪙 +' + pk.value);
+          }
+        }
+      });
+      state.pickups = state.pickups.filter(pk => !pk.collected);
+
+      // частицы
+      state.particles.forEach(pt => {
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.vx *= 0.96;
+        pt.vy *= 0.96;
+        pt.life -= dt;
+      });
+      state.particles = state.particles.filter(pt => pt.life > 0);
+
+      // волны врагов
+      state.waveTimer -= dt;
+      if (state.waveTimer <= 0) {
+        state.waveTimer = 3 + Math.random() * 2;
+        state.waveCount++;
+        // 1–3 врага
+        const count = Math.min(3, 1 + Math.floor(state.waveCount / 5));
+        for (let i = 0; i < count; i++) {
+          const loc = state.location;
+          let pool;
+          if (loc === 0) pool = ['gnome', 'vampire'];
+          else if (loc === 1) pool = ['gnome', 'vampire', 'zombie'];
+          else if (loc === 2) pool = ['zombie', 'mummy', 'water'];
+          else if (loc === 3) pool = ['mummy', 'water', 'multibear'];
+          else pool = ['mummy', 'water', 'multibear'];
+          const t = pool[Math.floor(Math.random() * pool.length)];
+          spawnEnemy(t);
+        }
+        // аптечка иногда
+        if (Math.random() < 0.15) spawnHealOnMap();
+      }
+    }
+
+    function findNearestEnemy() {
+      let nearest = null, best = Infinity;
+      state.enemies.forEach(e => {
+        if (e.hp <= 0) return;
+        const d = Math.hypot(e.x - state.player.x, e.y - state.player.y);
+        if (d < best) { best = d; nearest = e; }
+      });
+      return nearest;
+    }
+
+    function shoot(target, w, now) {
+      const p = state.player;
+      const angle = Math.atan2(target.y - p.y, target.x - p.x);
+      const speed = w.short ? 300 : 600;
+      state.bullets.push({
+        x: p.x, y: p.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        damage: w.damage,
+        radius: w.bulletSize,
+        color: w.color,
+        slow: w.slow,
+        explode: w.explode,
+        life: w.short ? 0.3 : 1.5
       });
     }
 
     function damageEnemy(e, dmg) {
       e.hp -= dmg;
-      e.el.classList.add('hit');
-      setTimeout(() => e.el.classList.remove('hit'), 100);
-      const ratio = Math.max(0, e.hp / e.maxHp);
-      e.hpEl.style.width = (50 * ratio) + 'px';
-      if (e.hp <= 0 && !e.dead) {
-        e.dead = true;
-        e.el.classList.add('dying');
-        e.hpEl.remove(); e.hpBgEl.remove();
-        state.score += e.coins || 10;
-        state.waveKilled++;
-        state.coins += Math.floor((e.coins || 10) / 2);
-        updateHUD();
-        updateSeedsUI();
-        // ГАРАНТИРОВАННАЯ монета с каждого врага
-        spawnCoinAt(e.x, e.row);
-        setTimeout(() => {
-          e.el.remove();
-          const i = state.enemies.indexOf(e);
-          if (i >= 0) state.enemies.splice(i, 1);
-        }, 600);
-      }
     }
 
-    function spawnCoinAt(x, row) {
-      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
-      const el = document.createElement('div');
-      el.className = 'coin';
-      el.textContent = '🪙';
-      el.style.left = (x - 16) + 'px';
-      el.style.top = (cy - 16) + 'px';
-      fieldEl.appendChild(el);
-      const coin = { id: state.nextId++, el, collected: false, value: CONFIG.coinValue };
-      state.coinsOnField.push(coin);
-      el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        collectCoin(coin);
-      });
-    }
-
-    function spawnFallingCoin() {
-      if (!state.running || state.gameOver) return;
-      const x = 40 + Math.random() * (fieldRect.width - 80);
-      const el = document.createElement('div');
-      el.className = 'coin';
-      el.textContent = '🪙';
-      el.style.left = x + 'px';
-      el.style.top = '-40px';
-      el.style.animation = 'none';
-      el.style.transition = 'top 8s linear';
-      fieldEl.appendChild(el);
-      setTimeout(() => { el.style.top = fieldRect.height + 'px'; }, 50);
-      const coin = { id: state.nextId++, el, collected: false, value: CONFIG.coinValue };
-      state.coinsOnField.push(coin);
-      el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        collectCoin(coin);
-      });
-    }
-
-    function collectCoin(coin) {
-      if (coin.collected) return;
-      coin.collected = true;
-      state.coins += coin.value;
-      updateHUD();
-      updateSeedsUI();
-      coin.el.classList.add('collected');
-      setTimeout(() => {
-        coin.el.remove();
-        const i = state.coinsOnField.indexOf(coin);
-        if (i >= 0) state.coinsOnField.splice(i, 1);
-      }, 400);
-    }
-
-    function spawnBullet(defender, targetRow) {
-      const d = defender.def;
-      const row = targetRow !== undefined ? targetRow : defender.row;
-      const cy = fieldRect.cellH * row + fieldRect.cellH / 2;
-      const el = document.createElement('div');
-      el.className = 'bullet';
-      el.style.left = (defender.x - 7) + 'px';
-      el.style.top = (cy - 7) + 'px';
-      fieldEl.appendChild(el);
-      state.bullets.push({
-        id: state.nextId++, x: defender.x, y: cy, row,
-        dmg: d.attack || 20,
-        speed: d.projectileSpeed || 400, el
-      });
-    }
-
-    function explode(defender) {
-      const el = document.createElement('div');
-      el.className = 'explosion';
-      el.style.left = (defender.x - 120) + 'px';
-      el.style.top = (defender.y - 120) + 'px';
-      fieldEl.appendChild(el);
-      setTimeout(() => el.remove(), 700);
-      state.enemies.forEach(e => {
-        if (e.dead) return;
-        const dx = Math.abs(e.x - defender.x);
-        const dy = Math.abs((fieldRect.cellH * e.row + fieldRect.cellH/2) - defender.y);
-        if (dx < fieldRect.cellW * 1.5 && dy < fieldRect.cellH * 1.5) damageEnemy(e, 3000);
-      });
-    }
-
-    function gameLoop(timestamp) {
-      if (!state.running) return;
-      if (!state.lastFrameTime) state.lastFrameTime = timestamp;
-      const dt = Math.min(50, timestamp - state.lastFrameTime) / 1000;
-      state.lastFrameTime = timestamp;
-      const now = Date.now();
-
-      state.defenders.forEach(d => {
-        const def = d.def;
-        if (d.bomb && now > d.bombTime) { explode(d); removeDefender(d); return; }
-        if (def.coinProduction && now - d.lastCoin > def.coinProduction) {
-          d.lastCoin = now;
-          spawnCoinAt(d.x, d.row);
-        }
-        if (def.attack && now - d.lastShot > def.fireRate) {
-          let hasTarget = false;
-          if (def.targetRows === 3) {
-            for (let dr = -1; dr <= 1; dr++) {
-              const row = d.row + dr;
-              if (row < 0 || row >= CONFIG.rows) continue;
-              if (state.enemies.some(e => e.row === row && e.x > d.x && !e.dead)) {
-                hasTarget = true; spawnBullet(d, row);
-              }
-            }
-          } else {
-            hasTarget = state.enemies.some(e => e.row === d.row && e.x > d.x && !e.dead);
-            if (hasTarget) spawnBullet(d);
-          }
-          if (hasTarget) {
-            d.lastShot = now;
-            d.el.classList.add('shooting');
-            setTimeout(() => d.el.classList.remove('shooting'), 200);
-          }
-        }
-      });
-
-      state.bullets.forEach(b => {
-        b.x += b.speed * dt;
-        b.el.style.left = (b.x - 7) + 'px';
-        for (const e of state.enemies) {
-          if (e.dead || e.row !== b.row) continue;
-          if (Math.abs(e.x + 25 - b.x) < 25) {
-            damageEnemy(e, b.dmg);
-            b.el.remove();
-            const i = state.bullets.indexOf(b);
-            if (i >= 0) state.bullets.splice(i, 1);
-            return;
-          }
-        }
-        if (b.x > fieldRect.width + 20) {
-          b.el.remove();
-          const i = state.bullets.indexOf(b);
-          if (i >= 0) state.bullets.splice(i, 1);
-        }
-      });
-
-      state.enemies.forEach(e => {
-        if (e.dead) return;
-        const defenderHere = state.defenders.find(d =>
-          d.row === e.row && Math.abs(d.x - e.x) < fieldRect.cellW * 0.7 && d.x < e.x && !d.bomb
-        );
-        if (defenderHere) {
-          e.eating = true;
-          defenderHere.hp -= e.damage * dt;
-          defenderHere.el.style.transform = 'scale(' + (0.9 + 0.1 * (defenderHere.hp / defenderHere.maxHp)) + ')';
-          if (defenderHere.hp <= 0) { removeDefender(defenderHere); e.eating = false; }
-        } else {
-          e.eating = false;
-          e.x -= e.speed * dt;
-          e.el.style.left = (e.x - 25) + 'px';
-          e.hpEl.style.left = (e.x - 25) + 'px';
-          e.hpBgEl.style.left = (e.x - 25) + 'px';
-        }
-        if (e.x < 0) {
-          e.dead = true;
-          e.el.remove();
-          if (e.hpEl) e.hpEl.remove();
-          if (e.hpBgEl) e.hpBgEl.remove();
-          state.hearts -= e.isBoss ? 3 : 1;
-          updateHUD();
-          showToast(e.isBoss ? 'БИЛЛ ПРОРВАЛСЯ! -3 ❤️' : 'Прорыв! -1 ❤️');
-          if (state.hearts <= 0) endGame(false);
-        }
-      });
-
-      state.enemies = state.enemies.filter(e => !e.dead || e.el.parentElement);
-
-      if (now - state.lastCoinDrop > CONFIG.coinDropInterval) {
-        state.lastCoinDrop = now;
-        spawnFallingCoin();
-      }
-
-      updateWaves(now);
-      requestAnimationFrame(gameLoop);
-    }
-
-    function updateWaves(now) {
-      if (state.lastWave === 0) {
-        if (!state.firstPlaced || state.defenders.length === 0) return;
-        state.lastWave = now + CONFIG.firstWaveDelay;
-        showToast('Первая волна через 10 секунд!');
-        return;
-      }
-      if (now > state.lastWave) {
-        if (state.wave >= CONFIG.totalWaves) {
-          const alive = state.enemies.filter(e => !e.dead).length;
-          if (alive === 0) { endGame(true); return; }
-          state.lastWave = now + 1000;
+    // ============================================================
+    // ПРОКАЧКА
+    // ============================================================
+    function unlockNextWeapon() {
+      for (let i = 0; i < state.unlocked.length; i++) {
+        if (!state.unlocked[i]) {
+          state.unlocked[i] = true;
+          showToast('🔫 Новое оружие: ' + WEAPONS[i].name + '!');
+          buildWeaponBar();
           return;
         }
-        state.wave++;
-        updateHUD();
-        startWave();
-        state.lastWave = now + CONFIG.waveInterval;
       }
-      spawnWaveEnemies();
     }
 
-    function startWave() {
-      const w = state.wave;
-      let weight;
-      if (w === 1) weight = 2;
-      else if (w === 2) weight = 3;
-      else if (w === 3) weight = 5;
-      else if (w === 4) weight = 7;
-      else if (w === 5) weight = 10;
-      else if (w === 6) weight = 12;
-      else if (w === 7) weight = 15;
-      else weight = 20;
-
-      state.waveTarget = weight;
-      state.waveSpawned = 0;
-      state.waveKilled = 0;
-
-      if (w === CONFIG.totalWaves) {
-        showBillWarning();
-        setTimeout(() => {
-          if (state.gameOver) return;
-          spawnEnemy('bill');
-          state.waveSpawned++;
-        }, 2000);
+    // ============================================================
+    // ПЕРЕХОД ПО ЛОКАЦИЯМ
+    // ============================================================
+    function checkLocationProgress() {
+      const loc = state.locations[state.location];
+      if (state.pages >= loc.pagesToNext && state.location < state.locations.length - 1) {
+        state.location++;
+        showToast('📍 Новая локация: ' + state.locations[state.location].name);
+        updateHud();
+        // обнуляем для следующей
+        spawnPageOnMap();
+        state.enemies = [];
+        state.bullets = [];
       }
-      showToast(w === CONFIG.totalWaves ? '👁️ БИЛЛ ШИФР!' : 'Волна ' + w);
     }
 
-    function showBillWarning() {
-      const el = document.createElement('div');
-      el.className = 'bill-warning';
-      el.textContent = '👁️ БИЛЛ ШИФР ИДЁТ 👁️';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 3000);
+    // ============================================================
+    // БОССЫ
+    // ============================================================
+    function spawnBoss() {
+      const loc = state.location;
+      let bossType = 'gideon';
+      if (loc === 2) bossType = 'gideon';
+      else if (loc === 3) bossType = 'multibear';
+      else if (loc === 4) bossType = 'bill';
+
+      state.enemies.push({
+        type: bossType,
+        x: W / 2,
+        y: 80,
+        hp: ENEMY_TYPES[bossType].hp,
+        maxHp: ENEMY_TYPES[bossType].hp,
+        speed: ENEMY_TYPES[bossType].speed,
+        damage: ENEMY_TYPES[bossType].damage,
+        radius: ENEMY_TYPES[bossType].radius,
+        coins: ENEMY_TYPES[bossType].coins,
+        isBoss: true,
+        slowUntil: 0
+      });
+      showToast('⚔️ БОСС: ' + bossType.toUpperCase() + '!');
     }
 
-    function spawnWaveEnemies() {
-      if (!state.running || state.gameOver) return;
-      if (state.waveSpawned >= state.waveTarget) return;
-      const alive = state.enemies.filter(e => !e.dead).length;
-      if (alive >= 6 + state.wave) return;
-      const now = Date.now();
-      if (state._lastSpawn && now - state._lastSpawn < 2200) return;
-      state._lastSpawn = now;
+    // ============================================================
+    // ОТРИСОВКА
+    // ============================================================
+    function draw() {
+      const loc = state.locations[state.location];
+      // фон
+      ctx.fillStyle = loc.bg;
+      ctx.fillRect(0, 0, W, H);
 
-      let pool;
-      if (state.wave <= 1) pool = ['gnome'];
-      else if (state.wave <= 2) pool = ['gnome', 'vampire'];
-      else if (state.wave <= 3) pool = ['gnome', 'vampire', 'zombie'];
-      else if (state.wave <= 5) pool = ['gnome', 'vampire', 'zombie', 'mummy'];
-      else pool = ['gnome', 'vampire', 'zombie', 'mummy', 'water', 'multibear'];
+      // сетка
+      ctx.strokeStyle = loc.wall;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.3;
+      for (let x = 0; x < W; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
 
-      const type = pool[Math.floor(Math.random() * pool.length)];
-      spawnEnemy(type);
-      state.waveSpawned++;
+      // пикапы
+      state.pickups.forEach(pk => {
+        const bob = Math.sin(performance.now() / 200) * 3;
+        if (pk.type === 'page') {
+          ctx.font = '32px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('📖', pk.x, pk.y + bob);
+        } else if (pk.type === 'heal') {
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🍦', pk.x, pk.y + bob);
+        } else if (pk.type === 'coin') {
+          ctx.font = '22px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🪙', pk.x, pk.y + bob);
+        }
+      });
+
+      // враги
+      state.enemies.forEach(e => {
+        const et = ENEMY_TYPES[e.type];
+        // тень
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y + e.radius * 0.8, e.radius * 0.8, e.radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // сам враг
+        ctx.font = (e.radius * 2.2) + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(et.emoji, e.x, e.y);
+        // hp-бар
+        if (e.hp < e.maxHp) {
+          const w = e.radius * 2;
+          ctx.fillStyle = 'rgba(0,0,0,0.6)';
+          ctx.fillRect(e.x - w/2, e.y - e.radius - 14, w, 6);
+          ctx.fillStyle = e.isBoss ? '#ff2a6a' : '#6ee37c';
+          ctx.fillRect(e.x - w/2, e.y - e.radius - 14, w * (e.hp / e.maxHp), 6);
+        }
+        // босс — свечение
+        if (e.isBoss) {
+          ctx.strokeStyle = '#ffd24a';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.radius + 8, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+
+      // пули
+      state.bullets.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // частицы
+      state.particles.forEach(pt => {
+        ctx.globalAlpha = pt.life / pt.maxLife;
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      // игрок (Диппер)
+      const p = state.player;
+      // тень
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + p.radius * 0.8, p.radius * 0.9, p.radius * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // сам Диппер
+      ctx.font = '42px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🧢', p.x, p.y);
+      // ствол пушки — указатель направления
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = WEAPONS[state.selectedWeapon].color;
+      ctx.fillRect(10, -3, 22, 6);
+      ctx.restore();
+      // индикатор HP над игроком
+      if (p.hp < p.maxHp) {
+        const w = 40;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(p.x - w/2, p.y - p.radius - 14, w, 5);
+        ctx.fillStyle = '#ff5c8a';
+        ctx.fillRect(p.x - w/2, p.y - p.radius - 14, w * (p.hp / p.maxHp), 5);
+      }
     }
 
-    function handleFieldClick(e) {
-      if (!state.running) return;
-      const rect = fieldEl.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const col = Math.floor(x / fieldRect.cellW);
-      const row = Math.floor(y / fieldRect.cellH);
-      if (col < 0 || col >= CONFIG.cols || row < 0 || row >= CONFIG.rows) return;
-      if (state.selectedDefender) tryPlaceAt(col, row);
+    // ============================================================
+    // УПРАВЛЕНИЕ
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w' || k === 'ц') state.keys.w = 1;
+      if (k === 'a' || k === 'ф') state.keys.a = 1;
+      if (k === 's' || k === 'ы') state.keys.s = 1;
+      if (k === 'd' || k === 'в') state.keys.d = 1;
+      if (k === 'arrowup') state.keys.up = 1;
+      if (k === 'arrowdown') state.keys.down = 1;
+      if (k === 'arrowleft') state.keys.left = 1;
+      if (k === 'arrowright') state.keys.right = 1;
+    });
+    document.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w' || k === 'ц') state.keys.w = 0;
+      if (k === 'a' || k === 'ф') state.keys.a = 0;
+      if (k === 's' || k === 'ы') state.keys.s = 0;
+      if (k === 'd' || k === 'в') state.keys.d = 0;
+      if (k === 'arrowup') state.keys.up = 0;
+      if (k === 'arrowdown') state.keys.down = 0;
+      if (k === 'arrowleft') state.keys.left = 0;
+      if (k === 'arrowright') state.keys.right = 0;
+    });
+
+    // джойстик (тач + мышь)
+    const joystick = document.getElementById('joystick');
+    const knob = document.getElementById('knob');
+
+    function startJoystick(x, y) {
+      state.joystick.active = true;
+      state.joystick.cx = x;
+      state.joystick.cy = y;
+      joystick.style.left = (x - 60) + 'px';
+      joystick.style.top = (y - 60) + 'px';
+      joystick.style.display = 'block';
+      state.joystick.dx = 0;
+      state.joystick.dy = 0;
+      knob.style.transform = 'translate(-50%, -50%)';
     }
 
-    fieldEl.addEventListener('click', handleFieldClick);
-    fieldEl.addEventListener('contextmenu', e => e.preventDefault());
-
-    function showToast(text) {
-      toastEl.textContent = text;
-      toastEl.classList.remove('show');
-      void toastEl.offsetWidth;
-      toastEl.classList.add('show');
+    function moveJoystick(x, y) {
+      if (!state.joystick.active) return;
+      const dx = x - state.joystick.cx;
+      const dy = y - state.joystick.cy;
+      const len = Math.hypot(dx, dy);
+      const maxLen = 50;
+      const kx = len > maxLen ? (dx / len) * maxLen : dx;
+      const ky = len > maxLen ? (dy / len) * maxLen : dy;
+      knob.style.transform = 'translate(calc(-50% + ' + kx + 'px), calc(-50% + ' + ky + 'px))';
+      state.joystick.dx = kx / maxLen;
+      state.joystick.dy = ky / maxLen;
     }
 
+    function endJoystick() {
+      state.joystick.active = false;
+      state.joystick.dx = 0;
+      state.joystick.dy = 0;
+      joystick.style.display = 'none';
+    }
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      startJoystick(t.clientX, t.clientY - canvas.getBoundingClientRect().top);
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      moveJoystick(t.clientX, t.clientY - canvas.getBoundingClientRect().top);
+    }, { passive: false });
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      endJoystick();
+    }, { passive: false });
+
+    canvas.addEventListener('mousedown', (e) => startJoystick(e.clientX, e.clientY - canvas.getBoundingClientRect().top));
+    canvas.addEventListener('mousemove', (e) => { if (state.joystick.active) moveJoystick(e.clientX, e.clientY - canvas.getBoundingClientRect().top); });
+    canvas.addEventListener('mouseup', endJoystick);
+    canvas.addEventListener('mouseleave', endJoystick);
+
+    // кнопка стрельбы (ручной залп)
+    document.getElementById('shootBtn').addEventListener('click', () => {
+      const nearest = findNearestEnemy();
+      if (nearest) {
+        const w = WEAPONS[state.selectedWeapon];
+        shoot(nearest, w, performance.now());
+      }
+    });
+
+    // ============================================================
+    // ФИНАЛ
+    // ============================================================
     function endGame(won) {
       if (state.gameOver) return;
       state.gameOver = true;
       state.running = false;
+      const overlay = document.getElementById('winOverlay');
+      const title = document.getElementById('winTitle');
+      const text = document.getElementById('winText');
       if (won) {
-        endTitle.textContent = '🏆 Победа!';
-        endTitle.classList.remove('lose');
-        endText.innerHTML = 'Ты отбил все ' + CONFIG.totalWaves + ' волн и прогнал Билла Шифра обратно в его измерение!<br>Гравити Фолз спасён. Диппер и Мэйбл гордятся тобой.';
-        endReward.innerHTML = 'Монеты: ' + state.coins + '<br>Очки: ' + state.score;
+        title.textContent = '🏆 Победа!';
+        title.classList.remove('lose');
+        text.innerHTML = 'Ты собрал все 5 страниц Дневника №3, прошёл через лес, озеро и подземелье и уничтожил Билла Шифра! Гравити Фолз спасён.';
       } else {
-        endTitle.textContent = '💀 Поражение';
-        endTitle.classList.add('lose');
-        endText.innerHTML = 'Монстры прорвались в Хижину Чудес.<br>Ты продержался ' + state.wave + ' из ' + CONFIG.totalWaves + ' волн.';
-        endReward.innerHTML = 'Очки: ' + state.score;
+        title.textContent = '💀 Поражение';
+        title.classList.add('lose');
+        text.innerHTML = 'Монстры одолели Диппера. Мэйбл не дождалась брата...<br>Страниц собрано: ' + state.pages + ' из ' + state.totalPages;
       }
-      endOverlay.classList.add('show');
+      overlay.classList.add('show');
     }
 
-    document.getElementById('restartBtn').addEventListener('click', () => {
-      endOverlay.classList.remove('show');
-      startGame();
+    // ============================================================
+    // ЗАПУСК
+    // ============================================================
+    document.getElementById('startBtn').addEventListener('click', () => {
+      document.getElementById('titleScreen').classList.add('hidden');
+      document.getElementById('game').style.display = 'flex';
+      resize();
+      initGame();
     });
 
-    document.getElementById('menuBtn').addEventListener('click', () => {
-      endOverlay.classList.remove('show');
-      gameEl.classList.remove('show');
-      titleScreen.classList.remove('hidden');
-      state.running = false;
-    });
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(text) {
+      const el = document.getElementById('toast');
+      el.textContent = text;
+      el.classList.remove('show');
+      void el.offsetWidth;
+      el.classList.add('show');
+    }
 
-    backBtn.addEventListener('click', () => {
-      if (confirm('Выйти в меню?')) {
-        state.running = false;
-        gameEl.classList.remove('show');
-        titleScreen.classList.remove('hidden');
-      }
-    });
-
-    window.addEventListener('resize', () => {
-      if (state.running) { calcField(); buildGrid(); }
-    });
-
-    setInterval(() => { if (state.running) updateSeedsUI(); }, 200);
+    // проверка прогресса локации в цикле
+    setInterval(() => {
+      if (!state.running) return;
+      checkLocationProgress();
+    }, 500);
   </script>
 </body>
 </html>
