@@ -99,7 +99,7 @@
     var MAP_ROWS = 18;
 
     var WEAPONS = [
-      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 300, color: '#5ecbff', size: 6 },
+      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 250, color: '#5ecbff', size: 8 },
       { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 500, color: '#a78bfa', size: 10 },
       { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 7, short: true },
       { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 400, color: '#5ecbff', size: 8, slow: true },
@@ -107,18 +107,15 @@
     ];
 
     var ENEMY_TYPES = {
-      gnome: { emoji: '👺', hp: 40, speed: 60, damage: 8, xp: 10, coins: 15, radius: 16 },
-      vampire: { emoji: '🧛', hp: 80, speed: 75, damage: 12, xp: 20, coins: 30, radius: 18 },
-      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 50, damage: 15, xp: 35, coins: 50, radius: 20 },
-      mummy: { emoji: '🧟', hp: 200, speed: 45, damage: 20, xp: 60, coins: 80, radius: 22 },
+      gnome: { emoji: '👺', hp: 40, speed: 60, damage: 12, xp: 10, coins: 15, radius: 16 },
+      vampire: { emoji: '🧛', hp: 80, speed: 75, damage: 15, xp: 20, coins: 30, radius: 18 },
+      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 50, damage: 18, xp: 35, coins: 50, radius: 20 },
+      mummy: { emoji: '🧟', hp: 200, speed: 45, damage: 22, xp: 60, coins: 80, radius: 22 },
       water: { emoji: '🐙', hp: 350, speed: 50, damage: 25, xp: 100, coins: 130, radius: 26 },
       multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, xp: 180, coins: 200, radius: 30 },
       gideon: { emoji: '🧙', hp: 1200, speed: 55, damage: 30, xp: 500, coins: 500, radius: 30, boss: true }
     };
 
-    // ============================================================
-    // ЛОКАЦИИ
-    // ============================================================
     var LOCATIONS = [
       { name: 'Хижина · 1 этаж', floorColor: '#3a1a2a', wallColor: '#8a5a3a',
         walls: [
@@ -227,9 +224,6 @@
       }
     ];
 
-    // ============================================================
-    // NPC
-    // ============================================================
     var NPCS = {
       mabel: { name: 'Мэйбл', emoji: '👱‍♀️', color: '#ff8ac4', x: 12, y: 10, location: 0,
         dialog: { text: 'Диппер! Мы нашли 5 страниц Дневника №3, но они разбросаны по всей округе. Собери их все!',
@@ -238,13 +232,13 @@
         dialog: { text: 'Псс, пацан. Хочешь новую пушку? Давай 300 монет — и она твоя.',
           choices: [ { text: 'Купить за 300 🪙', action: 'buy' }, { text: 'Отказаться', action: 'close' } ] } },
       wendy: { name: 'Венди', emoji: '👩‍🦰', color: '#ff6a3a', x: 12, y: 8, location: 1,
-        dialog: { text: 'Привет, Диппер! Гидеон прячется в своём доме на юго-востоке. Но не суйся туда без Дневника — он тебя раздавит.',
+        dialog: { text: 'Привет, Диппер! Гидеон прячется в своём доме на юго-востоке. Не суйся туда без Дневника.',
           choices: [ { text: 'Спасибо, Венди', action: 'close' } ] } },
       zus: { name: 'Зус', emoji: '🧑‍🦱', color: '#9ad04a', x: 12, y: 14, location: 3,
-        dialog: { text: 'Йо, Диппер! В лесу неспокойно. Гномы, вампиры — жуть! Хочешь, подлечу?',
+        dialog: { text: 'Йо, Диппер! В лесу неспокойно. Хочешь, подлечу?',
           choices: [ { text: 'Спасибо, Зус', action: 'heal' }, { text: 'Позже', action: 'close' } ] } },
       mcgucket: { name: 'МакГаккет', emoji: '👴', color: '#b8a060', x: 5, y: 14, location: 4,
-        dialog: { text: 'Я помню! Помню Гидеона! Он... он построил амулет, который блокирует выстрелы. Пока амулет активен — стреляй в него чаще, чтобы сбить щит!',
+        dialog: { text: 'Я помню! Помню Гидеона! Стреляй в него чаще — у него щит, который сбивается от выстрелов!',
           choices: [ { text: 'Спасибо, старик', action: 'close' } ] } }
     };
 
@@ -264,7 +258,7 @@
       enemyTimer: 20,
       nearestNpc: null,
       dialogOpen: false,
-      questStage: 0, // 0 — Мэйбл, 1 — Стэн, 2 — Зус, 3 — страницы, 4 — Гидеон
+      questStage: 0,
       quest: 'Поговори с Мэйбл в Хижине',
       gideonSpawned: false,
       metMabel: false,
@@ -368,19 +362,11 @@
       requestAnimationFrame(loop);
     }
 
-    // ============================================================
-    // 5 СТРАНИЦ — спрятаны в углах
-    // ============================================================
     function spawnPages() {
-      // 1 — Двор Хижины, правый нижний угол
       state.pickups.push({ type: 'page', x: 20 * TILE + TILE/2, y: 15 * TILE + TILE/2, radius: 20, collected: false, location: 2 });
-      // 2 — Тёмный лес, правый нижний угол
       state.pickups.push({ type: 'page', x: 22 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 3 });
-      // 3 — Озеро, правый верхний угол
       state.pickups.push({ type: 'page', x: 20 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 4 });
-      // 4 — Пещера, правый нижний угол
       state.pickups.push({ type: 'page', x: 21 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 5 });
-      // 5 — Гравити Фолз, между домами
       state.pickups.push({ type: 'page', x: 12 * TILE + TILE/2, y: 9 * TILE + TILE/2, radius: 20, collected: false, location: 6 });
     }
 
@@ -504,12 +490,17 @@
       }
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
+      // пули
       for (var i = state.bullets.length - 1; i >= 0; i--) {
         var b = state.bullets[i];
+        if (b.noWallFrames && b.noWallFrames > 0) {
+          b.noWallFrames--;
+        } else {
+          if (isWallAt(b.x, b.y)) b.life = 0;
+        }
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         b.life -= dt;
-        if (isWallAt(b.x, b.y)) b.life = 0;
         for (var j = 0; j < state.enemies.length; j++) {
           var e = state.enemies[j];
           if (e.hp <= 0) continue;
@@ -520,10 +511,11 @@
             break;
           }
         }
-        if (b.x < -50 || b.x > W + 50 || b.y < -50 || b.y > H + 50) b.life = 0;
+        if (b.x < -100 || b.x > W + 100 || b.y < -100 || b.y > H + 100) b.life = 0;
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
+      // ВРАГИ АТАКУЮТ
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
@@ -531,12 +523,15 @@
         var ddy = p.y - e.y;
         var dd = Math.hypot(ddx, ddy);
         var slow = (e.slowUntil > now) ? 0.5 : 1;
+        // двигаются к игроку
         if (dd > p.radius + e.radius - 4) {
           var enx = e.x + (ddx / dd) * e.speed * slow * dt;
           var eny = e.y + (ddy / dd) * e.speed * slow * dt;
           if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
           if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
-        } else {
+        }
+        // если в зоне удара — бьют
+        if (dd < p.radius + e.radius + 6) {
           p.hp -= e.damage * dt;
           if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
         }
@@ -581,7 +576,6 @@
       }
       state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
 
-      // переходы
       var cx = Math.floor(p.x / TILE);
       var cy = Math.floor(p.y / TILE);
       var loc = getLocation();
@@ -609,7 +603,6 @@
       }
       state.particles = state.particles.filter(function(pt) { return pt.life > 0; });
 
-      // NPC
       state.nearestNpc = null;
       var bestNpcDist = 90;
       for (var key in NPCS) {
@@ -624,14 +617,18 @@
       if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
       else ib.classList.remove('show');
 
-      // ВРАГИ — раз в 15–20 секунд
       var loc2 = getLocation();
       if (loc2.enemies.length > 0) {
         state.enemyTimer -= dt;
         if (state.enemyTimer <= 0) {
-          state.enemyTimer = 15 + Math.random() * 8;
+          state.enemyTimer = 8 + Math.random() * 5;
           var type = loc2.enemies[Math.floor(Math.random() * loc2.enemies.length)];
           spawnEnemy(type);
+          if (Math.random() < 0.3) {
+            setTimeout(function() {
+              if (state.running && !state.gameOver) spawnEnemy(type);
+            }, 500);
+          }
         }
       }
     }
@@ -674,16 +671,15 @@
       }
       p.angle = angle;
       state.lastShot = now;
-      var speed = w.short ? 350 : 650;
-      var startX = p.x + Math.cos(angle) * 26;
-      var startY = p.y + Math.sin(angle) * 26;
+      var speed = w.short ? 500 : 900;
       state.bullets.push({
-        x: startX, y: startY,
+        x: p.x, y: p.y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         damage: w.damage, radius: w.size,
         color: w.color, slow: w.slow,
-        life: w.short ? 0.3 : 1.5
+        life: w.short ? 0.3 : 2.0,
+        noWallFrames: 4
       });
     }
 
@@ -732,7 +728,6 @@
         }
       }
 
-      // переходы
       var loc = getLocation();
       for (var i = 0; i < loc.exits.length; i++) {
         var ex = loc.exits[i];
@@ -771,7 +766,7 @@
         }
       }
 
-      // пикапы
+      // ПИКАПЫ
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location) continue;
@@ -794,9 +789,6 @@
         if (pk.type === 'page') {
           ctx.font = '44px serif';
           ctx.fillText('📖', pk.x, pk.y + bob);
-          ctx.font = 'bold 16px sans-serif';
-          ctx.fillStyle = '#ffd24a';
-          ctx.fillText('▼', pk.x, pk.y - 60 + bob);
         } else if (pk.type === 'heal') {
           ctx.font = '28px serif';
           ctx.fillText('🍦', pk.x, pk.y + bob);
@@ -806,7 +798,7 @@
         }
       }
 
-      // враги
+      // ВРАГИ
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         var et = ENEMY_TYPES[e.type];
@@ -828,14 +820,13 @@
         var b = state.bullets[i];
         ctx.fillStyle = b.color;
         ctx.shadowColor = b.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
       }
 
-      // игрок
       var p = state.player;
       ctx.font = '42px serif';
       ctx.textAlign = 'center';
@@ -872,19 +863,23 @@
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
-      for (var i = 0; i < state.pickups.length; i++) {
-        var pk = state.pickups[i];
-        if (pk.location !== state.location || pk.type !== 'page') continue;
-        ctx.fillStyle = '#ffd24a';
-        ctx.fillRect(mmX + (pk.x / TILE) * cell - 2, mmY + (pk.y / TILE) * cell - 2, 4, 4);
+      // NPC — видны на карте
+      for (var key in NPCS) {
+        var npc = NPCS[key];
+        if (npc.location !== state.location) continue;
+        ctx.fillStyle = npc.color;
+        ctx.fillRect(mmX + npc.x * cell - 1.5, mmY + npc.y * cell - 1.5, 4, 4);
       }
+      // игрок
       ctx.fillStyle = '#5ecbff';
       ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
+      // враги
       ctx.fillStyle = '#ff5c8a';
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         ctx.fillRect(mmX + (e.x / TILE) * cell - 1, mmY + (e.y / TILE) * cell - 1, 2, 2);
       }
+      // СТРАНИЦЫ НА КАРТЕ НЕ ОТОБРАЖАЮТСЯ
     }
 
     function openDialog(npc) {
@@ -903,7 +898,6 @@
       document.getElementById('dialogBox').classList.add('show');
     }
 
-    // ЛОГИКА КВЕСТОВ
     function advanceQuest(npc) {
       if (npc.name === 'Мэйбл' && !state.metMabel) {
         state.metMabel = true;
