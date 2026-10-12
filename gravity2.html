@@ -8,139 +8,31 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; touch-action: none; }
   #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: block; background: #1a0a20; touch-action: none; }
-
-  .hud {
-    position: fixed; top: 0; left: 0; right: 0;
-    display: flex; justify-content: space-between;
-    padding: 8px 12px;
-    font-size: 13px; font-weight: 700;
-    z-index: 10;
-    pointer-events: none;
-    gap: 6px;
-  }
-  .hud .stat {
-    background: rgba(0,0,0,0.6);
-    padding: 5px 12px; border-radius: 20px;
-    border: 1px solid #3a1a4a;
-  }
+  .hud { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 8px 12px; font-size: 13px; font-weight: 700; z-index: 10; pointer-events: none; gap: 6px; flex-wrap: wrap; }
+  .hud .stat { background: rgba(0,0,0,0.6); padding: 5px 12px; border-radius: 20px; border: 1px solid #3a1a4a; }
   .hud .hp { color: #ff5c8a; }
   .hud .pages { color: #5ecbff; }
   .hud .loc { color: #a78bfa; }
-
-  .weapon-bar {
-    position: fixed; bottom: 10px; left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 6px;
-    padding: 6px 10px;
-    background: rgba(10, 5, 16, 0.85);
-    border: 2px solid #3a1a4a;
-    border-radius: 16px;
-    z-index: 10;
-    max-width: 95vw;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
+  .hud .coins { color: #ffd24a; }
+  .weapon-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 6px 10px; background: rgba(10, 5, 16, 0.85); border: 2px solid #3a1a4a; border-radius: 16px; z-index: 10; max-width: 95vw; overflow-x: auto; scrollbar-width: none; }
   .weapon-bar::-webkit-scrollbar { display: none; }
-  .weapon {
-    flex-shrink: 0;
-    width: 52px; height: 52px;
-    background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%);
-    border: 2px solid #3a1a4a;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    position: relative;
-    touch-action: manipulation;
-  }
-  .weapon.selected {
-    border-color: #ffd24a;
-    box-shadow: 0 0 16px rgba(255,210,74,0.8);
-    transform: translateY(-3px);
-  }
+  .weapon { flex-shrink: 0; width: 52px; height: 52px; background: linear-gradient(180deg, #2a1030 0%, #1a0a20 100%); border: 2px solid #3a1a4a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; position: relative; touch-action: manipulation; }
+  .weapon.selected { border-color: #ffd24a; box-shadow: 0 0 16px rgba(255,210,74,0.8); transform: translateY(-3px); }
   .weapon.locked { opacity: 0.3; }
   .weapon.locked::after { content: '🔒'; position: absolute; font-size: 18px; }
-
-  .joystick {
-    position: fixed;
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    background: rgba(255,210,74,0.08);
-    border: 2px solid rgba(255,210,74,0.4);
-    display: none;
-    pointer-events: none;
-    z-index: 20;
-  }
-  .joystick .knob {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 50px; height: 50px;
-    border-radius: 50%;
-    background: rgba(255,210,74,0.5);
-    border: 2px solid #ffd24a;
-  }
-
-  .shoot-btn {
-    position: fixed;
-    bottom: 80px; right: 20px;
-    width: 78px; height: 78px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff5c8a, #8a2a4a);
-    border: 3px solid #ffd24a;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px;
-    z-index: 20;
-    box-shadow: 0 0 30px rgba(255,92,138,0.6);
-    touch-action: manipulation;
-  }
+  .joystick { position: fixed; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,210,74,0.08); border: 2px solid rgba(255,210,74,0.4); display: none; pointer-events: none; z-index: 20; }
+  .joystick .knob { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; border-radius: 50%; background: rgba(255,210,74,0.5); border: 2px solid #ffd24a; }
+  .shoot-btn { position: fixed; bottom: 80px; right: 20px; width: 78px; height: 78px; border-radius: 50%; background: linear-gradient(135deg, #ff5c8a, #8a2a4a); border: 3px solid #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 20; box-shadow: 0 0 30px rgba(255,92,138,0.6); touch-action: manipulation; }
   .shoot-btn:active { transform: scale(0.92); }
-
-  .toast {
-    position: fixed; top: 40%; left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    background: rgba(20, 5, 15, 0.95);
-    border: 3px solid #ffd24a;
-    border-radius: 14px;
-    padding: 16px 30px;
-    font-size: 15px; font-weight: 800;
-    color: #ffd24a;
-    text-align: center;
-    z-index: 200;
-    pointer-events: none;
-    max-width: 80vw;
-  }
+  .toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); background: rgba(20, 5, 15, 0.95); border: 3px solid #ffd24a; border-radius: 14px; padding: 16px 30px; font-size: 15px; font-weight: 800; color: #ffd24a; text-align: center; z-index: 200; pointer-events: none; max-width: 80vw; }
   .toast.show { animation: toastPop 2s ease-out forwards; }
-  @keyframes toastPop {
-    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-    15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-    30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    85% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-  }
-
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.92);
-    display: none;
-    align-items: center; justify-content: center;
-    flex-direction: column;
-    z-index: 300;
-    padding: 20px; text-align: center;
-  }
+  @keyframes toastPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } 30% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 85% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 300; padding: 20px; text-align: center; }
   .overlay.show { display: flex; }
   .overlay h1 { font-size: 28px; color: #ffd24a; margin-bottom: 16px; }
   .overlay h1.lose { color: #ff5c8a; }
   .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.6; max-width: 420px; margin-bottom: 20px; }
-  .overlay button {
-    padding: 14px 36px;
-    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
-    border: none; border-radius: 40px;
-    color: #1a0a08;
-    font-family: inherit; font-size: 14px; font-weight: 800;
-    letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; margin: 4px;
-    touch-action: manipulation;
-  }
+  .overlay button { padding: 14px 36px; background: linear-gradient(135deg, #ffd24a, #ff5c8a); border: none; border-radius: 40px; color: #1a0a08; font-family: inherit; font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin: 4px; touch-action: manipulation; }
 </style>
 </head>
 <body>
@@ -150,6 +42,7 @@
   <div class="hud">
     <div class="stat hp"><span>❤️</span> <span id="hpVal">100</span></div>
     <div class="stat pages"><span>📖</span> <span id="pagesVal">0 / 5</span></div>
+    <div class="stat coins"><span>🪙</span> <span id="coinsVal">0</span></div>
     <div class="stat loc"><span>📍</span> <span id="locVal">Хижина</span></div>
   </div>
 
@@ -168,9 +61,6 @@
   </div>
 
   <script>
-    // ============================================
-    // ИГРА · ГРАВИТИ ФОЛЗ
-    // ============================================
     var canvas = document.getElementById('canvas');
     var ctx = canvas.getContext('2d');
     var W = 0, H = 0;
@@ -186,7 +76,7 @@
       { name: 'Грави', emoji: '🌀', damage: 15, cooldown: 700, color: '#a78bfa', size: 10 },
       { name: 'Огонь', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 6, short: true },
       { name: 'Лёд', emoji: '❄️', damage: 20, cooldown: 600, color: '#5ecbff', size: 7, slow: true },
-      { name: 'Ракета', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', size: 12, explode: true }
+      { name: 'Ракета', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', size: 12 }
     ];
 
     var ENEMY_TYPES = {
@@ -200,10 +90,128 @@
       bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, coins: 1000, radius: 36, boss: true }
     };
 
+    // ============================================================
+    // КАРТЫ ЛОКАЦИЙ
+    // ============================================================
+    // tile: 0 — пол, 1 — стена, 2 — сундук, 3 — дверь
+    // каждый уровень — сетка 15 x 20 клеток, каждая клетка 60 x 60 px
+    var TILE = 60;
+
+    function makeMap(walls) {
+      // создаём пустую карту 20 x 15, обрамлённую стенами
+      var rows = 15, cols = 20;
+      var map = [];
+      for (var y = 0; y < rows; y++) {
+        var row = [];
+        for (var x = 0; x < cols; x++) {
+          if (x === 0 || x === cols - 1 || y === 0 || y === rows - 1) row.push(1);
+          else row.push(0);
+        }
+        map.push(row);
+      }
+      // добавляем стены
+      for (var i = 0; i < walls.length; i++) {
+        var w = walls[i];
+        if (w.type === 'rect') {
+          for (var y = w.y1; y <= w.y2; y++)
+            for (var x = w.x1; x <= w.x2; x++)
+              if (map[y] && map[y][x] !== undefined) map[y][x] = 1;
+        } else if (w.type === 'chest') {
+          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 2;
+        } else if (w.type === 'door') {
+          if (map[w.y] && map[w.y][w.x] !== undefined) map[w.y][w.x] = 3;
+        }
+      }
+      return map;
+    }
+
+    var LOCATIONS = [
+      {
+        name: 'Хижина Чудес',
+        bg: '#2a1040',
+        wallColor: '#6a3a8a',
+        floorColor: '#1a0a2a',
+        walls: [
+          // несколько комнат
+          { type: 'rect', x1: 3, y1: 3, x2: 8, y2: 3 },
+          { type: 'rect', x1: 3, y1: 3, x2: 3, y2: 7 },
+          { type: 'rect', x1: 12, y1: 3, x2: 16, y2: 3 },
+          { type: 'rect', x1: 16, y1: 3, x2: 16, y2: 7 },
+          { type: 'rect', x1: 3, y1: 11, x2: 8, y2: 11 },
+          { type: 'rect', x1: 12, y1: 11, x2: 16, y2: 11 },
+          { type: 'chest', x: 5, y: 5 },
+          { type: 'chest', x: 14, y: 5 },
+          { type: 'chest', x: 10, y: 7 }
+        ]
+      },
+      {
+        name: 'Тёмный лес',
+        bg: '#0a2a0a',
+        wallColor: '#2a6a2a',
+        floorColor: '#061a06',
+        walls: [
+          // деревья — отдельные точки
+          { type: 'rect', x1: 4, y1: 4, x2: 5, y2: 4 },
+          { type: 'rect', x1: 8, y1: 3, x2: 8, y2: 5 },
+          { type: 'rect', x1: 12, y1: 4, x2: 13, y2: 4 },
+          { type: 'rect', x1: 15, y1: 6, x2: 15, y2: 8 },
+          { type: 'rect', x1: 4, y1: 8, x2: 4, y2: 10 },
+          { type: 'rect', x1: 7, y1: 9, x2: 9, y2: 9 },
+          { type: 'rect', x1: 12, y1: 10, x2: 12, y2: 12 },
+          { type: 'rect', x1: 16, y1: 10, x2: 17, y2: 10 },
+          { type: 'chest', x: 10, y: 5 },
+          { type: 'chest', x: 6, y: 12 }
+        ]
+      },
+      {
+        name: 'Озеро',
+        bg: '#0a1a3a',
+        wallColor: '#3a6aa8',
+        floorColor: '#050f20',
+        walls: [
+          { type: 'rect', x1: 8, y1: 6, x2: 12, y2: 9 },
+          { type: 'rect', x1: 4, y1: 3, x2: 5, y2: 4 },
+          { type: 'rect', x1: 15, y1: 3, x2: 16, y2: 4 },
+          { type: 'rect', x1: 4, y1: 11, x2: 5, y2: 12 },
+          { type: 'rect', x1: 15, y1: 11, x2: 16, y2: 12 },
+          { type: 'chest', x: 3, y: 7 },
+          { type: 'chest', x: 17, y: 7 }
+        ]
+      },
+      {
+        name: 'Подземелье',
+        bg: '#1a0a05',
+        wallColor: '#6a3a1a',
+        floorColor: '#0a0402',
+        walls: [
+          { type: 'rect', x1: 3, y1: 4, x2: 3, y2: 10 },
+          { type: 'rect', x1: 6, y1: 3, x2: 6, y2: 6 },
+          { type: 'rect', x1: 9, y1: 5, x2: 9, y2: 9 },
+          { type: 'rect', x1: 12, y1: 3, x2: 12, y2: 6 },
+          { type: 'rect', x1: 15, y1: 5, x2: 15, y2: 11 },
+          { type: 'rect', x1: 5, y1: 12, x2: 14, y2: 12 },
+          { type: 'chest', x: 10, y: 11 }
+        ]
+      },
+      {
+        name: 'Комната Билла',
+        bg: '#2a0000',
+        wallColor: '#ff4040',
+        floorColor: '#1a0000',
+        walls: [
+          { type: 'rect', x1: 5, y1: 5, x2: 6, y2: 5 },
+          { type: 'rect', x1: 14, y1: 5, x2: 15, y2: 5 },
+          { type: 'rect', x1: 5, y1: 9, x2: 6, y2: 9 },
+          { type: 'rect', x1: 14, y1: 9, x2: 15, y2: 9 },
+          { type: 'chest', x: 10, y: 3 }
+        ]
+      }
+    ];
+
     var state = {
-      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 18, speed: 200, angle: 0 },
+      player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 200, angle: 0 },
       enemies: [], bullets: [], pickups: [], particles: [],
-      pages: 0, totalPages: 5,
+      pages: 0, totalPages: 5, coins: 0,
       selected: 0,
       unlocked: [true, false, false, false, false],
       keys: { w: 0, a: 0, s: 0, d: 0 },
@@ -211,38 +219,53 @@
       running: true, gameOver: false,
       lastTime: 0, lastShot: 0,
       location: 0,
-      locations: [
-        { name: 'Хижина', bg: '#2a1040', wall: '#4a2a6a' },
-        { name: 'Лес', bg: '#0a2a0a', wall: '#1a5a1a' },
-        { name: 'Озеро', bg: '#0a1a3a', wall: '#1a3a6a' },
-        { name: 'Подземелье', bg: '#1a0a05', wall: '#3a1a0a' },
-        { name: 'Билл', bg: '#2a0000', wall: '#ff4040' }
-      ],
+      map: null,
+      chestsOpened: {},
       waveTimer: 0, waveCount: 0
     };
 
+    function getLocation() { return LOCATIONS[state.location]; }
+
     function init() {
       resize();
-      state.player.x = W / 2;
-      state.player.y = H / 2;
+      state.map = makeMap(getLocation().walls);
+      state.player.x = 3 * TILE + TILE / 2;
+      state.player.y = 7 * TILE + TILE / 2;
       state.player.hp = state.player.maxHp;
       state.enemies = [];
       state.bullets = [];
       state.pickups = [];
       state.particles = [];
       state.pages = 0;
+      state.coins = 0;
       state.selected = 0;
       state.unlocked = [true, false, false, false, false];
       state.location = 0;
+      state.map = makeMap(getLocation().walls);
       state.running = true;
       state.gameOver = false;
       state.lastTime = performance.now();
       state.waveTimer = 0;
       state.waveCount = 0;
+      state.chestsOpened = {};
       buildWeapons();
       updateHud();
-      spawnPage();
       requestAnimationFrame(loop);
+    }
+
+    function goToLocation(idx) {
+      state.location = idx;
+      state.map = makeMap(getLocation().walls);
+      state.enemies = [];
+      state.bullets = [];
+      state.pickups = [];
+      state.particles = [];
+      state.player.x = 3 * TILE + TILE / 2;
+      state.player.y = 7 * TILE + TILE / 2;
+      state.waveTimer = 2;
+      state.waveCount = 0;
+      showToast('📍 ' + getLocation().name);
+      updateHud();
     }
 
     function buildWeapons() {
@@ -269,19 +292,55 @@
     function updateHud() {
       document.getElementById('hpVal').textContent = Math.max(0, Math.round(state.player.hp));
       document.getElementById('pagesVal').textContent = state.pages + ' / ' + state.totalPages;
-      document.getElementById('locVal').textContent = state.locations[state.location].name;
+      document.getElementById('coinsVal').textContent = state.coins;
+      document.getElementById('locVal').textContent = getLocation().name;
+    }
+
+    function isWallAt(px, py) {
+      var x = Math.floor(px / TILE);
+      var y = Math.floor(py / TILE);
+      if (y < 0 || y >= state.map.length) return true;
+      if (x < 0 || x >= state.map[0].length) return true;
+      return state.map[y][x] === 1;
+    }
+
+    // проверка коллизии круг-стены
+    function canMoveTo(nx, ny, r) {
+      // проверяем 4 угла вокруг игрока
+      var points = [
+        { x: nx - r, y: ny - r },
+        { x: nx + r, y: ny - r },
+        { x: nx - r, y: ny + r },
+        { x: nx + r, y: ny + r },
+        { x: nx, y: ny - r },
+        { x: nx, y: ny + r },
+        { x: nx - r, y: ny },
+        { x: nx + r, y: ny }
+      ];
+      for (var i = 0; i < points.length; i++) {
+        if (isWallAt(points[i].x, points[i].y)) return false;
+      }
+      return true;
     }
 
     function spawnEnemy(type) {
       var et = ENEMY_TYPES[type];
-      var x, y;
-      var side = Math.floor(Math.random() * 4);
-      if (side === 0) { x = -50; y = Math.random() * H; }
-      else if (side === 1) { x = W + 50; y = Math.random() * H; }
-      else if (side === 2) { x = Math.random() * W; y = -50; }
-      else { x = Math.random() * W; y = H + 50; }
+      // спавн в случайной клетке пола далеко от игрока
+      var tries = 0;
+      var ex = 0, ey = 0;
+      while (tries < 50) {
+        ex = (1 + Math.random() * (state.map[0].length - 2)) * TILE;
+        ey = (1 + Math.random() * (state.map.length - 2)) * TILE;
+        var tx = Math.floor(ex / TILE);
+        var ty = Math.floor(ey / TILE);
+        if (state.map[ty] && state.map[ty][tx] === 0) {
+          var d = Math.hypot(ex - state.player.x, ey - state.player.y);
+          if (d > 200) break;
+        }
+        tries++;
+      }
       state.enemies.push({
-        type: type, x: x, y: y,
+        type: type, x: ex, y: ey,
         hp: et.hp, maxHp: et.hp,
         speed: et.speed, damage: et.damage,
         radius: et.radius, coins: et.coins,
@@ -289,26 +348,8 @@
       });
     }
 
-    function spawnPage() {
-      state.pickups.push({
-        type: 'page',
-        x: 80 + Math.random() * (W - 160),
-        y: 100 + Math.random() * (H - 200),
-        radius: 20, collected: false
-      });
-    }
-
-    function spawnHeal() {
-      state.pickups.push({
-        type: 'heal',
-        x: 80 + Math.random() * (W - 160),
-        y: 100 + Math.random() * (H - 200),
-        radius: 18, collected: false
-      });
-    }
-
-    function spawnCoin(x, y) {
-      state.pickups.push({ type: 'coin', x: x, y: y, radius: 14, collected: false });
+    function spawnPickupAt(x, y, type) {
+      state.pickups.push({ type: type, x: x, y: y, radius: 18, collected: false });
     }
 
     function loop(now) {
@@ -330,10 +371,12 @@
       if (state.joy.active) { dx += state.joy.dx; dy += state.joy.dy; }
       var len = Math.hypot(dx, dy);
       if (len > 1) { dx /= len; dy /= len; }
-      p.x += dx * p.speed * dt;
-      p.y += dy * p.speed * dt;
-      p.x = Math.max(p.radius, Math.min(W - p.radius, p.x));
-      p.y = Math.max(p.radius, Math.min(H - p.radius, p.y));
+
+      // движение с коллизией
+      var nx = p.x + dx * p.speed * dt;
+      var ny = p.y + dy * p.speed * dt;
+      if (canMoveTo(nx, p.y, p.radius)) p.x = nx;
+      if (canMoveTo(p.x, ny, p.radius)) p.y = ny;
 
       // цель
       var nearest = null, best = Infinity;
@@ -345,7 +388,6 @@
       }
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
-      // стрельба
       var w = WEAPONS[state.selected];
       if (nearest && now - state.lastShot > w.cooldown) {
         shoot(nearest, w);
@@ -358,6 +400,7 @@
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         b.life -= dt;
+        if (isWallAt(b.x, b.y)) b.life = 0;
         for (var j = 0; j < state.enemies.length; j++) {
           var e = state.enemies[j];
           if (e.hp <= 0) continue;
@@ -372,7 +415,7 @@
       }
       state.bullets = state.bullets.filter(function(b) { return b.life > 0; });
 
-      // враги двигаются к игроку
+      // враги
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
         if (e.hp <= 0) continue;
@@ -381,8 +424,10 @@
         var d2 = Math.hypot(dx2, dy2);
         var slow = (e.slowUntil > now) ? 0.4 : 1;
         if (d2 > p.radius + e.radius - 4) {
-          e.x += (dx2 / d2) * e.speed * slow * dt;
-          e.y += (dy2 / d2) * e.speed * slow * dt;
+          var enx = e.x + (dx2 / d2) * e.speed * slow * dt;
+          var eny = e.y + (dy2 / d2) * e.speed * slow * dt;
+          if (canMoveTo(enx, e.y, e.radius)) e.x = enx;
+          if (canMoveTo(e.x, eny, e.radius)) e.y = eny;
         } else {
           p.hp -= e.damage * dt;
           if (p.hp <= 0) { p.hp = 0; updateHud(); endGame(false); return; }
@@ -394,7 +439,8 @@
         var e = state.enemies[i];
         if (e.hp <= 0 && !e.dead) {
           e.dead = true;
-          if (Math.random() < 0.5) spawnCoin(e.x, e.y);
+          state.coins += Math.floor(e.coins / 2);
+          if (Math.random() < 0.7) spawnPickupAt(e.x, e.y, 'coin');
           if (e.boss && e.type === 'bill') setTimeout(function() { endGame(true); }, 100);
         }
       }
@@ -410,22 +456,33 @@
             state.pages++;
             unlockWeapon();
             showToast('📖 Страница ' + state.pages + ' / ' + state.totalPages);
-            updateHud();
-            if (state.pages < state.totalPages) {
-              setTimeout(spawnPage, 500);
-            } else {
-              setTimeout(spawnBoss, 1500);
-            }
+            if (state.pages >= state.totalPages) setTimeout(spawnBoss, 1500);
           } else if (pk.type === 'heal') {
             p.hp = Math.min(p.maxHp, p.hp + 30);
             showToast('🍦 +30 HP');
-            updateHud();
           } else if (pk.type === 'coin') {
+            state.coins += 20;
             showToast('🪙 +20');
           }
+          updateHud();
         }
       }
       state.pickups = state.pickups.filter(function(pk) { return !pk.collected; });
+
+      // сундуки и двери
+      var cx = Math.floor(p.x / TILE);
+      var cy = Math.floor(p.y / TILE);
+      if (state.map[cy] && state.map[cy][cx] === 2) {
+        var key = cx + ',' + cy + ',' + state.location;
+        if (!state.chestsOpened[key]) {
+          state.chestsOpened[key] = true;
+          var roll = Math.random();
+          if (roll < 0.5) { state.coins += 50; showToast('🪙 Сундук: +50 монет'); }
+          else if (roll < 0.8) { spawnPickupAt(p.x + 40, p.y, 'heal'); showToast('🎁 Сундук: аптечка рядом'); }
+          else { spawnPickupAt(p.x + 40, p.y, 'page'); showToast('📖 Сундук: страница рядом'); }
+          updateHud();
+        }
+      }
 
       // частицы
       for (var i = 0; i < state.particles.length; i++) {
@@ -451,7 +508,6 @@
           else pool = ['mummy', 'water', 'multibear'];
           spawnEnemy(pool[Math.floor(Math.random() * pool.length)]);
         }
-        if (Math.random() < 0.15) spawnHeal();
       }
     }
 
@@ -464,7 +520,7 @@
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         damage: w.damage, radius: w.size,
-        color: w.color, slow: w.slow, explode: w.explode,
+        color: w.color, slow: w.slow,
         life: w.short ? 0.3 : 1.5
       });
     }
@@ -497,20 +553,47 @@
     }
 
     function draw() {
-      var loc = state.locations[state.location];
-      ctx.fillStyle = loc.bg;
+      var loc = getLocation();
+      // фон поля
+      ctx.fillStyle = loc.floorColor;
       ctx.fillRect(0, 0, W, H);
 
-      ctx.strokeStyle = loc.wall;
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.3;
-      for (var x = 0; x < W; x += 60) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      // карта
+      for (var y = 0; y < state.map.length; y++) {
+        for (var x = 0; x < state.map[y].length; x++) {
+          var px = x * TILE;
+          var py = y * TILE;
+          var v = state.map[y][x];
+          if (v === 1) {
+            // стена
+            ctx.fillStyle = loc.wallColor;
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 1, py + 1, TILE - 2, TILE - 2);
+          } else if (v === 2) {
+            // сундук
+            ctx.font = '40px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📦', px + TILE / 2, py + TILE / 2);
+          } else if (v === 3) {
+            // дверь
+            ctx.fillStyle = '#ffd24a';
+            ctx.fillRect(px + 10, py + 10, TILE - 20, TILE - 20);
+            ctx.font = '30px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚪', px + TILE / 2, py + TILE / 2);
+          } else {
+            // пол — чередуем оттенки для сетки
+            if ((x + y) % 2 === 0) {
+              ctx.fillStyle = 'rgba(255,255,255,0.03)';
+              ctx.fillRect(px, py, TILE, TILE);
+            }
+          }
+        }
       }
-      for (var y = 0; y < H; y += 60) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
 
       // пикапы
       for (var i = 0; i < state.pickups.length; i++) {
@@ -518,9 +601,9 @@
         var bob = Math.sin(performance.now() / 200) * 3;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        if (pk.type === 'page') { ctx.font = '32px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
-        else if (pk.type === 'heal') { ctx.font = '28px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
-        else if (pk.type === 'coin') { ctx.font = '22px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
+        if (pk.type === 'page') { ctx.font = '28px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
+        else if (pk.type === 'heal') { ctx.font = '26px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
+        else if (pk.type === 'coin') { ctx.font = '20px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
       }
 
       // враги
@@ -551,7 +634,7 @@
 
       // игрок
       var p = state.player;
-      ctx.font = '42px serif';
+      ctx.font = '40px serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🧢', p.x, p.y);
@@ -561,6 +644,39 @@
       ctx.fillStyle = WEAPONS[state.selected].color;
       ctx.fillRect(10, -3, 22, 6);
       ctx.restore();
+
+      // мини-карта в правом нижнем углу
+      drawMinimap();
+    }
+
+    function drawMinimap() {
+      var mmSize = 120;
+      var cell = mmSize / Math.max(state.map[0].length, state.map.length);
+      var mmX = W - mmSize - 100;
+      var mmY = H - mmSize - 10;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(mmX - 4, mmY - 4, mmSize + 8, mmSize + 8);
+      ctx.strokeStyle = '#ffd24a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(mmX - 4, mmY - 4, mmSize + 8, mmSize + 8);
+
+      for (var y = 0; y < state.map.length; y++) {
+        for (var x = 0; x < state.map[y].length; x++) {
+          var v = state.map[y][x];
+          ctx.fillStyle = v === 1 ? '#6a3a8a' : v === 2 ? '#ffd24a' : 'rgba(255,255,255,0.1)';
+          ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
+        }
+      }
+      // игрок
+      ctx.fillStyle = '#5ecbff';
+      ctx.fillRect(mmX + (state.player.x / TILE) * cell - 1, mmY + (state.player.y / TILE) * cell - 1, 3, 3);
+      // враги
+      ctx.fillStyle = '#ff5c8a';
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        ctx.fillRect(mmX + (e.x / TILE) * cell - 1, mmY + (e.y / TILE) * cell - 1, 2, 2);
+      }
     }
 
     function endGame(won) {
@@ -573,7 +689,7 @@
       if (won) {
         t.textContent = '🏆 Победа!';
         t.classList.remove('lose');
-        x.textContent = 'Ты собрал все страницы Дневника №3 и уничтожил Билла Шифра!';
+        x.textContent = 'Ты собрал все страницы и победил Билла Шифра!';
       } else {
         t.textContent = '💀 Поражение';
         t.classList.add('lose');
@@ -620,7 +736,6 @@
       joystick.style.display = 'block';
       knob.style.transform = 'translate(-50%, -50%)';
     }
-
     function moveJoy(x, y) {
       if (!state.joy.active) return;
       var dx = x - state.joy.cx;
@@ -633,7 +748,6 @@
       state.joy.dx = kx / maxLen;
       state.joy.dy = ky / maxLen;
     }
-
     function endJoy() {
       state.joy.active = false;
       state.joy.dx = 0;
