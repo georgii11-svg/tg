@@ -98,20 +98,14 @@
     var MAP_COLS = 25;
     var MAP_ROWS = 18;
 
-    // ============================================================
-    // ОРУЖИЕ
-    // ============================================================
     var WEAPONS = [
-      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 300, color: '#5ecbff', size: 5 },
+      { name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 300, color: '#5ecbff', size: 6 },
       { name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 500, color: '#a78bfa', size: 10 },
-      { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 6, short: true },
-      { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 400, color: '#5ecbff', size: 7, slow: true },
-      { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 800, color: '#ff5c8a', size: 12 }
+      { name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', size: 7, short: true },
+      { name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 400, color: '#5ecbff', size: 8, slow: true },
+      { name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 800, color: '#ff5c8a', size: 14 }
     ];
 
-    // ============================================================
-    // ВРАГИ
-    // ============================================================
     var ENEMY_TYPES = {
       gnome: { emoji: '👺', hp: 40, speed: 60, damage: 8, xp: 10, coins: 15, radius: 16 },
       vampire: { emoji: '🧛', hp: 80, speed: 75, damage: 12, xp: 20, coins: 30, radius: 18 },
@@ -232,9 +226,6 @@
       }
     ];
 
-    // ============================================================
-    // NPC
-    // ============================================================
     var NPCS = {
       mabel: { name: 'Мэйбл', emoji: '👱‍♀️', color: '#ff8ac4', x: 12, y: 10, location: 0,
         dialog: { text: 'Диппер! В лесу, у озера и в пещере спрятаны 3 страницы Дневника. Собери их — и найдёшь логово Гидеона!',
@@ -243,13 +234,10 @@
         dialog: { text: 'Псс, пацан. Хочешь новую пушку? 100 монет — и она твоя.',
           choices: [ { text: 'Купить за 100 🪙', action: 'buy' }, { text: 'Отказаться', action: 'close' } ] } },
       wendy: { name: 'Венди', emoji: '👩‍🦰', color: '#ff6a3a', x: 12, y: 8, location: 1,
-        dialog: { text: 'Привет, Диппер! Дом Гидеона — на юго-востоке карты. Иди через лес, озеро и пещеру.',
+        dialog: { text: 'Привет, Диппер! Дом Гидеона — на юго-востоке. Иди через лес, озеро и пещеру.',
           choices: [ { text: 'Спасибо!', action: 'close' } ] } }
     };
 
-    // ============================================================
-    // СОСТОЯНИЕ
-    // ============================================================
     var state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 16, speed: 220, angle: 0, level: 1, xp: 0, xpNext: 50, damageBonus: 0 },
       enemies: [], bullets: [], pickups: [], particles: [],
@@ -362,13 +350,16 @@
       requestAnimationFrame(loop);
     }
 
+    // ============================================================
+    // СТРАНИЦЫ — на свободных клетках
+    // ============================================================
     function spawnPages() {
-      // Страница 1 — Тёмный лес, свободная клетка внизу по центру
-      state.pickups.push({ type: 'page', x: 12 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 3 });
-      // Страница 2 — Озеро, свободная клетка слева по центру
-      state.pickups.push({ type: 'page', x: 3 * TILE + TILE/2, y: 8 * TILE + TILE/2, radius: 20, collected: false, location: 4 });
-      // Страница 3 — Пещера, свободная клетка внизу справа
-      state.pickups.push({ type: 'page', x: 19 * TILE + TILE/2, y: 14 * TILE + TILE/2, radius: 20, collected: false, location: 5 });
+      // 1-я: Тёмный лес, клетка (4, 4) — рядом с точкой входа, точно свободно
+      state.pickups.push({ type: 'page', x: 4 * TILE + TILE/2, y: 4 * TILE + TILE/2, radius: 20, collected: false, location: 3 });
+      // 2-я: Озеро, клетка (3, 3) — рядом с точкой входа
+      state.pickups.push({ type: 'page', x: 3 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 4 });
+      // 3-я: Пещера, клетка (3, 3) — рядом с точкой входа
+      state.pickups.push({ type: 'page', x: 3 * TILE + TILE/2, y: 3 * TILE + TILE/2, radius: 20, collected: false, location: 5 });
     }
 
     function buildWeapons() {
@@ -426,8 +417,8 @@
       var et = ENEMY_TYPES[type];
       var tries = 0, ex = 0, ey = 0;
       while (tries < 60) {
-        ex = (1 + Math.random() * (MAP_COLS - 2)) * TILE;
-        ey = (1 + Math.random() * (MAP_ROWS - 2)) * TILE;
+        ex = (2 + Math.random() * (MAP_COLS - 4)) * TILE;
+        ey = (2 + Math.random() * (MAP_ROWS - 4)) * TILE;
         var tx = Math.floor(ex / TILE);
         var ty = Math.floor(ey / TILE);
         if (state.map[ty] && state.map[ty][tx] === 0) {
@@ -482,7 +473,6 @@
       if (canMoveTo(nx, p.y, p.radius)) p.x = nx;
       if (canMoveTo(p.x, ny, p.radius)) p.y = ny;
 
-      // поворот к ближайшему врагу (для направления ствола)
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -591,7 +581,6 @@
         }
       }
 
-      // частицы
       for (var i = 0; i < state.particles.length; i++) {
         var pt = state.particles[i];
         pt.x += pt.vx * dt;
@@ -615,7 +604,6 @@
       if (state.nearestNpc && !state.dialogOpen) ib.classList.add('show');
       else ib.classList.remove('show');
 
-      // редкий спавн врагов
       var loc2 = getLocation();
       if (loc2.enemies.length > 0) {
         state.enemyTimer -= dt;
@@ -642,13 +630,17 @@
       updateHud();
     }
 
-    // РУЧНАЯ СТРЕЛЬБА — вызывается по кнопке 💥 или пробелу
+    // ============================================================
+    // РУЧНАЯ СТРЕЛЬБА
+    // ============================================================
     function playerShoot() {
       if (!state.running || state.gameOver || state.dialogOpen) return;
       var p = state.player;
       var now = Date.now();
       var w = WEAPONS[state.selected];
       if (now - state.lastShot < w.cooldown) return;
+
+      // ищем врага
       var nearest = null, best = Infinity;
       for (var i = 0; i < state.enemies.length; i++) {
         var e = state.enemies[i];
@@ -656,19 +648,28 @@
         var d = Math.hypot(e.x - p.x, e.y - p.y);
         if (d < best) { best = d; nearest = e; }
       }
-      if (!nearest) {
-        // если врагов нет — стреляем в направлении джойстика
-        var angle = Math.atan2(state.joy.dy || 0, state.joy.dx || 1);
-        p.angle = angle;
+
+      // выбираем угол
+      var angle;
+      if (nearest) {
+        angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+      } else if (state.joy.active && (state.joy.dx || state.joy.dy)) {
+        angle = Math.atan2(state.joy.dy, state.joy.dx);
       } else {
-        p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+        angle = p.angle;
       }
+      p.angle = angle;
       state.lastShot = now;
-      var speed = w.short ? 300 : 600;
+
+      var speed = w.short ? 350 : 650;
+      // пуля появляется в 26 пикселях впереди — НЕ внутри игрока
+      var startX = p.x + Math.cos(angle) * 26;
+      var startY = p.y + Math.sin(angle) * 26;
+
       state.bullets.push({
-        x: p.x, y: p.y,
-        vx: Math.cos(p.angle) * speed,
-        vy: Math.sin(p.angle) * speed,
+        x: startX, y: startY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
         damage: w.damage, radius: w.size,
         color: w.color, slow: w.slow,
         life: w.short ? 0.3 : 1.5
@@ -759,14 +760,13 @@
         }
       }
 
-      // ПИКАПЫ — с подсветкой
+      // пикапы — с подсветкой
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location) continue;
         var bob = Math.sin(performance.now() / 200) * 3;
 
         if (pk.type === 'page') {
-          // светящийся круг
           ctx.save();
           ctx.fillStyle = 'rgba(255,210,74,0.25)';
           ctx.beginPath();
@@ -818,9 +818,12 @@
       for (var i = 0; i < state.bullets.length; i++) {
         var b = state.bullets[i];
         ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
       // игрок
@@ -860,7 +863,7 @@
           ctx.fillRect(mmX + x * cell, mmY + y * cell, cell, cell);
         }
       }
-      // страницы на миникарте — ярко
+      // страницы
       for (var i = 0; i < state.pickups.length; i++) {
         var pk = state.pickups[i];
         if (pk.location !== state.location || pk.type !== 'page') continue;
@@ -1054,7 +1057,7 @@
       if (mouseDown) { endJoy(); mouseDown = false; }
     });
 
-    // кнопка 💥 — РУЧНАЯ СТРЕЛЬБА
+    // КНОПКА 💥 — ручная стрельба
     document.getElementById('shootBtn').addEventListener('click', function(e) {
       e.stopPropagation();
       e.preventDefault();
