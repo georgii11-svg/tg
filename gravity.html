@@ -6,18 +6,39 @@
 <title>Гравити Фолз · Дневник №3</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; touch-action: none; }
-  @media (orientation: portrait) {
-    body::before { content: '↻ Поверни телефон горизонтально'; position: fixed; inset: 0; background: #0a0510; color: #ffd24a; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; z-index: 99999; text-align: center; padding: 20px; }
+  html, body { min-height: 100%; overflow-y: auto; overflow-x: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0510; color: #fff; user-select: none; }
+
+  .title-screen {
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px 20px 40px;
+    text-align: center;
+    overflow-y: auto;
   }
-  #game { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
-  #canvas {
-    flex: 1;
-    display: block;
-    width: 100%;
-    background: #1a0a20;
-    touch-action: none;
+  .title-screen.hidden { display: none; }
+  .title-screen h1 {
+    font-size: 34px; letter-spacing: 3px; text-transform: uppercase;
+    background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
+    margin-bottom: 6px;
   }
+  .title-screen .sub { font-size: 13px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 24px; text-transform: uppercase; }
+  .title-screen p { font-size: 13px; color: #b8b8d8; line-height: 1.6; max-width: 400px; margin-bottom: 12px; }
+  .title-screen button {
+    padding: 16px 44px; margin-top: 20px;
+    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
+    border: none; border-radius: 40px; color: #1a0a08;
+    font-family: inherit; font-size: 16px; font-weight: 800;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
+  }
+  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
+
+  #game { position: fixed; inset: 0; display: none; flex-direction: column; overflow: hidden; }
+  #canvas { flex: 1; display: block; width: 100%; background: #1a0a20; touch-action: none; }
+
   .hud {
     position: absolute; top: 0; left: 0; right: 0;
     display: flex; justify-content: space-between; align-items: center;
@@ -68,28 +89,15 @@
     box-shadow: 0 0 16px rgba(255,210,74,0.8);
     transform: translateY(-3px);
   }
-  .weapon.locked {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
+  .weapon.locked { opacity: 0.3; cursor: not-allowed; }
   .weapon.locked::after {
     content: '🔒';
     position: absolute;
     font-size: 20px;
   }
-  .weapon .cost {
-    position: absolute;
-    bottom: -2px; right: 2px;
-    font-size: 9px;
-    font-weight: 900;
-    color: #ffd24a;
-    background: rgba(0,0,0,0.8);
-    padding: 0 4px;
-    border-radius: 6px;
-  }
 
   .joystick {
-    position: absolute; z-index: 20;
+    position: fixed; z-index: 20;
     width: 120px; height: 120px;
     border-radius: 50%;
     background: rgba(255,210,74,0.08);
@@ -107,7 +115,7 @@
     border: 2px solid rgba(255,210,74,0.7);
   }
   .shoot-btn {
-    position: absolute;
+    position: fixed;
     bottom: 90px; right: 20px;
     width: 80px; height: 80px;
     border-radius: 50%;
@@ -128,7 +136,7 @@
     border: 3px solid #ffd24a;
     border-radius: 14px;
     padding: 16px 30px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     color: #ffd24a;
     text-align: center;
@@ -146,41 +154,15 @@
     100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
   }
 
-  .title-screen {
-    position: fixed; inset: 0;
-    background: radial-gradient(circle at 50% 40%, #2a1050 0%, #0a0418 70%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 20px; z-index: 5000; text-align: center;
-  }
-  .title-screen.hidden { display: none; }
-  .title-screen h1 {
-    font-size: 42px; letter-spacing: 4px; text-transform: uppercase;
-    background: linear-gradient(135deg, #ffd24a 0%, #ff5c8a 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    text-shadow: 0 0 30px rgba(255, 210, 74, 0.5);
-    margin-bottom: 8px;
-  }
-  .title-screen .sub { font-size: 14px; letter-spacing: 3px; color: #a78bfa; margin-bottom: 30px; text-transform: uppercase; }
-  .title-screen p { font-size: 14px; color: #b8b8d8; line-height: 1.7; max-width: 520px; margin-bottom: 18px; }
-  .title-screen button {
-    padding: 16px 44px; margin-top: 16px;
-    background: linear-gradient(135deg, #ffd24a, #ff5c8a);
-    border: none; border-radius: 40px; color: #1a0a08;
-    font-family: inherit; font-size: 16px; font-weight: 800;
-    letter-spacing: 3px; text-transform: uppercase; cursor: pointer;
-    box-shadow: 0 6px 0 #8a2a4a, 0 0 40px rgba(255, 92, 138, 0.4);
-  }
-  .title-screen button:active { transform: translateY(4px); box-shadow: 0 2px 0 #8a2a4a; }
-
   .overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.92);
     display: none; align-items: center; justify-content: center;
     flex-direction: column; z-index: 300; padding: 20px; text-align: center;
   }
   .overlay.show { display: flex; }
-  .overlay h1 { font-size: 32px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; }
+  .overlay h1 { font-size: 30px; letter-spacing: 3px; margin-bottom: 14px; color: #ffd24a; }
   .overlay h1.lose { color: #ff5c8a; }
-  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.7; max-width: 440px; margin-bottom: 20px; }
+  .overlay p { font-size: 14px; color: #c8c8dc; line-height: 1.6; max-width: 440px; margin-bottom: 20px; }
   .overlay button {
     padding: 14px 36px;
     background: linear-gradient(135deg, #ffd24a, #ff5c8a);
@@ -197,28 +179,21 @@
   <div class="title-screen" id="titleScreen">
     <h1>Гравити Фолз</h1>
     <div class="sub">Дневник №3</div>
-    <p>Ты — Диппер Пайнс. Хижина Чудес, лес, озеро, подземелье — четыре локации. Каждая охраняется монстрами.</p>
-    <p>Собери <b>5 страниц Дневника</b>, чтобы открыть новые пушки. Найди логово <b>Билла Шифра</b> и уничтожь его.</p>
-    <p style="font-size:12px;color:#8a7ab8;">Ходьба — тап по экрану или джойстик. Стрельба — автоматически по врагам. Оружие — кнопки внизу. Боссы — Гидеон, мультиберал, водяной, Билл.</p>
+    <p>Ты — Диппер Пайнс. Собирай страницы Дневника, отбивайся от монстров и найди Билла Шифра.</p>
+    <p style="font-size:12px;color:#8a7ab8;">Держи палец на экране, чтобы идти. Диппер стреляет сам. Открывай новое оружие по мере сбора страниц.</p>
     <button id="startBtn">Играть</button>
   </div>
 
-  <div id="game" style="display:none;">
+  <div id="game">
     <canvas id="canvas"></canvas>
-
     <div class="hud">
       <div class="stat hp"><span>❤️</span><span id="hudHp">100</span></div>
       <div class="stat ammo"><span>⚡</span><span id="hudAmmo">∞</span></div>
       <div class="stat pages"><span>📖</span><span id="hudPages">0 / 5</span></div>
       <div class="stat location"><span>📍</span><span id="hudLoc">Хижина Чудес</span></div>
     </div>
-
     <div class="weapon-bar" id="weaponBar"></div>
-
-    <div class="joystick" id="joystick">
-      <div class="knob" id="knob"></div>
-    </div>
-
+    <div class="joystick" id="joystick"><div class="knob" id="knob"></div></div>
     <button class="shoot-btn" id="shootBtn">💥</button>
   </div>
 
@@ -231,12 +206,8 @@
   </div>
 
   <script>
-    // ============================================================
-    // ИГРА · ГРАВИТИ ФОЛЗ · ДНЕВНИК №3
-    // ============================================================
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-
     let W = 0, H = 0;
     function resize() {
       W = canvas.width = canvas.clientWidth;
@@ -244,34 +215,27 @@
     }
     window.addEventListener('resize', resize);
 
-    // ============================================================
-    // ОРУЖИЕ
-    // ============================================================
+    // ========== ОРУЖИЕ ==========
     const WEAPONS = [
-      { id: 'blaster', name: 'Бластер', emoji: '🔫', cost: 0, damage: 25, cooldown: 400, color: '#5ecbff', bulletSize: 5 },
-      { id: 'gravity', name: 'Гравипушка', emoji: '🌀', cost: 2, damage: 15, cooldown: 800, color: '#a78bfa', bulletSize: 10, push: true },
-      { id: 'flame', name: 'Огнемёт', emoji: '🔥', cost: 3, damage: 8, cooldown: 100, color: '#ff8000', bulletSize: 6, short: true },
-      { id: 'ice', name: 'Ледяная', emoji: '❄️', cost: 3, damage: 20, cooldown: 600, color: '#5ecbff', bulletSize: 7, slow: true },
-      { id: 'rocket', name: 'Ракетница', emoji: '🚀', cost: 5, damage: 60, cooldown: 1200, color: '#ff5c8a', bulletSize: 12, explode: true }
+      { id: 'blaster', name: 'Бластер', emoji: '🔫', damage: 25, cooldown: 400, color: '#5ecbff', bulletSize: 5 },
+      { id: 'gravity', name: 'Гравипушка', emoji: '🌀', damage: 15, cooldown: 800, color: '#a78bfa', bulletSize: 10 },
+      { id: 'flame', name: 'Огнемёт', emoji: '🔥', damage: 8, cooldown: 100, color: '#ff8000', bulletSize: 6, short: true },
+      { id: 'ice', name: 'Ледяная', emoji: '❄️', damage: 20, cooldown: 600, color: '#5ecbff', bulletSize: 7, slow: true },
+      { id: 'rocket', name: 'Ракетница', emoji: '🚀', damage: 60, cooldown: 1200, color: '#ff5c8a', bulletSize: 12, explode: true }
     ];
 
-    // ============================================================
-    // ВРАГИ
-    // ============================================================
+    // ========== ВРАГИ ==========
     const ENEMY_TYPES = {
-      gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, color: '#8a5a3a', coins: 15, radius: 16 },
-      vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, color: '#4a0a5a', coins: 30, radius: 18 },
-      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 60, damage: 15, color: '#3a5a3a', coins: 50, radius: 20 },
-      mummy: { emoji: '🧟', hp: 200, speed: 50, damage: 20, color: '#6a5a4a', coins: 80, radius: 22 },
-      water: { emoji: '🐙', hp: 350, speed: 55, damage: 25, color: '#2a5a8a', coins: 130, radius: 26 },
-      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, color: '#6a3a1a', coins: 200, radius: 30 },
-      gideon: { emoji: '🧙', hp: 800, speed: 50, damage: 25, color: '#a07aff', coins: 300, radius: 28, isBoss: true },
-      bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, color: '#ffd24a', coins: 1000, radius: 36, isBoss: true }
+      gnome: { emoji: '👺', hp: 40, speed: 70, damage: 8, coins: 15, radius: 16 },
+      vampire: { emoji: '🧛', hp: 80, speed: 90, damage: 12, coins: 30, radius: 18 },
+      zombie: { emoji: '🧟‍♀️', hp: 120, speed: 60, damage: 15, coins: 50, radius: 20 },
+      mummy: { emoji: '🧟', hp: 200, speed: 50, damage: 20, coins: 80, radius: 22 },
+      water: { emoji: '🐙', hp: 350, speed: 55, damage: 25, coins: 130, radius: 26 },
+      multibear: { emoji: '🐻', hp: 600, speed: 40, damage: 30, coins: 200, radius: 30 },
+      gideon: { emoji: '🧙', hp: 800, speed: 50, damage: 25, coins: 300, radius: 28, isBoss: true },
+      bill: { emoji: '👁️', hp: 3000, speed: 60, damage: 40, coins: 1000, radius: 36, isBoss: true }
     };
 
-    // ============================================================
-    // СОСТОЯНИЕ
-    // ============================================================
     const state = {
       player: { x: 0, y: 0, hp: 100, maxHp: 100, radius: 18, speed: 200, angle: 0 },
       enemies: [],
@@ -282,28 +246,25 @@
       totalPages: 5,
       selectedWeapon: 0,
       unlocked: [true, false, false, false, false],
-      keys: { w: 0, a: 0, s: 0, d: 0, up: 0, down: 0, left: 0, right: 0 },
-      joystick: { active: false, cx: 0, cy: 0, dx: 0, dy: 0, id: null },
+      keys: { w: 0, a: 0, s: 0, d: 0 },
+      joystick: { active: false, cx: 0, cy: 0, dx: 0, dy: 0 },
       running: false,
       gameOver: false,
       lastTime: 0,
       lastShot: 0,
-      location: 0,          // 0 хижина, 1 лес, 2 озеро, 3 подземелье, 4 билл
+      location: 0,
       locations: [
-        { name: 'Хижина Чудес', bg: '#2a1040', wall: '#4a2a6a', pagesToNext: 1 },
-        { name: 'Тёмный лес', bg: '#0a2a0a', wall: '#1a5a1a', pagesToNext: 2 },
-        { name: 'Озеро', bg: '#0a1a3a', wall: '#1a3a6a', pagesToNext: 3 },
-        { name: 'Подземелье', bg: '#1a0a05', wall: '#3a1a0a', pagesToNext: 4 },
-        { name: 'Комната Билла', bg: '#2a0000', wall: '#ff4040', pagesToNext: 5 }
+        { name: 'Хижина Чудес', bg: '#2a1040', wall: '#4a2a6a' },
+        { name: 'Тёмный лес', bg: '#0a2a0a', wall: '#1a5a1a' },
+        { name: 'Озеро', bg: '#0a1a3a', wall: '#1a3a6a' },
+        { name: 'Подземелье', bg: '#1a0a05', wall: '#3a1a0a' },
+        { name: 'Комната Билла', bg: '#2a0000', wall: '#ff4040' }
       ],
       waveTimer: 0,
       waveCount: 0,
-      spawnedBosses: {}
+      bossAlive: false
     };
 
-    // ============================================================
-    // ИНИЦИАЛИЗАЦИЯ
-    // ============================================================
     function initGame() {
       resize();
       state.player.x = W / 2;
@@ -322,7 +283,7 @@
       state.lastTime = performance.now();
       state.waveTimer = 0;
       state.waveCount = 0;
-      state.spawnedBosses = {};
+      state.bossAlive = false;
       buildWeaponBar();
       updateHud();
       spawnPageOnMap();
@@ -335,20 +296,15 @@
     }
     window.restart = restart;
 
-    // ============================================================
-    // ОРУЖИЕ UI
-    // ============================================================
     function buildWeaponBar() {
       const bar = document.getElementById('weaponBar');
       bar.innerHTML = '';
       WEAPONS.forEach((w, i) => {
         const el = document.createElement('div');
         el.className = 'weapon';
-        el.dataset.i = i;
-        const locked = !state.unlocked[i];
-        if (locked) el.classList.add('locked');
+        if (!state.unlocked[i]) el.classList.add('locked');
         if (i === state.selectedWeapon) el.classList.add('selected');
-        el.innerHTML = w.emoji + (locked ? '' : '<span class="cost">' + w.damage + '</span>');
+        el.textContent = w.emoji;
         el.addEventListener('click', () => {
           if (!state.unlocked[i]) return;
           state.selectedWeapon = i;
@@ -358,55 +314,38 @@
       });
     }
 
-    // ============================================================
-    // HUD
-    // ============================================================
     function updateHud() {
       document.getElementById('hudHp').textContent = Math.max(0, Math.round(state.player.hp));
-      document.getElementById('hudAmmo').textContent = '∞';
       document.getElementById('hudPages').textContent = state.pages + ' / ' + state.totalPages;
       document.getElementById('hudLoc').textContent = state.locations[state.location].name;
     }
 
-    // ============================================================
-    // СПАВН ВРАГОВ
-    // ============================================================
     function spawnEnemy(typeId) {
       const et = ENEMY_TYPES[typeId];
-      // спавним на краю
       let x, y;
       const side = Math.floor(Math.random() * 4);
       if (side === 0) { x = -50; y = Math.random() * H; }
       else if (side === 1) { x = W + 50; y = Math.random() * H; }
       else if (side === 2) { x = Math.random() * W; y = -50; }
       else { x = Math.random() * W; y = H + 50; }
-
       state.enemies.push({
-        type: typeId,
-        x, y,
+        type: typeId, x, y,
         hp: et.hp, maxHp: et.hp,
-        speed: et.speed,
-        damage: et.damage,
-        radius: et.radius,
-        coins: et.coins,
-        slowUntil: 0,
-        isBoss: !!et.isBoss
+        speed: et.speed, damage: et.damage,
+        radius: et.radius, coins: et.coins,
+        slowUntil: 0, isBoss: !!et.isBoss, dead: false
       });
     }
 
-    // ============================================================
-    // СТРАНИЦЫ
-    // ============================================================
     function spawnPageOnMap() {
-      // Кладём страницу в случайное место
-      const x = 100 + Math.random() * (W - 200);
-      const y = 100 + Math.random() * (H - 200);
+      const x = 80 + Math.random() * (W - 160);
+      const y = 80 + Math.random() * (H - 160);
       state.pickups.push({ type: 'page', x, y, radius: 20, collected: false });
     }
 
     function spawnHealOnMap() {
-      const x = 100 + Math.random() * (W - 200);
-      const y = 100 + Math.random() * (H - 200);
+      const x = 80 + Math.random() * (W - 160);
+      const y = 80 + Math.random() * (H - 160);
       state.pickups.push({ type: 'heal', x, y, radius: 18, collected: false });
     }
 
@@ -414,29 +353,22 @@
       state.pickups.push({ type: 'coin', x, y, radius: 14, collected: false, value: 20 });
     }
 
-    // ============================================================
-    // ИГРОВОЙ ЦИКЛ
-    // ============================================================
     function loop(now) {
       if (!state.running) return;
       const dt = Math.min(50, now - state.lastTime) / 1000;
       state.lastTime = now;
-
       update(dt, now);
       draw();
-
       requestAnimationFrame(loop);
     }
 
     function update(dt, now) {
       const p = state.player;
-
-      // движение игрока (клавиатура + джойстик)
       let dx = 0, dy = 0;
-      if (state.keys.w || state.keys.up) dy -= 1;
-      if (state.keys.s || state.keys.down) dy += 1;
-      if (state.keys.a || state.keys.left) dx -= 1;
-      if (state.keys.d || state.keys.right) dx += 1;
+      if (state.keys.w) dy -= 1;
+      if (state.keys.s) dy += 1;
+      if (state.keys.a) dx -= 1;
+      if (state.keys.d) dx += 1;
       if (state.joystick.active) {
         dx += state.joystick.dx;
         dy += state.joystick.dy;
@@ -445,17 +377,15 @@
       if (len > 1) { dx /= len; dy /= len; }
       p.x += dx * p.speed * dt;
       p.y += dy * p.speed * dt;
-      // границы
       p.x = Math.max(p.radius, Math.min(W - p.radius, p.x));
       p.y = Math.max(p.radius, Math.min(H - p.radius, p.y));
-      // поворот к ближайшему врагу
+
       const nearest = findNearestEnemy();
       if (nearest) p.angle = Math.atan2(nearest.y - p.y, nearest.x - p.x);
 
-      // стрельба автоматическая
       const w = WEAPONS[state.selectedWeapon];
       if (now - state.lastShot > w.cooldown && nearest) {
-        shoot(nearest, w, now);
+        shoot(nearest, w);
         state.lastShot = now;
       }
 
@@ -464,26 +394,22 @@
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         b.life -= dt;
-        // попадание
         for (const e of state.enemies) {
           if (e.hp <= 0) continue;
-          const d = Math.hypot(e.x - b.x, e.y - b.y);
-          if (d < e.radius + b.radius) {
-            damageEnemy(e, b.damage);
+          if (Math.hypot(e.x - b.x, e.y - b.y) < e.radius + b.radius) {
+            e.hp -= b.damage;
             if (b.slow) e.slowUntil = now + 2000;
             if (b.explode) {
-              // взрыв
-              for (const e2 of state.enemies) {
+              state.enemies.forEach(e2 => {
                 if (e2.hp <= 0) continue;
-                if (Math.hypot(e2.x - b.x, e2.y - b.y) < 100) damageEnemy(e2, b.damage);
-              }
+                if (Math.hypot(e2.x - b.x, e2.y - b.y) < 100) e2.hp -= b.damage;
+              });
               for (let i = 0; i < 12; i++) {
                 state.particles.push({
                   x: b.x, y: b.y,
                   vx: (Math.random() - 0.5) * 300,
                   vy: (Math.random() - 0.5) * 300,
-                  life: 0.6, maxLife: 0.6,
-                  color: '#ff8000'
+                  life: 0.6, maxLife: 0.6, color: '#ff8000'
                 });
               }
             }
@@ -498,26 +424,25 @@
       // враги
       state.enemies.forEach(e => {
         if (e.hp <= 0) return;
-        const et = ENEMY_TYPES[e.type];
-        const dx = p.x - e.x;
-        const dy = p.y - e.y;
-        const d = Math.hypot(dx, dy);
+        const dx2 = p.x - e.x;
+        const dy2 = p.y - e.y;
+        const d = Math.hypot(dx2, dy2);
         const slow = (e.slowUntil > now) ? 0.4 : 1;
         if (d > p.radius + e.radius - 4) {
-          e.x += (dx / d) * e.speed * slow * dt;
-          e.y += (dy / d) * e.speed * slow * dt;
+          e.x += (dx2 / d) * e.speed * slow * dt;
+          e.y += (dy2 / d) * e.speed * slow * dt;
         } else {
-          // атака
           p.hp -= e.damage * dt;
           if (p.hp <= 0) { p.hp = 0; endGame(false); return; }
         }
       });
 
-      // удаление мёртвых врагов
+      // мёртвые
       state.enemies.forEach(e => {
         if (e.hp <= 0 && !e.dead) {
           e.dead = true;
-          if (Math.random() < 0.4) spawnCoinOnMap(e.x, e.y);
+          if (Math.random() < 0.5) spawnCoinOnMap(e.x, e.y);
+          if (e.isBoss && e.type === 'bill') { endGame(true); return; }
         }
       });
       state.enemies = state.enemies.filter(e => !e.dead);
@@ -525,25 +450,23 @@
       // пикапы
       state.pickups.forEach(pk => {
         if (pk.collected) return;
-        const d = Math.hypot(pk.x - p.x, pk.y - p.y);
-        if (d < p.radius + pk.radius) {
+        if (Math.hypot(pk.x - p.x, pk.y - p.y) < p.radius + pk.radius) {
           pk.collected = true;
           if (pk.type === 'page') {
             state.pages++;
             unlockNextWeapon();
-            showToast('📖 Страница найдена! ' + state.pages + ' / ' + state.totalPages);
+            showToast('📖 Страница ' + state.pages + ' / ' + state.totalPages);
             updateHud();
             if (state.pages < state.totalPages) {
               setTimeout(spawnPageOnMap, 500);
             } else {
-              setTimeout(() => spawnBoss(), 2000);
+              setTimeout(spawnBoss, 1500);
             }
           } else if (pk.type === 'heal') {
             p.hp = Math.min(p.maxHp, p.hp + 30);
             showToast('🍦 +30 HP!');
             updateHud();
           } else if (pk.type === 'coin') {
-            // монеты просто собираем — здесь не тратятся
             showToast('🪙 +' + pk.value);
           }
         }
@@ -560,12 +483,11 @@
       });
       state.particles = state.particles.filter(pt => pt.life > 0);
 
-      // волны врагов
+      // волны
       state.waveTimer -= dt;
       if (state.waveTimer <= 0) {
         state.waveTimer = 3 + Math.random() * 2;
         state.waveCount++;
-        // 1–3 врага
         const count = Math.min(3, 1 + Math.floor(state.waveCount / 5));
         for (let i = 0; i < count; i++) {
           const loc = state.location;
@@ -573,12 +495,10 @@
           if (loc === 0) pool = ['gnome', 'vampire'];
           else if (loc === 1) pool = ['gnome', 'vampire', 'zombie'];
           else if (loc === 2) pool = ['zombie', 'mummy', 'water'];
-          else if (loc === 3) pool = ['mummy', 'water', 'multibear'];
           else pool = ['mummy', 'water', 'multibear'];
           const t = pool[Math.floor(Math.random() * pool.length)];
           spawnEnemy(t);
         }
-        // аптечка иногда
         if (Math.random() < 0.15) spawnHealOnMap();
       }
     }
@@ -593,7 +513,7 @@
       return nearest;
     }
 
-    function shoot(target, w, now) {
+    function shoot(target, w) {
       const p = state.player;
       const angle = Math.atan2(target.y - p.y, target.x - p.x);
       const speed = w.short ? 300 : 600;
@@ -604,134 +524,74 @@
         damage: w.damage,
         radius: w.bulletSize,
         color: w.color,
-        slow: w.slow,
-        explode: w.explode,
+        slow: w.slow, explode: w.explode,
         life: w.short ? 0.3 : 1.5
       });
     }
 
-    function damageEnemy(e, dmg) {
-      e.hp -= dmg;
-    }
-
-    // ============================================================
-    // ПРОКАЧКА
-    // ============================================================
     function unlockNextWeapon() {
       for (let i = 0; i < state.unlocked.length; i++) {
         if (!state.unlocked[i]) {
           state.unlocked[i] = true;
-          showToast('🔫 Новое оружие: ' + WEAPONS[i].name + '!');
+          showToast('🔫 Новое: ' + WEAPONS[i].name);
           buildWeaponBar();
           return;
         }
       }
     }
 
-    // ============================================================
-    // ПЕРЕХОД ПО ЛОКАЦИЯМ
-    // ============================================================
-    function checkLocationProgress() {
-      const loc = state.locations[state.location];
-      if (state.pages >= loc.pagesToNext && state.location < state.locations.length - 1) {
-        state.location++;
-        showToast('📍 Новая локация: ' + state.locations[state.location].name);
-        updateHud();
-        // обнуляем для следующей
-        spawnPageOnMap();
-        state.enemies = [];
-        state.bullets = [];
-      }
-    }
-
-    // ============================================================
-    // БОССЫ
-    // ============================================================
     function spawnBoss() {
       const loc = state.location;
       let bossType = 'gideon';
-      if (loc === 2) bossType = 'gideon';
-      else if (loc === 3) bossType = 'multibear';
+      if (loc === 3) bossType = 'multibear';
       else if (loc === 4) bossType = 'bill';
-
+      const et = ENEMY_TYPES[bossType];
       state.enemies.push({
-        type: bossType,
-        x: W / 2,
-        y: 80,
-        hp: ENEMY_TYPES[bossType].hp,
-        maxHp: ENEMY_TYPES[bossType].hp,
-        speed: ENEMY_TYPES[bossType].speed,
-        damage: ENEMY_TYPES[bossType].damage,
-        radius: ENEMY_TYPES[bossType].radius,
-        coins: ENEMY_TYPES[bossType].coins,
-        isBoss: true,
-        slowUntil: 0
+        type: bossType, x: W / 2, y: 80,
+        hp: et.hp, maxHp: et.hp,
+        speed: et.speed, damage: et.damage,
+        radius: et.radius, coins: et.coins,
+        slowUntil: 0, isBoss: true, dead: false
       });
+      state.bossAlive = true;
       showToast('⚔️ БОСС: ' + bossType.toUpperCase() + '!');
     }
 
-    // ============================================================
-    // ОТРИСОВКА
-    // ============================================================
     function draw() {
       const loc = state.locations[state.location];
-      // фон
       ctx.fillStyle = loc.bg;
       ctx.fillRect(0, 0, W, H);
 
-      // сетка
       ctx.strokeStyle = loc.wall;
       ctx.lineWidth = 1;
       ctx.globalAlpha = 0.3;
       for (let x = 0; x < W; x += 60) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, H);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
       }
       for (let y = 0; y < H; y += 60) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(W, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
       }
       ctx.globalAlpha = 1;
 
       // пикапы
       state.pickups.forEach(pk => {
         const bob = Math.sin(performance.now() / 200) * 3;
-        if (pk.type === 'page') {
-          ctx.font = '32px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('📖', pk.x, pk.y + bob);
-        } else if (pk.type === 'heal') {
-          ctx.font = '28px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🍦', pk.x, pk.y + bob);
-        } else if (pk.type === 'coin') {
-          ctx.font = '22px serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🪙', pk.x, pk.y + bob);
-        }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        if (pk.type === 'page') { ctx.font = '32px serif'; ctx.fillText('📖', pk.x, pk.y + bob); }
+        else if (pk.type === 'heal') { ctx.font = '28px serif'; ctx.fillText('🍦', pk.x, pk.y + bob); }
+        else if (pk.type === 'coin') { ctx.font = '22px serif'; ctx.fillText('🪙', pk.x, pk.y + bob); }
       });
 
       // враги
       state.enemies.forEach(e => {
         const et = ENEMY_TYPES[e.type];
-        // тень
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.beginPath();
         ctx.ellipse(e.x, e.y + e.radius * 0.8, e.radius * 0.8, e.radius * 0.3, 0, 0, Math.PI * 2);
         ctx.fill();
-        // сам враг
         ctx.font = (e.radius * 2.2) + 'px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(et.emoji, e.x, e.y);
-        // hp-бар
         if (e.hp < e.maxHp) {
           const w = e.radius * 2;
           ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -739,13 +599,10 @@
           ctx.fillStyle = e.isBoss ? '#ff2a6a' : '#6ee37c';
           ctx.fillRect(e.x - w/2, e.y - e.radius - 14, w * (e.hp / e.maxHp), 6);
         }
-        // босс — свечение
         if (e.isBoss) {
           ctx.strokeStyle = '#ffd24a';
           ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(e.x, e.y, e.radius + 8, 0, Math.PI * 2);
-          ctx.stroke();
+          ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 8, 0, Math.PI * 2); ctx.stroke();
         }
       });
 
@@ -754,9 +611,7 @@
         ctx.fillStyle = b.color;
         ctx.shadowColor = b.color;
         ctx.shadowBlur = 15;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
       });
 
@@ -764,32 +619,25 @@
       state.particles.forEach(pt => {
         ctx.globalAlpha = pt.life / pt.maxLife;
         ctx.fillStyle = pt.color;
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2); ctx.fill();
       });
       ctx.globalAlpha = 1;
 
-      // игрок (Диппер)
+      // игрок
       const p = state.player;
-      // тень
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.beginPath();
       ctx.ellipse(p.x, p.y + p.radius * 0.8, p.radius * 0.9, p.radius * 0.4, 0, 0, Math.PI * 2);
       ctx.fill();
-      // сам Диппер
       ctx.font = '42px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('🧢', p.x, p.y);
-      // ствол пушки — указатель направления
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.angle);
       ctx.fillStyle = WEAPONS[state.selectedWeapon].color;
       ctx.fillRect(10, -3, 22, 6);
       ctx.restore();
-      // индикатор HP над игроком
       if (p.hp < p.maxHp) {
         const w = 40;
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -799,19 +647,13 @@
       }
     }
 
-    // ============================================================
-    // УПРАВЛЕНИЕ
-    // ============================================================
+    // ========== КЛАВИАТУРА ==========
     document.addEventListener('keydown', (e) => {
       const k = e.key.toLowerCase();
       if (k === 'w' || k === 'ц') state.keys.w = 1;
       if (k === 'a' || k === 'ф') state.keys.a = 1;
       if (k === 's' || k === 'ы') state.keys.s = 1;
       if (k === 'd' || k === 'в') state.keys.d = 1;
-      if (k === 'arrowup') state.keys.up = 1;
-      if (k === 'arrowdown') state.keys.down = 1;
-      if (k === 'arrowleft') state.keys.left = 1;
-      if (k === 'arrowright') state.keys.right = 1;
     });
     document.addEventListener('keyup', (e) => {
       const k = e.key.toLowerCase();
@@ -819,30 +661,32 @@
       if (k === 'a' || k === 'ф') state.keys.a = 0;
       if (k === 's' || k === 'ы') state.keys.s = 0;
       if (k === 'd' || k === 'в') state.keys.d = 0;
-      if (k === 'arrowup') state.keys.up = 0;
-      if (k === 'arrowdown') state.keys.down = 0;
-      if (k === 'arrowleft') state.keys.left = 0;
-      if (k === 'arrowright') state.keys.right = 0;
     });
 
-    // джойстик (тач + мышь)
+    // ========== ДЖОЙСТИК ==========
     const joystick = document.getElementById('joystick');
     const knob = document.getElementById('knob');
 
-    function startJoystick(x, y) {
+    function startJoystick(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
       state.joystick.active = true;
       state.joystick.cx = x;
       state.joystick.cy = y;
+      state.joystick.dx = 0;
+      state.joystick.dy = 0;
       joystick.style.left = (x - 60) + 'px';
       joystick.style.top = (y - 60) + 'px';
       joystick.style.display = 'block';
-      state.joystick.dx = 0;
-      state.joystick.dy = 0;
       knob.style.transform = 'translate(-50%, -50%)';
     }
 
-    function moveJoystick(x, y) {
+    function moveJoystick(clientX, clientY) {
       if (!state.joystick.active) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
       const dx = x - state.joystick.cx;
       const dy = y - state.joystick.cy;
       const len = Math.hypot(dx, dy);
@@ -864,35 +708,28 @@
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const t = e.changedTouches[0];
-      startJoystick(t.clientX, t.clientY - canvas.getBoundingClientRect().top);
+      startJoystick(t.clientX, t.clientY);
     }, { passive: false });
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
       const t = e.changedTouches[0];
-      moveJoystick(t.clientX, t.clientY - canvas.getBoundingClientRect().top);
+      moveJoystick(t.clientX, t.clientY);
     }, { passive: false });
     canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
       endJoystick();
     }, { passive: false });
 
-    canvas.addEventListener('mousedown', (e) => startJoystick(e.clientX, e.clientY - canvas.getBoundingClientRect().top));
-    canvas.addEventListener('mousemove', (e) => { if (state.joystick.active) moveJoystick(e.clientX, e.clientY - canvas.getBoundingClientRect().top); });
+    canvas.addEventListener('mousedown', (e) => startJoystick(e.clientX, e.clientY));
+    canvas.addEventListener('mousemove', (e) => { if (state.joystick.active) moveJoystick(e.clientX, e.clientY); });
     canvas.addEventListener('mouseup', endJoystick);
     canvas.addEventListener('mouseleave', endJoystick);
 
-    // кнопка стрельбы (ручной залп)
     document.getElementById('shootBtn').addEventListener('click', () => {
       const nearest = findNearestEnemy();
-      if (nearest) {
-        const w = WEAPONS[state.selectedWeapon];
-        shoot(nearest, w, performance.now());
-      }
+      if (nearest) shoot(nearest, WEAPONS[state.selectedWeapon]);
     });
 
-    // ============================================================
-    // ФИНАЛ
-    // ============================================================
     function endGame(won) {
       if (state.gameOver) return;
       state.gameOver = true;
@@ -903,18 +740,15 @@
       if (won) {
         title.textContent = '🏆 Победа!';
         title.classList.remove('lose');
-        text.innerHTML = 'Ты собрал все 5 страниц Дневника №3, прошёл через лес, озеро и подземелье и уничтожил Билла Шифра! Гравити Фолз спасён.';
+        text.innerHTML = 'Ты собрал все страницы Дневника №3 и уничтожил Билла Шифра! Гравити Фолз спасён.';
       } else {
         title.textContent = '💀 Поражение';
         title.classList.add('lose');
-        text.innerHTML = 'Монстры одолели Диппера. Мэйбл не дождалась брата...<br>Страниц собрано: ' + state.pages + ' из ' + state.totalPages;
+        text.innerHTML = 'Монстры одолели Диппера.<br>Страниц собрано: ' + state.pages + ' из ' + state.totalPages;
       }
       overlay.classList.add('show');
     }
 
-    // ============================================================
-    // ЗАПУСК
-    // ============================================================
     document.getElementById('startBtn').addEventListener('click', () => {
       document.getElementById('titleScreen').classList.add('hidden');
       document.getElementById('game').style.display = 'flex';
@@ -922,9 +756,6 @@
       initGame();
     });
 
-    // ============================================================
-    // TOAST
-    // ============================================================
     function showToast(text) {
       const el = document.getElementById('toast');
       el.textContent = text;
@@ -932,12 +763,6 @@
       void el.offsetWidth;
       el.classList.add('show');
     }
-
-    // проверка прогресса локации в цикле
-    setInterval(() => {
-      if (!state.running) return;
-      checkLocationProgress();
-    }, 500);
   </script>
 </body>
 </html>
