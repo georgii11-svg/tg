@@ -60,7 +60,7 @@
 
 <script>
 /* =========================================================
-   PvZ — ПРОТОТИП (мобильная версия + пауза + щадящий баланс)
+   PvZ — ПРОТОТИП (мобильная версия + пауза + новые зомби)
    ========================================================= */
 
 const canvas = document.getElementById('game');
@@ -85,7 +85,7 @@ function fitCanvas(){
 window.addEventListener('resize', fitCanvas);
 window.addEventListener('orientationchange', ()=>setTimeout(fitCanvas,200));
 
-/* ---------- ЩАДЯЩИЙ БАЛАНС ---------- */
+/* ---------- БАЛАНС ---------- */
 const CONFIG = {
   sunStart: 75,
   sunFromSkyInterval: 7,
@@ -101,10 +101,13 @@ const CONFIG = {
   zombieSpeed: CELL_W / 4.7,
   zombieDamage: 100,
   coneZombieHP: 570,
+  bucketZombieHP: 1370,        // ведро 1100 + тело 270
+  zomboniHP: 1160,             // зомби на катке
+  zomboniSpeed: CELL_W / 4,    // 4 сек/клетка
   cherryDamage: 1800,
   wallnutHP: 4000,
-  firstWaveDelay: 40,      // первая волна через 40 сек
-  waveInterval: 40,        // далее каждые 40 сек
+  firstWaveDelay: 40,
+  waveInterval: 40,
 };
 
 const PLANTS = [
@@ -294,8 +297,14 @@ function update(dt){
     if(cell) target = plantAt(z.r, cell.c);
 
     if(target){
-      target.hp -= CONFIG.zombieDamage * dt;
-      if(target.hp<=0){ target.alive=false; }
+      if(z.isZomboni){
+        // Каток давит растение мгновенно
+        target.hp = 0;
+        target.alive = false;
+      } else {
+        target.hp -= CONFIG.zombieDamage * dt;
+        if(target.hp<=0){ target.alive=false; }
+      }
     } else {
       z.x -= speed*dt;
     }
@@ -323,7 +332,7 @@ function update(dt){
 function spawnWave(n){
   // 1-я волна: ровно 1 обычный зомби, без конусов
   if(n === 1){
-    zombies.push(makeZombie(Math.floor(Math.random()*ROWS), false));
+    zombies.push(makeZombie(Math.floor(Math.random()*ROWS), 'normal'));
     showMsg('ВОЛНА 1', 1200);
     return;
   }
@@ -333,21 +342,33 @@ function spawnWave(n){
     setTimeout(()=>{
       if(gameOver) return;
       const r = Math.floor(Math.random()*ROWS);
-      // конусы ТОЛЬКО с 4-й волны
-      const isCone = n >= 4 && Math.random()<0.3;
-      zombies.push(makeZombie(r, isCone));
+      let type = 'normal';
+
+      // Приоритет: zomboni > bucket > cone
+      const roll = Math.random();
+      if(n >= 6 && roll < 0.15)       type = 'zomboni';
+      else if(n >= 5 && roll < 0.30)  type = 'bucket';
+      else if(n >= 4 && roll < 0.55)  type = 'cone';
+
+      zombies.push(makeZombie(r, type));
     }, i*1200);
   }
   showMsg('ВОЛНА '+n, 1200);
 }
 
-function makeZombie(r, isCone){
+function makeZombie(r, type){
+  let hp = CONFIG.zombieHP;
+  let speed = CONFIG.zombieSpeed;
+  let isCone = false, isBucket = false, isZomboni = false;
+
+  if(type === 'cone')    { hp = CONFIG.coneZombieHP;   isCone = true; }
+  if(type === 'bucket')  { hp = CONFIG.bucketZombieHP; isBucket = true; }
+  if(type === 'zomboni') { hp = CONFIG.zomboniHP; speed = CONFIG.zomboniSpeed; isZomboni = true; }
+
   return {
     r, x: canvas.width + 20,
-    hp: isCone ? CONFIG.coneZombieHP : CONFIG.zombieHP,
-    maxHp: isCone ? CONFIG.coneZombieHP : CONFIG.zombieHP,
-    speed: CONFIG.zombieSpeed, slow: 0, alive: true,
-    cellCol: COLS-1, isCone
+    hp, maxHp: hp, speed, slow: 0, alive: true,
+    cellCol: COLS-1, isCone, isBucket, isZomboni, type
   };
 }
 
@@ -464,18 +485,43 @@ function render(){
 
   for(const z of zombies){
     const y = GRID_Y + z.r*CELL_H + CELL_H/2;
-    ctx.font = '42px serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
+
     if(z.slow>0){
       ctx.fillStyle='#4fc3f7';
-      ctx.beginPath(); ctx.arc(z.x, y, 26, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(z.x, y, 28, 0, Math.PI*2); ctx.fill();
     }
-    ctx.fillText(z.isCone ? '🧟‍♂️' : '🧟', z.x, y);
-    if(z.isCone){ ctx.font='20px serif'; ctx.fillText('🔺', z.x, y-30); }
+
+    // Зомби на катке — рисуем машинку
+    if(z.isZomboni){
+      ctx.font = '42px serif';
+      ctx.fillText('🚜', z.x-8, y);
+      ctx.font = '28px serif';
+      ctx.fillText('🧟', z.x+18, y-8);
+    } else {
+      // Обычный / конус / ведро
+      ctx.font = '42px serif';
+      let icon = '🧟';
+      if(z.isCone)   icon = '🧟‍♂️';
+      if(z.isBucket) icon = '🧟‍♂️';
+      ctx.fillText(icon, z.x, y);
+
+      // Аксессуары
+      if(z.isCone){
+        ctx.font = '20px serif';
+        ctx.fillText('🔺', z.x, y-30);
+      }
+      if(z.isBucket){
+        ctx.font = '22px serif';
+        ctx.fillText('🪣', z.x, y-32);
+      }
+    }
+
+    // HP бар
     ctx.fillStyle='#0008';
-    ctx.fillRect(z.x-22, y-34, 44, 5);
+    ctx.fillRect(z.x-22, y-38, 44, 5);
     ctx.fillStyle = z.hp/z.maxHp>0.5?'#4caf50':'#e53935';
-    ctx.fillRect(z.x-22, y-34, 44*(z.hp/z.maxHp), 5);
+    ctx.fillRect(z.x-22, y-38, 44*(z.hp/z.maxHp), 5);
   }
 
   for(const s of suns){
