@@ -12,21 +12,56 @@
     overflow: hidden;
     font-family: "Courier New", "Consolas", monospace;
     color: #33ff66;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.5;
     padding: 20px;
     text-shadow: 0 0 6px rgba(51, 255, 102, 0.5);
   }
-  #terminal { white-space: pre-wrap; word-break: break-all; }
+
+  /* Стартовый экран */
+  #startScreen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .start-btn {
+    padding: 18px 50px;
+    background: transparent;
+    border: 2px solid #33ff66;
+    color: #33ff66;
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(51, 255, 102, 0.4), inset 0 0 20px rgba(51, 255, 102, 0.2);
+    animation: pulseGreen 2s infinite;
+    touch-action: manipulation;
+  }
+  @keyframes pulseGreen {
+    0%, 100% { box-shadow: 0 0 20px rgba(51, 255, 102, 0.4), inset 0 0 20px rgba(51, 255, 102, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(51, 255, 102, 0.8), inset 0 0 30px rgba(51, 255, 102, 0.4); }
+  }
+  .start-btn:active { transform: scale(0.95); }
+
+  /* Терминал */
+  #terminal-wrap { display: none; height: 100%; overflow-y: auto; }
+  #terminal { white-space: pre-wrap; word-break: break-all; padding-bottom: 40px; }
   .cursor {
     display: inline-block;
-    width: 8px; height: 16px;
+    width: 8px; height: 14px;
     background: #33ff66;
     vertical-align: middle;
     animation: blink 0.7s steps(1) infinite;
   }
   @keyframes blink { 50% { opacity: 0; } }
 
+  /* Финал */
   #final {
     position: fixed;
     inset: 0;
@@ -90,10 +125,10 @@
     text-transform: uppercase;
     cursor: pointer;
     box-shadow: 0 0 30px rgba(255, 42, 42, 0.6);
-    animation: pulse 1.5s infinite;
+    animation: pulseRed 1.5s infinite;
     touch-action: manipulation;
   }
-  @keyframes pulse {
+  @keyframes pulseRed {
     0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 42, 42, 0.6); }
     50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 42, 42, 0.9); }
   }
@@ -118,19 +153,25 @@
     margin-bottom: 20px;
     filter: drop-shadow(0 0 20px #33ff66);
   }
-  #success h2 { color: #fff; font-size: 22px; margin-bottom: 10px; }
+  #success h2 { color: #fff; font-size: 22px; margin-bottom: 10px; letter-spacing: 2px; }
   #success p { color: #888; font-size: 14px; }
 </style>
 </head>
 <body>
 
-  <div id="terminal"><span class="cursor"></span></div>
+  <div id="startScreen">
+    <button class="start-btn" id="startBtn">НАЧАТЬ ДЕАНОН</button>
+  </div>
+
+  <div id="terminal-wrap">
+    <div id="terminal"><span class="cursor"></span></div>
+  </div>
 
   <div id="final">
     <div class="card">
       <div class="icon">💰</div>
       <h1>База данных вскрыта</h1>
-      <p>Доступ к финансовым операциям получен. Найдено 3 привязанные карты.</p>
+      <p>Доступ к финансовым операциям получен. Найдено несколько привязанных сервисов.</p>
       <div class="stolen">ОЖИДАНИЕ КОМАНДЫ</div>
       <br>
       <button class="btn" id="hackBtn">УКРАСТЬ ДЕНЬГИ</button>
@@ -144,6 +185,9 @@
   </div>
 
   <script>
+    const startScreen = document.getElementById('startScreen');
+    const startBtn = document.getElementById('startBtn');
+    const terminalWrap = document.getElementById('terminal-wrap');
     const term = document.getElementById('terminal');
     const final = document.getElementById('final');
     const success = document.getElementById('success');
@@ -151,44 +195,74 @@
     const cursor = '<span class="cursor"></span>';
 
     const lines = [
-      "[*] Запуск скрипта obfuscated_wallet_drainer.sh...",
-      "[*] Установка соединения с удалённым сервером...",
-      "[+] Подключение установлено. IP: 185.14.31.99",
-      "[*] Сканирование локальной сети...",
-      "[+] Найдено активных устройств: 4",
-      "[*] Перехват трафика...",
-      "[+] MAC-адрес жертвы: 4C:32:75:89:AA:BE",
-      "[+] Модель устройства: iPhone 13 Pro",
-      "[*] Доступ к защищённому хранилищу...",
-      "[+] Обход шифрования AES-256... успешно",
+      "[*] Инициализация протокола 'DarkTrace'...",
+      "[*] Загрузка ядра обфускации... 100%",
+      "[*] Установка защищённого туннеля...",
+      "[+] Туннель установлен. Прокси: 45.12.88.201 (NL)",
+      "[*] Обход файрвола маршрутизатора...",
+      "[+] Уязвимость CVE-2024-1337 проэксплуатирована",
+      "[*] Получение доступа к локальной сети (LAN)...",
+      "[+] Найдено активных узлов: 6",
+      "[*] Сканирование открытых портов...",
+      "[+] Порт 22 (SSH) - открыт",
+      "[+] Порт 443 (HTTPS) - открыт",
+      "[+] Порт 8080 (HTTP-Proxy) - открыт",
+      "[*] Попытка перехвата трафика (MITM)...",
+      "[+] Сертификат подменён. Трафик расшифровывается.",
+      "[*] Анализ пакетов устройства жертвы...",
+      "[+] MAC-адрес: 8C:85:90:1A:2B:3C",
+      "[+] Модель устройства: Android / Samsung S23 Ultra",
+      "[+] ОС: Android 14",
+      "[*] Доступ к хранилищу ключей (Keystore)...",
+      "[+] Обход биометрической защиты... обойдена",
       "[*] Поиск приложений с финансовыми данными...",
-      "[+] Сбербанк Онлайн — доступ разрешён",
-      "[+] Тинькофф — доступ разрешён",
-      "[+] Кошелёк (USDT TRC-20) — доступ разрешён",
-      "[*] Анализ баланса...",
-      "[!] Обнаружен баланс: 14 870 ₽",
-      "[!] Обнаружен баланс: 1 240 $",
-      "[*] Подготовка транзакции...",
-      "[+] Транзакция сформирована",
-      "[*] Маскировка следа...",
-      "[+] Логи очищены",
-      "[*] Соединение с базой данных готово.",
-      "[!] НАЖМИТЕ КНОПКУ НИЖЕ ДЛЯ ИЗЪЯТИЯ СРЕДСТВ..."
+      "[+] Обнаружено: Сбербанк Онлайн",
+      "[+] Обнаружено: Тинькофф",
+      "[+] Обнаружено: ВТБ",
+      "[+] Обнаружено: Крипто-кошелёк Trust Wallet",
+      "[*] Извлечение токенов авторизации...",
+      "[+] Токен сессии Сбербанка получен (Active)",
+      "[+] Токен сессии Тинькофф получен (Active)",
+      "[*] Подключение к API банковских сервисов...",
+      "[+] Соединение с API установлено",
+      "[*] Обход двухфакторной аутентификации (2FA)...",
+      "[!] Обнаружен перехват SMS",
+      "[+] Код подтверждения перехвачен: 8*4*1*",
+      "[+] Двухфакторная аутентификация обойдена",
+      "[*] Запрос списка привязанных карт...",
+      "[+] Карта 1: * * * * 4 5 8 9",
+      "[+] Карта 2: * * * * 9 1 2 3",
+      "[+] Карта 3: * * * * 7 7 7 7",
+      "[*] Анализ лимитов на переводы...",
+      "[+] Лимит карты 1: до 150 000 ₽/день",
+      "[+] Лимит карты 2: до 300 000 ₽/день",
+      "[*] Формирование транзакции на списание...",
+      "[*] Генерация фиктивного получателя...",
+      "[+] Получатель: ООО 'Ромашка' (транзитный счёт)",
+      "[*] Подмена MAC-адреса для обхода антифрода...",
+      "[+] Антифрод-система банка обманута",
+      "[*] Подготовка к финальной стадии...",
+      "[+] Соединение с базой данных готово.",
+      "[!] КРИТИЧЕСКИЙ ДОСТУП ПОЛУЧЕН.",
+      "[!] СИСТЕМА ГОТОВА К ИЗЪЯТИЮ СРЕДСТВ.",
+      "[!] НАЖМИТЕ КНОПКУ НИЖЕ ДЛЯ ЗАВЕРШЕНИЯ ОПЕРАЦИИ..."
     ];
 
     let i = 0;
     function typeLine(text, done) {
       let j = 0;
-      const speed = 12 + Math.random() * 20;
+      const speed = 8 + Math.random() * 15; // Быстрая печать
       function tick() {
         if (j <= text.length) {
           term.innerHTML = lines.slice(0, i).join('\n') +
             (i > 0 ? '\n' : '') + text.slice(0, j) + cursor;
+          // авто-скролл
+          if (terminalWrap) terminalWrap.scrollTop = terminalWrap.scrollHeight;
           j++;
           setTimeout(tick, speed);
         } else {
           i++;
-          setTimeout(done, 200 + Math.random() * 300);
+          setTimeout(done, 100 + Math.random() * 150); // Быстрая смена строк
         }
       }
       tick();
@@ -196,7 +270,7 @@
 
     function run() {
       if (i >= lines.length) {
-        setTimeout(() => final.classList.add('show'), 800);
+        setTimeout(() => final.classList.add('show'), 600);
         return;
       }
       typeLine(lines[i], run);
@@ -252,6 +326,19 @@
       } catch(e) {}
     }
 
+    // Запуск по кнопке
+    startBtn.addEventListener('click', () => {
+      // Инициализируем аудио-контекст при первом клике (требование браузеров)
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch(e) {}
+
+      startScreen.style.display = 'none';
+      terminalWrap.style.display = 'block';
+      setTimeout(run, 100);
+    });
+
     hackBtn.addEventListener('click', () => {
       playPaymentSound();
       setTimeout(() => {
@@ -259,8 +346,6 @@
         success.classList.add('show');
       }, 800);
     });
-
-    setTimeout(run, 500);
   </script>
 </body>
 </html>
