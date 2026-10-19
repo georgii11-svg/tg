@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>System Terminal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: "Courier New", "Consolas", monospace;
+    color: #33ff66;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 20px;
+    text-shadow: 0 0 6px rgba(51, 255, 102, 0.5);
+  }
+  #terminal { white-space: pre-wrap; word-break: break-all; }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 16px;
+    background: #33ff66;
+    vertical-align: middle;
+    animation: blink 0.7s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  #final {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  #final.show { display: flex; opacity: 1; }
+
+  .card {
+    max-width: 400px;
+    width: 100%;
+    border: 1px solid #ff2a2a;
+    padding: 30px 24px;
+    background: rgba(255, 42, 42, 0.05);
+    box-shadow: 0 0 50px rgba(255, 42, 42, 0.3);
+  }
+  .card .icon { font-size: 50px; margin-bottom: 16px; }
+  .card h1 {
+    color: #ff2a2a;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .card p {
+    color: #ff8080;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .stolen {
+    color: #fff;
+    background: #ff2a2a;
+    padding: 8px 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 13px;
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 24px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 16px 40px;
+    background: #ff2a2a;
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 30px rgba(255, 42, 42, 0.6);
+    animation: pulse 1.5s infinite;
+    touch-action: manipulation;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255, 42, 42, 0.6); }
+    50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 42, 42, 0.9); }
+  }
+  .btn:active { transform: scale(0.95); }
+
+  /* Экран успеха */
+  #success {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 200;
+  }
+  #success.show { display: flex; }
+  .check {
+    font-size: 80px;
+    color: #33ff66;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 20px #33ff66);
+  }
+  #success h2 { color: #fff; font-size: 22px; margin-bottom: 10px; }
+  #success p { color: #888; font-size: 14px; }
+</style>
+</head>
+<body>
+
+  <div id="terminal"><span class="cursor"></span></div>
+
+  <div id="final">
+    <div class="card">
+      <div class="icon">💰</div>
+      <h1>База данных вскрыта</h1>
+      <p>Доступ к финансовым операциям получен. Найдено 3 привязанные карты.</p>
+      <div class="stolen">ОЖИДАНИЕ КОМАНДЫ</div>
+      <br>
+      <button class="btn" id="hackBtn">УКРАСТЬ ДЕНЬГИ</button>
+    </div>
+  </div>
+
+  <div id="success">
+    <div class="check">✓</div>
+    <h2>УСПЕШНО СПИСАНО</h2>
+    <p>Перевод на подконтрольный кошелёк завершён.</p>
+  </div>
+
+  <script>
+    const term = document.getElementById('terminal');
+    const final = document.getElementById('final');
+    const success = document.getElementById('success');
+    const hackBtn = document.getElementById('hackBtn');
+    const cursor = '<span class="cursor"></span>';
+
+    const lines = [
+      "[*] Запуск скрипта obfuscated_wallet_drainer.sh...",
+      "[*] Установка соединения с удалённым сервером...",
+      "[+] Подключение установлено. IP: 185.14.31.99",
+      "[*] Сканирование локальной сети...",
+      "[+] Найдено активных устройств: 4",
+      "[*] Перехват трафика...",
+      "[+] MAC-адрес жертвы: 4C:32:75:89:AA:BE",
+      "[+] Модель устройства: iPhone 13 Pro",
+      "[*] Доступ к защищённому хранилищу...",
+      "[+] Обход шифрования AES-256... успешно",
+      "[*] Поиск приложений с финансовыми данными...",
+      "[+] Сбербанк Онлайн — доступ разрешён",
+      "[+] Тинькофф — доступ разрешён",
+      "[+] Кошелёк (USDT TRC-20) — доступ разрешён",
+      "[*] Анализ баланса...",
+      "[!] Обнаружен баланс: 14 870 ₽",
+      "[!] Обнаружен баланс: 1 240 $",
+      "[*] Подготовка транзакции...",
+      "[+] Транзакция сформирована",
+      "[*] Маскировка следа...",
+      "[+] Логи очищены",
+      "[*] Соединение с базой данных готово.",
+      "[!] НАЖМИТЕ КНОПКУ НИЖЕ ДЛЯ ИЗЪЯТИЯ СРЕДСТВ..."
+    ];
+
+    let i = 0;
+    function typeLine(text, done) {
+      let j = 0;
+      const speed = 12 + Math.random() * 20;
+      function tick() {
+        if (j <= text.length) {
+          term.innerHTML = lines.slice(0, i).join('\n') +
+            (i > 0 ? '\n' : '') + text.slice(0, j) + cursor;
+          j++;
+          setTimeout(tick, speed);
+        } else {
+          i++;
+          setTimeout(done, 200 + Math.random() * 300);
+        }
+      }
+      tick();
+    }
+
+    function run() {
+      if (i >= lines.length) {
+        setTimeout(() => final.classList.add('show'), 800);
+        return;
+      }
+      typeLine(lines[i], run);
+    }
+
+    // Звук успешной оплаты (Web Audio)
+    function playPaymentSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Звук 1: звон монет (два высоких тона)
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        const gain2 = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.value = 1300;
+        osc2.frequency.value = 1600;
+
+        gain1.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        gain2.gain.setValueAtTime(0.2, ctx.currentTime + 0.1);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+
+        osc1.connect(gain1).connect(ctx.destination);
+        osc2.connect(gain2).connect(ctx.destination);
+
+        osc1.start();
+        osc2.start(ctx.currentTime + 0.1);
+        osc1.stop(ctx.currentTime + 0.4);
+        osc2.stop(ctx.currentTime + 0.5);
+
+        // Звук 2: низкий "клик" подтверждения
+        setTimeout(() => {
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'square';
+          osc3.frequency.setValueAtTime(200, ctx.currentTime);
+          osc3.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.15);
+          gain3.gain.setValueAtTime(0.15, ctx.currentTime);
+          gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          osc3.connect(gain3).connect(ctx.destination);
+          osc3.start();
+          osc3.stop(ctx.currentTime + 0.2);
+        }, 400);
+
+        // Звук 3: вибрация
+        if (navigator.vibrate) {
+          navigator.vibrate([100, 50, 100, 50, 200]);
+        }
+      } catch(e) {}
+    }
+
+    hackBtn.addEventListener('click', () => {
+      playPaymentSound();
+      setTimeout(() => {
+        final.classList.remove('show');
+        success.classList.add('show');
+      }, 800);
+    });
+
+    setTimeout(run, 500);
+  </script>
+</body>
+</html>
