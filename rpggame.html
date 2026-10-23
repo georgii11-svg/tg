@@ -23,48 +23,52 @@
 
         #crosshair {
             position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white;
-            transform: translate(-50%, -50%); border-radius: 50%;
+            transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
         }
 
         #message {
-            position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%);
             font-size: 24px; color: yellow; text-align: center; text-shadow: 2px 2px 0 #000;
             opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
 
-        /* Всплывающий экран уровня */
+        /* Экран перехода */
         #level-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 100; text-align: center;
+            cursor: pointer;
         }
         #level-screen h1 { color: #00ffcc; font-size: 40px; margin-bottom: 10px; }
         #level-screen p { font-size: 20px; color: white; }
 
-        /* Управление */
-        #mobile-controls {
-            display: none; position: absolute; bottom: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Чтобы не блокировать экран */
+        /* Мобильный джойстик (База и кнопка) */
+        #joystick-zone {
+            display: none; position: absolute; bottom: 50px; left: 50px;
+            width: 120px; height: 120px; background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            pointer-events: none; z-index: 10;
         }
-        .touch-zone {
-            position: absolute; bottom: 0; width: 50%; height: 100%; pointer-events: auto;
+        #joystick-knob {
+            position: absolute; top: 35px; left: 35px; width: 50px; height: 50px;
+            background: rgba(255,255,255,0.5); border-radius: 50%;
+            pointer-events: none;
         }
-        #zone-left { left: 0; }
-        #zone-right { right: 0; }
-        
-        #btn-attack {
-            position: absolute; bottom: 40px; right: 40px;
-            width: 90px; height: 90px; border-radius: 50%;
-            background: rgba(255, 0, 0, 0.5); border: 3px solid red;
-            color: white; font-size: 20px; font-weight: bold;
-            display: flex; justify-content: center; align-items: center;
-            pointer-events: auto; box-shadow: 0 0 15px red;
-        }
-        #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
 
-        /* Показываем джойстики только на телефоне */
+        /* Кнопка атаки для телефона */
+        #btn-attack {
+            display: none; position: absolute; bottom: 60px; right: 40px;
+            width: 90px; height: 90px; border-radius: 50%;
+            background: rgba(255, 0, 0, 0.4); border: 3px solid red;
+            color: white; font-size: 20px; font-weight: bold;
+            justify-content: center; align-items: center;
+            pointer-events: auto; box-shadow: 0 0 15px red; z-index: 10;
+        }
+
+        /* Включаем мобильное управление, если тач-экран */
         @media (pointer: coarse) {
-            #mobile-controls { display: block; }
+            #joystick-zone { display: block; }
+            #btn-attack { display: flex; }
         }
     </style>
 </head>
@@ -85,30 +89,32 @@
         <p id="level-desc">Нажмите, чтобы начать</p>
     </div>
 
-    <!-- Зоны управления для телефона -->
-    <div id="mobile-controls">
-        <div class="touch-zone" id="zone-left"></div>
-        <div class="touch-zone" id="zone-right"></div>
-        <div id="btn-attack">БЕЙ!</div>
+    <!-- Мобильный джойстик -->
+    <div id="joystick-zone">
+        <div id="joystick-knob"></div>
     </div>
+    <div id="btn-attack">БЕЙ!</div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Настройки 3D
+        // --- НАСТРОЙКИ ---
         const FOV = Math.PI / 3; 
         const RENDER_DIST = 16;  
-        
-        // Состояние игры
+        const MOVE_SPEED = 3.0; // Скорость ходьбы (юнитов в секунду)
+        const ROT_SPEED = 2.5;  // Скорость поворота (радиан в секунду)
+
+        // --- СОСТОЯНИЕ ---
         let level = 1;
         let player = { x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, gold: 0, attackTimer: 0 };
         let map = [];
         let monsters = [];
         let potions = [];
-        let gameState = "menu"; // menu, playing, levelup, gameover, win
+        let gameState = "menu";
+        let lastTime = performance.now();
 
-        // Карты уровней (1-стена, 0-пол, 2-сундук)
+        // Карты
         const maps = [
             [ // Уровень 1
                 [1,1,1,1,1,1,1,1,1,1],
@@ -122,7 +128,7 @@
                 [1,0,0,0,0,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1]
             ],
-            [ // Уровень 2 (Лабиринт)
+            [ // Уровень 2
                 [1,1,1,1,1,1,1,1,1,1],
                 [1,0,1,0,0,0,1,0,0,1],
                 [1,0,1,0,1,0,1,0,1,1],
@@ -134,7 +140,7 @@
                 [1,0,1,1,1,1,1,1,0,1],
                 [1,1,1,1,1,1,1,1,1,1]
             ],
-            [ // Уровень 3 (Арена)
+            [ // Уровень 3
                 [1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,1,1,0,0,0,1],
                 [1,0,2,0,1,1,0,0,0,1],
@@ -150,21 +156,23 @@
 
         // Управление
         const keys = { w: false, a: false, s: false, d: false };
-        let touchLeft = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
-        let touchRight = { active: false, startX: 0 };
         let attackRequested = false;
+        
+        // Мобильный джойстик
+        let joyActive = false;
+        let joyStartX = 0, joyStartY = 0;
+        let joyDX = 0, joyDY = 0;
 
-        // --- ИНИЦИАЛИЗАЦИЯ УРОВНЯ ---
+        // --- ИНИЦИАЛИЗАЦИЯ ---
         function startLevel(lvl) {
             level = lvl;
             player.x = 1.5; player.y = 1.5; player.angle = 0;
-            if (lvl === 1) player.hp = 100; // Хил при старте игры
+            if (lvl === 1) player.hp = 100;
 
-            map = maps[lvl - 1].map(row => [...row]); // Копируем карту
+            map = maps[lvl - 1].map(row => [...row]);
             monsters = [];
             potions = [];
 
-            // Спавн монстров (сложность растет)
             let numMonsters = 2 + lvl * 2; 
             for (let i = 0; i < numMonsters; i++) {
                 let mx, my;
@@ -172,11 +180,9 @@
                     mx = 1.5 + Math.random() * 7;
                     my = 1.5 + Math.random() * 7;
                 } while (map[Math.floor(my)][Math.floor(mx)] !== 0 || (mx < 3 && my < 3));
-                
                 monsters.push({ x: mx, y: my, hp: 20 + (lvl * 10), maxHp: 20 + (lvl * 10), attackCd: 0, alive: true });
             }
 
-            // Спавн зелий (по 1 на уровень)
             let px, py;
             do {
                 px = 1.5 + Math.random() * 7;
@@ -187,13 +193,12 @@
             updateUI();
             gameState = "playing";
             document.getElementById('level-screen').style.display = 'none';
-            requestAnimationFrame(gameLoop);
+            lastTime = performance.now();
         }
 
         function updateUI() {
             document.getElementById('hp-val').innerText = Math.floor(player.hp);
             document.getElementById('gold-val').innerText = player.gold;
-            
             let aliveMonsters = monsters.filter(m => m.alive).length;
             let totalMonsters = monsters.length;
             document.getElementById('quest-text').innerText = `Задача: Убейте монстров (${totalMonsters - aliveMonsters}/${totalMonsters})`;
@@ -205,54 +210,78 @@
             setTimeout(() => msg.style.opacity = 0, 1500);
         }
 
-        // --- ЛОГИКА ---
-        function update() {
+        function handleTransition() {
+            if (document.pointerLockElement) document.exitPointerLock();
+            if (gameState === "levelup") startLevel(level + 1);
+            else if (gameState === "gameover" || gameState === "win" || gameState === "menu") {
+                if (gameState !== "menu") player.gold = 0;
+                startLevel(1);
+            }
+        }
+
+        // --- ЛОГИКА (С привязкой ко времени) ---
+        function update(time) {
             if (gameState !== "playing") return;
+            
+            // Вычисляем время с последнего кадра (в секундах)
+            let dt = (time - lastTime) / 1000;
+            lastTime = time;
+            // Ограничитель, чтобы при лагах не проваливаться сквозь стены
+            if (dt > 0.1) dt = 0.1;
 
             if (player.hp <= 0) {
                 gameState = "gameover";
+                if (document.pointerLockElement) document.exitPointerLock();
                 document.getElementById('level-title').innerText = "ВЫ ПОГИБЛИ";
                 document.getElementById('level-desc').innerText = "Нажмите, чтобы начать заново";
                 document.getElementById('level-screen').style.display = 'flex';
                 return;
             }
 
-            // Движение (клавиатура + тач)
-            const speed = 0.06;
-            const rotSpeed = 0.06;
-            let dx = 0, dy = 0;
+            // Векторы движения
+            let moveVec = { x: 0, y: 0 };
+            let rotAmount = 0;
 
-            if (keys.w) { dx += Math.cos(player.angle) * speed; dy += Math.sin(player.angle) * speed; }
-            if (keys.s) { dx -= Math.cos(player.angle) * speed; dy -= Math.sin(player.angle) * speed; }
-            if (keys.a) player.angle -= rotSpeed;
-            if (keys.d) player.angle += rotSpeed;
+            // Клавиатура
+            if (keys.w) { moveVec.x += Math.cos(player.angle); moveVec.y += Math.sin(player.angle); }
+            if (keys.s) { moveVec.x -= Math.cos(player.angle); moveVec.y -= Math.sin(player.angle); }
+            if (keys.a) rotAmount -= 1;
+            if (keys.d) rotAmount += 1;
 
-            // Тач-управление (левая зона - ходьба, правая - поворот)
-            if (touchLeft.active) {
-                // Мертвая зона
-                if (Math.abs(touchLeft.dx) > 5 || Math.abs(touchLeft.dy) > 5) {
-                    if (touchLeft.dy < -5) { dx += Math.cos(player.angle) * speed; dy += Math.sin(player.angle) * speed; } // Вверх
-                    if (touchLeft.dy > 5) { dx -= Math.cos(player.angle) * speed; dy -= Math.sin(player.angle) * speed; } // Вниз
-                    if (touchLeft.dx < -5) player.angle -= rotSpeed; // Влево
-                    if (touchLeft.dx > 5) player.angle += rotSpeed; // Вправо
+            // Джойстик (Мобилка)
+            if (joyActive) {
+                let len = Math.hypot(joyDX, joyDY);
+                if (len > 10) { // Мертвая зона
+                    // Движение вперед/назад
+                    if (joyDY < -10) { moveVec.x += Math.cos(player.angle); moveVec.y += Math.sin(player.angle); }
+                    if (joyDY > 10) { moveVec.x -= Math.cos(player.angle); moveVec.y -= Math.sin(player.angle); }
+                    // Поворот
+                    if (joyDX < -10) rotAmount -= 1;
+                    if (joyDX > 10) rotAmount += 1;
                 }
             }
 
-            // Проверка стен для игрока
-            let nextX = player.x + dx;
-            let nextY = player.y + dy;
-            
-            if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(nextX)] === 0) {
-                player.x = nextX; player.y = nextY;
-            } else if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) {
-                player.x = nextX; 
-            } else if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) {
-                player.y = nextY; 
+            // Нормализация вектора движения (чтобы по диагонали не бегать быстрее)
+            let moveLen = Math.hypot(moveVec.x, moveVec.y);
+            if (moveLen > 0) {
+                moveVec.x /= moveLen; moveVec.y /= moveLen;
             }
 
-            // Атака (Пробел или Левая кнопка мыши или Тач)
+            // Применяем скорость с учетом времени (dt)
+            let dx = moveVec.x * MOVE_SPEED * dt;
+            let dy = moveVec.y * MOVE_SPEED * dt;
+            player.angle += rotAmount * ROT_SPEED * dt;
+
+            // Коллизии стен (по осям X и Y отдельно для скольжения вдоль стен)
+            let nextX = player.x + dx;
+            let nextY = player.y + dy;
+
+            if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
+            if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
+
+            // Атака
             if ((keys.attack || attackRequested) && player.attackTimer <= 0) {
-                player.attackTimer = 30;
+                player.attackTimer = 0.5; // Кулдаун полсекунды
                 attackRequested = false;
                 let hitSomething = false;
 
@@ -263,14 +292,10 @@
                         while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
                         while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
 
-                        // Если монстр близко и прямо по курсу
                         if (dist < 2.5 && Math.abs(angleToMonster) < 0.6) {
-                            m.hp -= 15;
+                            m.hp -= 20;
                             hitSomething = true;
-                            if (m.hp <= 0) {
-                                m.alive = false;
-                                player.gold += 10;
-                            }
+                            if (m.hp <= 0) { m.alive = false; player.gold += 10; }
                         }
                     }
                 }
@@ -278,75 +303,70 @@
                 updateUI();
             }
 
-            if (player.attackTimer > 0) player.attackTimer--;
+            if (player.attackTimer > 0) player.attackTimer -= dt;
 
-            // Логика монстров
+            // Монстры
             for (let m of monsters) {
                 if (!m.alive) continue;
-                if (m.attackCd > 0) m.attackCd--;
+                if (m.attackCd > 0) m.attackCd -= dt;
 
                 let dist = Math.hypot(player.x - m.x, player.y - m.y);
                 
-                // Агрессия (если игрок близко)
                 if (dist < 5 && dist > 0.8) {
                     let angleToPlayer = Math.atan2(player.y - m.y, player.x - m.x);
-                    let nextMX = m.x + Math.cos(angleToPlayer) * 0.02;
-                    let nextMY = m.y + Math.sin(angleToPlayer) * 0.02;
-                    
+                    let nextMX = m.x + Math.cos(angleToPlayer) * 1.5 * dt;
+                    let nextMY = m.y + Math.sin(angleToPlayer) * 1.5 * dt;
                     if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
                         m.x = nextMX; m.y = nextMY;
                     }
                 }
                 
-                // Атака монстра (урон не смертельный сразу)
                 if (dist < 1.0 && m.attackCd <= 0) {
-                    player.hp -= 8 + (level * 2); // Урон зависит от уровня
-                    m.attackCd = 60; // Кулдаун атаки (1 секунда)
+                    player.hp -= 8 + (level * 2);
+                    m.attackCd = 1.0; // 1 секунда
                     showMsg("МОНСТР АТАКУЕТ!", "#ff3333");
                     updateUI();
                 }
             }
 
-            // Подбор зелий
+            // Зелья
             for (let p of potions) {
-                if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.5) {
+                if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.6) {
                     p.alive = false;
                     player.hp = Math.min(player.maxHp, player.hp + 30);
-                    showMsg("ВЫ ВЫПИЛИ ЗЕЛЬЕ! +30 HP", "#00ff00");
+                    showMsg("ЗЕЛЬЕ! +30 HP", "#00ff00");
                     updateUI();
                 }
             }
 
-            // Проверка победы на уровне
+            // Проверка победы
             if (monsters.every(m => !m.alive)) {
+                if (document.pointerLockElement) document.exitPointerLock();
                 if (level < 3) {
                     gameState = "levelup";
                     document.getElementById('level-title').innerText = `УРОВЕНЬ ${level} ПРОЙДЕН!`;
-                    document.getElementById('level-desc').innerText = "Нажмите, чтобы перейти на следующий уровень";
-                    document.getElementById('level-screen').style.display = 'flex';
+                    document.getElementById('level-desc').innerText = "Нажмите на экран (или Пробел)";
                 } else {
                     gameState = "win";
                     document.getElementById('level-title').innerText = "ПОБЕДА!";
-                    document.getElementById('level-desc').innerText = `Вы прошли игру! Золото: ${player.gold}\nНажмите, чтобы играть снова`;
-                    document.getElementById('level-screen').style.display = 'flex';
+                    document.getElementById('level-desc').innerText = `Вы прошли игру! Золото: ${player.gold}\nНажмите, чтобы начать заново`;
                 }
+                document.getElementById('level-screen').style.display = 'flex';
             }
         }
 
-        // --- РЕНДЕР 3D ---
+        // --- РЕНДЕР ---
         function draw() {
-            if (gameState !== "playing" && gameState !== "menu") return;
+            if (gameState !== "playing") return;
 
             // Небо и пол
             let gradSky = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
             gradSky.addColorStop(0, "#000022"); gradSky.addColorStop(1, "#333355");
             ctx.fillStyle = gradSky; ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-            
             let gradFloor = ctx.createLinearGradient(0, canvas.height / 2, 0, canvas.height);
             gradFloor.addColorStop(0, "#111111"); gradFloor.addColorStop(1, "#333333");
             ctx.fillStyle = gradFloor; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
-            // Лучи
             const rayAngleStep = FOV / canvas.width;
             
             for (let x = 0; x < canvas.width; x++) {
@@ -358,7 +378,6 @@
                     dist += 0.05;
                     let testX = player.x + Math.cos(rayAngle) * dist;
                     let testY = player.y + Math.sin(rayAngle) * dist;
-
                     if (testX < 0 || testX >= map[0].length || testY < 0 || testY >= map.length) {
                         hitWall = true; dist = RENDER_DIST;
                     } else if (map[Math.floor(testY)][Math.floor(testX)] > 0) {
@@ -370,16 +389,14 @@
                 let wallHeight = (canvas.height * 0.8) / dist;
                 let drawStart = (canvas.height - wallHeight) / 2;
                 let brightness = Math.max(0, 150 - (dist * 10));
-                
                 ctx.fillStyle = `rgb(${brightness/2}, ${brightness/2}, ${brightness})`;
                 ctx.fillRect(x, drawStart, 1, wallHeight);
             }
 
-            // Отрисовка спрайтов (сортируем по дистанции)
+            // Спрайты
             let sprites = [];
             monsters.filter(m => m.alive).forEach(m => sprites.push({...m, type: 'monster'}));
             potions.filter(p => p.alive).forEach(p => sprites.push({...p, type: 'potion'}));
-            
             sprites.sort((a, b) => Math.hypot(b.x-player.x, b.y-player.y) - Math.hypot(a.x-player.x, a.y-player.y));
 
             for (let s of sprites) {
@@ -389,7 +406,6 @@
 
                 if (Math.abs(angleToSprite) < FOV / 2 + 0.2) {
                     let dist = Math.hypot(s.x-player.x, s.y-player.y);
-                    // Проверка видимости (не за стеной)
                     let visible = true;
                     let steps = Math.floor(dist / 0.1);
                     for (let i = 1; i < steps; i++) {
@@ -405,20 +421,17 @@
                     let drawStartY = (canvas.height - spriteHeight) / 2;
 
                     if (s.type === 'monster') {
-                        // Тело монстра (темно-красный)
                         ctx.fillStyle = "#880000"; 
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY, spriteWidth, spriteHeight);
-                        // Глаза
                         ctx.fillStyle = "#ffff00";
                         ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
                         ctx.fillRect(screenX + spriteWidth/8, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
-                        // Полоска здоровья над монстром
+                        // HP бар
                         ctx.fillStyle = "red";
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth, 5);
                         ctx.fillStyle = "green";
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth * (s.hp / s.maxHp), 5);
-                    } else if (s.type === 'potion') {
-                        // Зелье (Зеленый крест)
+                    } else {
                         ctx.fillStyle = "#00ff00";
                         ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/3, spriteWidth/2, spriteHeight/6);
                         ctx.fillRect(screenX - spriteWidth/12, drawStartY + spriteHeight/4, spriteWidth/6, spriteHeight/3);
@@ -427,7 +440,7 @@
             }
         }
 
-        // --- СОБЫТИЯ (Мышь, Клавиатура, Тач) ---
+        // --- СОБЫТИЯ ---
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -441,6 +454,10 @@
             if (e.key === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'ф') keys.a = true;
             if (e.key === 'd' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'в') keys.d = true;
             if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
+            
+            if ((e.key === ' ' || e.key === 'Enter') && gameState !== "playing") {
+                handleTransition();
+            }
         });
         window.addEventListener('keyup', e => {
             if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = false;
@@ -450,10 +467,11 @@
             if (e.key === ' ') keys.attack = false;
         });
 
-        // Мышь (Поворот головы и удар)
+        // Мышь (ПК)
         canvas.addEventListener('mousemove', e => {
             if (document.pointerLockElement === canvas) {
-                player.angle += e.movementX * 0.003;
+                // Медленный и плавный поворот мышью
+                player.angle += e.movementX * 0.002;
             }
         });
         canvas.addEventListener('click', () => {
@@ -463,56 +481,65 @@
             }
         });
 
-        // Мобильное управление (Виртуальные джойстики)
-        const zoneLeft = document.getElementById('zone-left');
-        const zoneRight = document.getElementById('zone-right');
+        // Тач-управление
+        const zoneLeft = document.getElementById('joystick-zone');
+        const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
 
-        zoneLeft.addEventListener('touchstart', e => {
-            touchLeft.active = true; touchLeft.startX = e.touches[0].clientX; touchLeft.startY = e.touches[0].clientY;
-        });
-        zoneLeft.addEventListener('touchmove', e => {
-            if (!touchLeft.active) return;
-            touchLeft.dx = e.touches[0].clientX - touchLeft.startX;
-            touchLeft.dy = e.touches[0].clientY - touchLeft.startY;
-        });
-        zoneLeft.addEventListener('touchend', () => { touchLeft.active = false; touchLeft.dx = 0; touchLeft.dy = 0; });
+        // Джойстик (Логика)
+        function handleJoyStart(e) {
+            e.preventDefault();
+            joyActive = true;
+            joyStartX = e.touches[0].clientX;
+            joyStartY = e.touches[0].clientY;
+        }
+        function handleJoyMove(e) {
+            e.preventDefault();
+            if (!joyActive) return;
+            joyDX = e.touches[0].clientX - joyStartX;
+            joyDY = e.touches[0].clientY - joyStartY;
+            
+            // Ограничиваем ход стика радиусом базы (60px)
+            let dist = Math.hypot(joyDX, joyDY);
+            if (dist > 60) {
+                joyDX = (joyDX / dist) * 60;
+                joyDY = (joyDY / dist) * 60;
+            }
+            // Двигаем кружок внутри базы
+            knob.style.transform = `translate(${joyDX}px, ${joyDY}px)`;
+        }
+        function handleJoyEnd(e) {
+            e.preventDefault();
+            joyActive = false;
+            joyDX = 0; joyDY = 0;
+            knob.style.transform = `translate(0px, 0px)`;
+        }
 
-        zoneRight.addEventListener('touchstart', e => {
-            touchRight.active = true; touchRight.startX = e.touches[0].clientX;
-        });
-        zoneRight.addEventListener('touchmove', e => {
-            if (!touchRight.active) return;
-            let dx = e.touches[0].clientX - touchRight.startX;
-            player.angle += dx * 0.005; // Поворот
-            touchRight.startX = e.touches[0].clientX; // Сброс базы для плавности
-        });
-        zoneRight.addEventListener('touchend', () => { touchRight.active = false; });
+        zoneLeft.addEventListener('touchstart', handleJoyStart, {passive: false});
+        zoneLeft.addEventListener('touchmove', handleJoyMove, {passive: false});
+        zoneLeft.addEventListener('touchend', handleJoyEnd);
 
+        // Кнопка Атаки
         btnAttack.addEventListener('touchstart', e => {
             e.preventDefault();
             attackRequested = true;
         });
 
-        // Кнопка "Начать уровень"
-        document.getElementById('level-screen').addEventListener('click', () => {
-            if (gameState === "levelup") startLevel(level + 1);
-            else if (gameState === "gameover" || gameState === "win") { player.gold = 0; startLevel(1); }
-            else if (gameState === "menu") startLevel(1);
-        });
+        // Экран перехода
+        document.getElementById('level-screen').addEventListener('click', handleTransition);
 
-        // Запуск цикла
-        function gameLoop() {
-            update();
+        // Главный цикл
+        function gameLoop(time) {
+            update(time);
             draw();
             requestAnimationFrame(gameLoop);
         }
         
-        // Инициализация (стартовый экран)
+        // Инициализация
         document.getElementById('level-title').innerText = "3D RPG: Подземелье";
         document.getElementById('level-desc').innerText = "Кликните по экрану, чтобы играть\n(WASD + Мышь / Тач)";
         document.getElementById('level-screen').style.display = 'flex';
-        gameLoop();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
