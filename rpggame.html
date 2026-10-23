@@ -19,6 +19,7 @@
         .hp { color: #ff3333; margin-bottom: 5px; }
         .gold { color: #ffcc00; margin-bottom: 5px; }
         .quest { color: #00ffcc; font-size: 16px; margin-top: 10px; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 5px; border: 1px solid #00ffcc; }
+        .weapon { color: #ffa500; font-size: 16px; margin-top: 5px; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 5px; border: 1px solid #ffa500; }
 
         #crosshair {
             position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white;
@@ -61,6 +62,16 @@
             pointer-events: auto; box-shadow: 0 0 15px red; z-index: 10;
         }
 
+        /* Визуализация меча в руках */
+        #weapon-view {
+            position: absolute; bottom: 0; right: 20%; width: 100px; height: 150px;
+            background: linear-gradient(to top, #888, #ccc);
+            border: 2px solid #fff; border-radius: 5px;
+            clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
+            display: none; pointer-events: none; transform: rotate(15deg);
+            box-shadow: 0 0 10px #fff;
+        }
+
         @media (pointer: coarse) {
             #joystick-zone { display: block; }
             #btn-attack { display: flex; }
@@ -73,11 +84,14 @@
         <div class="hp">❤️ HP: <span id="hp-val">100</span></div>
         <div class="gold">🪙 Золото: <span id="gold-val">0</span></div>
         <div class="quest" id="quest-text">Задача: Убейте монстров (0/0)</div>
+        <div class="weapon" id="weapon-text">🗡️ Оружие: Кулаки (Урон: 25)</div>
     </div>
     
     <div id="crosshair"></div>
     <div id="message"></div>
     <canvas id="gameCanvas"></canvas>
+    
+    <div id="weapon-view"></div>
 
     <div id="level-screen" style="display: none;">
         <h1 id="level-title">ЛЕС</h1>
@@ -92,6 +106,7 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const weaponView = document.getElementById('weapon-view');
 
         const FOV = Math.PI / 3; 
         const RENDER_DIST = 22; 
@@ -99,22 +114,138 @@
         const ROT_SPEED = 2.5;  
 
         let level = 1;
-        let player = { x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, gold: 0, attackTimer: 0, healTimer: 0 };
+        let player = { 
+            x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, 
+            gold: 0, attackTimer: 0, healTimer: 0, 
+            damage: 25, // Базовый урон
+            weaponName: "Кулаки"
+        };
         let map = [];
         let monsters = [];
         let potions = [];
+        let weapons = []; // Массив для мечей на земле
         let gameState = "menu";
         let lastTime = performance.now();
 
         const levelNames = ["ЗЕЛЕНЫЙ ЛЕС", "КАМЕННЫЕ РУИНЫ", "ЗАБРОШЕННЫЙ ЗАМОК", "ЛЕДЯНАЯ ПЕЩЕРА", "ОГНЕННАЯ АРЕНА"];
 
-        // ... (карты остались без изменений, они большие)
+        // НОВЫЕ ОТКРЫТЫЕ КАРТЫ (20x20)
         const maps = [
-            [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1], [1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1], [1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1], [1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,1], [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1], [1,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1], [1,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1], [1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1], [1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1], [1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
-            [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,1,1,0,0,1,0,1,1,1,1,0,1,0,0,1,0,0,1], [1,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,1], [1,0,0,0,1,1,0,0,1,0,0,1,0,0,0,1,0,1,0,1], [1,1,1,0,1,0,0,0,0,0,0,0,1,1,0,0,0,1,0,1], [1,0,0,0,1,0,1,1,1,1,0,0,0,1,0,1,1,1,0,1], [1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1], [1,0,1,1,1,0,1,0,1,1,0,1,1,1,1,1,1,0,0,1], [1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,1], [1,0,1,0,0,0,1,0,0,0,1,1,1,1,0,0,0,0,0,1], [1,0,1,1,1,0,1,1,1,0,0,0,0,1,0,1,1,1,0,1], [1,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,0,0,0,1], [1,1,1,1,1,0,1,0,0,0,0,1,1,1,0,1,0,1,0,1], [1,0,0,0,0,0,1,1,1,1,0,0,0,1,0,0,0,1,0,1], [1,0,1,1,1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,1], [1,0,0,0,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,1], [1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,1], [1,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
-            [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1], [1,0,1,1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,1], [1,0,1,0,0,0,0,1,1,0,0,0,0,1,1,0,1,1,0,1], [1,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,1], [1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1], [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1], [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,0,1], [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,1], [1,0,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0,1], [1,0,0,0,1,0,0,0,0,0,0,1,0,1,1,1,0,1,0,1], [1,1,1,1,1,0,1,1,1,1,0,1,0,0,0,1,0,0,0,1], [1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,1,1,1,0,1], [1,0,1,1,1,0,1,0,0,0,0,1,1,1,0,0,0,0,0,1], [1,0,1,0,1,0,0,0,1,1,0,0,0,0,0,1,1,1,0,1], [1,0,0,0,1,1,1,0,1,1,1,1,1,1,0,1,0,0,0,1], [1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,1,1], [1,0,0,0,1,1,1,1,1,1,1,1,1,0,1,1,0,0,0,1], [1,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
-            [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1], [1,0,1,0,0,0,1,1,0,0,0,0,1,1,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1], [1,0,0,0,1,0,0,1,1,0,0,1,1,0,0,1,0,0,0,1], [1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1], [1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1], [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1], [1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,1], [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
-            [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1], [1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ]
+            // Уровень 1: Лес (Очень открытый)
+            [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1],
+                [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1],
+                [1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1],
+                [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ],
+            // Уровень 2: Руины (Открытый, но с колоннами)
+            [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ],
+            // Уровень 3: Замок (Больше стен, но прямые коридоры)
+            [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,1],
+                [1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,1,1,1,0,0,1,1,1,1,0,0,1,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ],
+            // Уровень 4: Пещера (Лабиринт, но большие залы)
+            [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1],
+                [1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1],
+                [1,0,1,0,0,0,1,1,0,0,0,0,1,1,0,0,0,1,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+                [1,0,0,0,1,0,0,1,1,0,0,1,1,0,0,1,0,0,0,1],
+                [1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1],
+                [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+                [1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ],
+            // Уровень 5: Арена (Полностью открытая)
+            [
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ]
         ];
 
         const keys = { w: false, a: false, s: false, d: false };
@@ -123,20 +254,21 @@
 
         function startLevel(lvl) {
             level = lvl;
-            // Игрок появляется в безопасном левом верхнем углу
-            player.x = 1.5; 
-            player.y = 1.5; 
-            player.angle = 0;
-            
+            player.x = 1.5; player.y = 1.5; player.angle = 0;
             player.healTimer = 0;
-            if (lvl === 1) { player.hp = 100; }
+            if (lvl === 1) { 
+                player.hp = 100; 
+                player.damage = 25;
+                player.weaponName = "Кулаки";
+            }
 
             map = maps[lvl - 1].map(row => [...row]);
             monsters = [];
             potions = [];
+            weapons = [];
 
-            // Спавн ВСЕХ монстров сразу при старте
-            let numMonsters = 5 + (lvl * 3); 
+            // Больше монстров!
+            let numMonsters = 10 + (lvl * 2); 
             let spawned = 0;
             let attempts = 0;
             
@@ -144,33 +276,45 @@
                 attempts++;
                 let mx = Math.floor(Math.random() * 18) + 1;
                 let my = Math.floor(Math.random() * 18) + 1;
-                
-                // Проверка: пустая ли клетка И достаточно далеко от игрока
                 let distToPlayer = Math.hypot(mx - player.x, my - player.y);
                 
-                if (map[my][mx] === 0 && distToPlayer > 5) {
+                if (map[my][mx] === 0 && distToPlayer > 6) {
                     let colors = ["#880000", "#444444", "#4a0080", "#008080", "#ff4400"];
                     monsters.push({ 
                         x: mx + 0.5, y: my + 0.5, 
-                        hp: 15 + (lvl * 10), maxHp: 15 + (lvl * 10), 
+                        homeX: mx + 0.5, homeY: my + 0.5, // Дом (для возврата)
+                        hp: 20 + (lvl * 15), maxHp: 20 + (lvl * 15), 
                         attackCd: 0, alive: true,
-                        color: colors[lvl-1]
+                        color: colors[lvl-1],
+                        aggro: false // Агрессия
                     });
                     spawned++;
                 }
             }
 
-            // Спавн зелий
+            // Спавн зелий (много)
             let potionsSpawned = 0;
-            let potionAttempts = 0;
-            while (potionsSpawned < lvl && potionAttempts < 1000) {
-                potionAttempts++;
+            while (potionsSpawned < lvl + 2) {
                 let px = Math.floor(Math.random() * 18) + 1;
                 let py = Math.floor(Math.random() * 18) + 1;
                 if (map[py][px] === 0 && Math.hypot(px - player.x, py - player.y) > 2) {
                     potions.push({ x: px + 0.5, y: py + 0.5, alive: true });
                     potionsSpawned++;
                 }
+            }
+
+            // Спавн оружия (1 на уровень + 1 на 5-м)
+            let weaponsToSpawn = (lvl === 5) ? 3 : 1;
+            for (let i = 0; i < weaponsToSpawn; i++) {
+                let px, py;
+                do {
+                    px = Math.floor(Math.random() * 18) + 1;
+                    py = Math.floor(Math.random() * 18) + 1;
+                } while (map[py][px] !== 0 || Math.hypot(px - player.x, py - player.y) < 3);
+                
+                // Мечи с разным уроном
+                let dmg = 35 + (lvl * 5); 
+                weapons.push({ x: px + 0.5, y: py + 0.5, alive: true, damage: dmg });
             }
 
             updateUI();
@@ -182,9 +326,22 @@
         function updateUI() {
             document.getElementById('hp-val').innerText = Math.floor(player.hp);
             document.getElementById('gold-val').innerText = player.gold;
+            document.getElementById('weapon-text').innerText = `🗡️ Оружие: ${player.weaponName} (Урон: ${player.damage})`;
+            
             let aliveMonsters = monsters.filter(m => m.alive).length;
             let totalMonsters = monsters.length;
             document.getElementById('quest-text').innerText = `${levelNames[level-1]}: Убейте монстров (${totalMonsters - aliveMonsters}/${totalMonsters})`;
+
+            // Меняем визуал меча в руках, если он есть
+            if (player.weaponName === "Кулаки") {
+                weaponView.style.display = 'none';
+            } else {
+                weaponView.style.display = 'block';
+                // Цвет меча зависит от уровня
+                let colors = ["#aaa", "#cd7f32", "#c0c0c0", "#00ffff", "#ff4500"];
+                weaponView.style.background = `linear-gradient(to top, ${colors[level-1]}, #fff)`;
+                weaponView.style.boxShadow = `0 0 15px ${colors[level-1]}`;
+            }
         }
 
         function showMsg(text, color = "yellow") {
@@ -197,7 +354,7 @@
             if (document.pointerLockElement) document.exitPointerLock();
             if (gameState === "levelup") startLevel(level + 1);
             else if (gameState === "gameover" || gameState === "win" || gameState === "menu") {
-                if (gameState !== "menu") player.gold = 0;
+                if (gameState !== "menu") { player.gold = 0; player.damage = 25; player.weaponName = "Кулаки"; }
                 startLevel(1);
             }
         }
@@ -218,6 +375,7 @@
                 return;
             }
 
+            // Регенерация
             player.healTimer += dt;
             if (player.healTimer >= 4.0) {
                 player.healTimer = 0;
@@ -258,6 +416,7 @@
             if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
             if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
 
+            // Атака
             if ((keys.attack || attackRequested) && player.attackTimer <= 0) {
                 player.attackTimer = 0.4; 
                 attackRequested = false;
@@ -281,7 +440,7 @@
                 }
 
                 if (closestMonster) {
-                    closestMonster.hp -= 25; 
+                    closestMonster.hp -= player.damage; // Используем урон оружия
                     showMsg("УДАР!", "#ff4444");
                     
                     let pushAngle = Math.atan2(closestMonster.y - player.y, closestMonster.x - player.x);
@@ -302,22 +461,43 @@
 
             if (player.attackTimer > 0) player.attackTimer -= dt;
 
+            // ИИ Монстров (Мирные, пока не подойдешь)
             for (let m of monsters) {
                 if (!m.alive) continue;
                 if (m.attackCd > 0) m.attackCd -= dt;
 
-                let dist = Math.hypot(player.x - m.x, player.y - m.y);
+                let distToPlayer = Math.hypot(player.x - m.x, player.y - m.y);
                 
-                if (dist < 8 && dist > 1.0) {
+                // Агрессия (если игрок ближе 4 метров)
+                if (distToPlayer < 4.0) {
+                    m.aggro = true;
+                } else if (distToPlayer > 7.0) {
+                    m.aggro = false; // Успокоился
+                }
+
+                if (m.aggro && distToPlayer > 1.0) {
+                    // Идет к игроку
                     let angleToPlayer = Math.atan2(player.y - m.y, player.x - m.x);
-                    let nextMX = m.x + Math.cos(angleToPlayer) * 2.0 * dt;
-                    let nextMY = m.y + Math.sin(angleToPlayer) * 2.0 * dt;
+                    let nextMX = m.x + Math.cos(angleToPlayer) * 2.5 * dt;
+                    let nextMY = m.y + Math.sin(angleToPlayer) * 2.5 * dt;
                     if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
                         m.x = nextMX; m.y = nextMY;
                     }
+                } else if (!m.aggro) {
+                    // Возвращается домой
+                    let distToHome = Math.hypot(m.homeX - m.x, m.homeY - m.y);
+                    if (distToHome > 0.5) {
+                        let angleToHome = Math.atan2(m.homeY - m.y, m.homeX - m.x);
+                        let nextMX = m.x + Math.cos(angleToHome) * 1.5 * dt;
+                        let nextMY = m.y + Math.sin(angleToHome) * 1.5 * dt;
+                        if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
+                            m.x = nextMX; m.y = nextMY;
+                        }
+                    }
                 }
                 
-                if (dist < 1.2 && m.attackCd <= 0) {
+                // Атака
+                if (distToPlayer < 1.2 && m.attackCd <= 0 && m.aggro) {
                     let angleToMonster = Math.atan2(m.y - player.y, m.x - player.x) - player.angle;
                     while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
                     while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
@@ -333,11 +513,23 @@
                 }
             }
 
+            // Зелья
             for (let p of potions) {
                 if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.6) {
                     p.alive = false;
                     player.hp = Math.min(player.maxHp, player.hp + 40); 
                     showMsg("ЗЕЛЬЕ! +40 HP", "#00ff00");
+                    updateUI();
+                }
+            }
+
+            // Оружие
+            for (let w of weapons) {
+                if (w.alive && Math.hypot(player.x - w.x, player.y - w.y) < 0.6) {
+                    w.alive = false;
+                    player.damage = w.damage;
+                    player.weaponName = `Меч (+${w.damage})`;
+                    showMsg(`ВЫ НАШЛИ МЕЧ! Урон: ${w.damage}`, "#ffa500");
                     updateUI();
                 }
             }
@@ -410,6 +602,7 @@
             let sprites = [];
             monsters.filter(m => m.alive).forEach(m => sprites.push({...m, type: 'monster'}));
             potions.filter(p => p.alive).forEach(p => sprites.push({...p, type: 'potion'}));
+            weapons.filter(w => w.alive).forEach(w => sprites.push({...w, type: 'weapon'}));
             sprites.sort((a, b) => Math.hypot(b.x-player.x, b.y-player.y) - Math.hypot(a.x-player.x, a.y-player.y));
 
             for (let s of sprites) {
@@ -434,7 +627,8 @@
                     let drawStartY = (canvas.height - spriteHeight) / 2;
 
                     if (s.type === 'monster') {
-                        ctx.fillStyle = s.color; 
+                        // Монстр мигает, если он в агре
+                        ctx.fillStyle = s.aggro ? "#ff0000" : s.color; 
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY, spriteWidth, spriteHeight);
                         
                         ctx.fillStyle = "#ffff00";
@@ -445,10 +639,23 @@
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth, 5);
                         ctx.fillStyle = "green";
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth * (s.hp / s.maxHp), 5);
-                    } else {
+                    } else if (s.type === 'potion') {
                         ctx.fillStyle = "#00ff00";
                         ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/3, spriteWidth/2, spriteHeight/6);
                         ctx.fillRect(screenX - spriteWidth/12, drawStartY + spriteHeight/4, spriteWidth/6, spriteHeight/3);
+                    } else if (s.type === 'weapon') {
+                        // Меч на земле (желтый ромб)
+                        ctx.fillStyle = "#ffa500";
+                        ctx.beginPath();
+                        ctx.moveTo(screenX, drawStartY + spriteHeight/4);
+                        ctx.lineTo(screenX + spriteWidth/4, drawStartY + spriteHeight/2);
+                        ctx.lineTo(screenX, drawStartY + spriteHeight * 0.75);
+                        ctx.lineTo(screenX - spriteWidth/4, drawStartY + spriteHeight/2);
+                        ctx.closePath();
+                        ctx.fill();
+                        // Блик
+                        ctx.fillStyle = "#fff";
+                        ctx.fillRect(screenX - 2, drawStartY + spriteHeight/2 - 2, 4, 4);
                     }
                 }
             }
