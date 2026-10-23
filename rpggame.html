@@ -94,7 +94,7 @@
         const ctx = canvas.getContext('2d');
 
         const FOV = Math.PI / 3; 
-        const RENDER_DIST = 22; // Увеличили дальность обзора для больших карт
+        const RENDER_DIST = 22; 
         const MOVE_SPEED = 3.5; 
         const ROT_SPEED = 2.5;  
 
@@ -106,13 +106,10 @@
         let gameState = "menu";
         let lastTime = performance.now();
 
-        // Названия уровней
         const levelNames = ["ЗЕЛЕНЫЙ ЛЕС", "КАМЕННЫЕ РУИНЫ", "ЗАБРОШЕННЫЙ ЗАМОК", "ЛЕДЯНАЯ ПЕЩЕРА", "ОГНЕННАЯ АРЕНА"];
 
-        // ОГРОМНЫЕ КАРТЫ (20x20)
-        // 1 - стена, 0 - пол
         const maps = [
-            // Уровень 1: Лес (Много открытого пространства и "деревьев")
+            // Уровень 1: Лес
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -135,7 +132,7 @@
                 [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ],
-            // Уровень 2: Руины (Стены потолще, коридоры)
+            // Уровень 2: Руины
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,1],
@@ -158,7 +155,7 @@
                 [1,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ],
-            // Уровень 3: Замок (Большие залы)
+            // Уровень 3: Замок
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1],
@@ -181,7 +178,7 @@
                 [1,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ],
-            // Уровень 4: Пещера (Много открытого пространства)
+            // Уровень 4: Пещера
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -204,7 +201,7 @@
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ],
-            // Уровень 5: Арена (Совсем открыто, мало стен)
+            // Уровень 5: Арена
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -243,7 +240,6 @@
             monsters = [];
             potions = [];
 
-            // Спавн монстров (сложность растет)
             let numMonsters = 5 + (lvl * 3); 
             for (let i = 0; i < numMonsters; i++) {
                 let mx, my;
@@ -252,7 +248,6 @@
                     my = 2 + Math.random() * 16;
                 } while (map[Math.floor(my)][Math.floor(mx)] !== 0 || (mx < 5 && my < 5));
                 
-                // Цвета монстров зависят от уровня
                 let colors = ["#880000", "#444444", "#4a0080", "#008080", "#ff4400"];
                 monsters.push({ 
                     x: mx, y: my, 
@@ -262,7 +257,6 @@
                 });
             }
 
-            // Спавн зелий (больше на больших картах)
             for (let i = 0; i < lvl; i++) {
                 let px, py;
                 do {
@@ -317,7 +311,6 @@
                 return;
             }
 
-            // РЕГЕНЕРАЦИЯ (5 HP каждые 4 сек)
             player.healTimer += dt;
             if (player.healTimer >= 4.0) {
                 player.healTimer = 0;
@@ -358,14 +351,12 @@
             if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
             if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
 
-            // АТАКА (ЧЕСТНАЯ)
             if ((keys.attack || attackRequested) && player.attackTimer <= 0) {
                 player.attackTimer = 0.4; 
                 attackRequested = false;
                 let closestMonster = null;
                 let closestAngleDiff = 999;
 
-                // Ищем монстра, который находится ПРЯМО ПО ЦЕНТРУ прицела
                 for (let m of monsters) {
                     if (m.alive) {
                         let dist = Math.hypot(player.x - m.x, player.y - m.y);
@@ -373,7 +364,6 @@
                         while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
                         while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
 
-                        // Если монстр в зоне удара, запоминаем того, кто ближе к центру
                         if (dist < 3.0 && Math.abs(angleToMonster) < 0.6) {
                             if (Math.abs(angleToMonster) < closestAngleDiff) {
                                 closestAngleDiff = Math.abs(angleToMonster);
@@ -383,12 +373,10 @@
                     }
                 }
 
-                // Бьем ТОЛЬКО одного (самого центрального)
                 if (closestMonster) {
-                    closestMonster.hp -= 25; // Чуть увеличили урон
+                    closestMonster.hp -= 25; 
                     showMsg("УДАР!", "#ff4444");
                     
-                    // Отталкивание
                     let pushAngle = Math.atan2(closestMonster.y - player.y, closestMonster.x - player.x);
                     let nextMX = closestMonster.x + Math.cos(pushAngle) * 0.8;
                     let nextMY = closestMonster.y + Math.sin(pushAngle) * 0.8;
@@ -407,7 +395,6 @@
 
             if (player.attackTimer > 0) player.attackTimer -= dt;
 
-            // МОНСТРЫ
             for (let m of monsters) {
                 if (!m.alive) continue;
                 if (m.attackCd > 0) m.attackCd -= dt;
@@ -423,7 +410,6 @@
                     }
                 }
                 
-                // Бьет только если ты смотришь на него
                 if (dist < 1.2 && m.attackCd <= 0) {
                     let angleToMonster = Math.atan2(m.y - player.y, m.x - player.x) - player.angle;
                     while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
@@ -440,7 +426,6 @@
                 }
             }
 
-            // ЗЕЛЬЯ
             for (let p of potions) {
                 if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.6) {
                     p.alive = false;
@@ -450,7 +435,6 @@
                 }
             }
 
-            // ПОБЕДА НА УРОВНЕ
             if (monsters.every(m => !m.alive)) {
                 if (document.pointerLockElement) document.exitPointerLock();
                 if (level < 5) {
@@ -469,9 +453,31 @@
         function draw() {
             if (gameState !== "playing") return;
 
-            // Небо/пол зависят от уровня
-            let skyColors = [["#87CEEB", "#1E90FF"], ["#2F4F4F", "#1C1C1C"], ["#4B0082", "#000000"], ["#E0FFFF", "#B0E0E6"], ["#FF4500", "#8B0000"]];
-            let floorColors = [["#228B22", "#006400"], ["#808080", "#2F4F4F"], ["#696969", "#000000"], ["#ADD8E6", "#4682B4"], ["#8B0000", "#000000"]];
+            // ИСПРАВЛЕННЫЕ ЦВЕТА (Контрастные)
+            // Массив 1: Небо [Верх, Низ]
+            let skyColors = [
+                ["#87CEEB", "#4682B4"], // Лес (Голубое небо)
+                ["#8B4513", "#2F4F4F"], // Руины (Коричневато-серое небо)
+                ["#191970", "#000000"], // Замок (Темно-синяя ночь)
+                ["#E0FFFF", "#87CEFA"], // Пещера (Ледяной свет)
+                ["#FF0000", "#8B0000"]  // Арена (Красное небо)
+            ];
+            // Массив 2: Пол [Верх, Низ]
+            let floorColors = [
+                ["#006400", "#003300"], // Лес (Темно-зеленая трава)
+                ["#A0522D", "#3E2723"], // Руины (Коричневая земля)
+                ["#2F4F4F", "#111111"], // Замок (Каменный пол)
+                ["#B0E0E6", "#4682B4"], // Пещера (Голубой лед)
+                ["#FF4500", "#1A0000"]  // Арена (Раскаленная лава)
+            ];
+            // Массив 3: Стены [R, G, B]
+            let wallColors = [
+                [34, 139, 34],   // Лес (Зеленые стены)
+                [160, 82, 45],   // Руины (Коричневый камень - ЯРКО)
+                [105, 105, 105], // Замок (Серый камень)
+                [0, 191, 255],   // Пещера (Голубой лед - ЯРКО)
+                [255, 69, 0]     // Арена (Огненные стены)
+            ];
 
             let gradSky = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
             gradSky.addColorStop(0, skyColors[level-1][0]); gradSky.addColorStop(1, skyColors[level-1][1]);
@@ -482,15 +488,6 @@
             ctx.fillStyle = gradFloor; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
             const rayAngleStep = FOV / canvas.width;
-            
-            // Цвета стен по уровням
-            let wallColors = [
-                [34, 139, 34],  // Лес (зеленый)
-                [105, 105, 105],// Руины (серый)
-                [75, 0, 130],   // Замок (фиолетовый)
-                [173, 216, 230],// Пещера (голубой)
-                [255, 69, 0]    // Арена (огненный)
-            ];
 
             for (let x = 0; x < canvas.width; x++) {
                 let rayAngle = player.angle - (FOV / 2) + (x * rayAngleStep);
@@ -512,8 +509,8 @@
                 let wallHeight = (canvas.height * 0.8) / dist;
                 let drawStart = (canvas.height - wallHeight) / 2;
                 
-                // Затемнение в зависимости от дистанции (туман)
-                let shade = Math.max(0.1, 1 - (dist / RENDER_DIST));
+                // ТУМАН (Затемнение к краям)
+                let shade = Math.max(0.2, 1 - (dist / RENDER_DIST)); // Минимум 20% яркости, чтобы стены не были черными
                 let baseCol = wallColors[level-1];
                 
                 ctx.fillStyle = `rgb(${baseCol[0]*shade}, ${baseCol[1]*shade}, ${baseCol[2]*shade})`;
@@ -550,12 +547,10 @@
                         ctx.fillStyle = s.color; 
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY, spriteWidth, spriteHeight);
                         
-                        // Глаза (светятся в темноте)
                         ctx.fillStyle = "#ffff00";
                         ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
                         ctx.fillRect(screenX + spriteWidth/8, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
                         
-                        // HP бар
                         ctx.fillStyle = "red";
                         ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth, 5);
                         ctx.fillStyle = "green";
