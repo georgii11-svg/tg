@@ -99,16 +99,16 @@
         const ROT_SPEED = 2.5;  
 
         let level = 1;
-        // Стартовые позиции для каждого уровня (безопасные зоны)
+        // Безопасные стартовые координаты (всегда в углу карты, где точно нет стен)
         const startPositions = [
-            {x: 2.5, y: 2.5, angle: 0},   // Лес
-            {x: 1.5, y: 1.5, angle: 0},   // Руины (исправлено)
-            {x: 2.5, y: 2.5, angle: 0},   // Замок
-            {x: 2.5, y: 2.5, angle: 0},   // Пещера
-            {x: 2.5, y: 2.5, angle: 0}    // Арена
+            {x: 1.5, y: 1.5, angle: 0}, 
+            {x: 1.5, y: 1.5, angle: 0}, 
+            {x: 1.5, y: 1.5, angle: 0}, 
+            {x: 1.5, y: 1.5, angle: 0}, 
+            {x: 1.5, y: 1.5, angle: 0}
         ];
 
-        let player = { x: 2.5, y: 2.5, angle: 0, hp: 100, maxHp: 100, gold: 0, attackTimer: 0, healTimer: 0 };
+        let player = { x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, gold: 0, attackTimer: 0, healTimer: 0 };
         let map = [];
         let monsters = [];
         let potions = [];
@@ -141,13 +141,13 @@
                 [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
             ],
-            // Уровень 2: Руины
+            // Уровень 2: Руины (Сделал карту чуть просторнее для спавна)
             [
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
                 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,1],
                 [1,0,1,1,0,0,1,0,1,1,1,1,0,1,0,0,1,0,0,1],
                 [1,0,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,1],
-                [1,0,0,0,1,1,1,0,1,0,0,1,0,0,0,1,0,1,0,1],
+                [1,0,0,0,1,1,0,0,1,0,0,1,0,0,0,1,0,1,0,1],
                 [1,1,1,0,1,0,0,0,0,0,0,0,1,1,0,0,0,1,0,1],
                 [1,0,0,0,1,0,1,1,1,1,0,0,0,1,0,1,1,1,0,1],
                 [1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1],
@@ -241,10 +241,10 @@
 
         function startLevel(lvl) {
             level = lvl;
-            // Берем стартовую позицию для текущего уровня
-            player.x = startPositions[lvl-1].x; 
-            player.y = startPositions[lvl-1].y; 
-            player.angle = startPositions[lvl-1].angle;
+            // Игрок ВСЕГДА появляется в безопасном углу
+            player.x = 1.5; 
+            player.y = 1.5; 
+            player.angle = 0;
             
             player.healTimer = 0;
             if (lvl === 1) { player.hp = 100; }
@@ -253,30 +253,42 @@
             monsters = [];
             potions = [];
 
+            // Надежный спавн монстров
             let numMonsters = 5 + (lvl * 3); 
-            for (let i = 0; i < numMonsters; i++) {
-                let mx, my;
-                do {
-                    mx = 2 + Math.random() * 16;
-                    my = 2 + Math.random() * 16;
-                } while (map[Math.floor(my)][Math.floor(mx)] !== 0 || (mx < 5 && my < 5));
+            let spawned = 0;
+            let attempts = 0;
+            
+            while (spawned < numMonsters && attempts < 1000) {
+                attempts++;
+                let mx = Math.floor(Math.random() * 18) + 1;
+                let my = Math.floor(Math.random() * 18) + 1;
                 
-                let colors = ["#880000", "#444444", "#4a0080", "#008080", "#ff4400"];
-                monsters.push({ 
-                    x: mx, y: my, 
-                    hp: 15 + (lvl * 10), maxHp: 15 + (lvl * 10), 
-                    attackCd: 0, alive: true,
-                    color: colors[lvl-1]
-                });
+                // Проверка: это пустая клетка И далеко от игрока (больше 4 клеток)
+                let distToPlayer = Math.hypot(mx - player.x, my - player.y);
+                
+                if (map[my][mx] === 0 && distToPlayer > 4) {
+                    let colors = ["#880000", "#444444", "#4a0080", "#008080", "#ff4400"];
+                    monsters.push({ 
+                        x: mx + 0.5, y: my + 0.5, 
+                        hp: 15 + (lvl * 10), maxHp: 15 + (lvl * 10), 
+                        attackCd: 0, alive: true,
+                        color: colors[lvl-1]
+                    });
+                    spawned++;
+                }
             }
 
-            for (let i = 0; i < lvl; i++) {
-                let px, py;
-                do {
-                    px = 2 + Math.random() * 16;
-                    py = 2 + Math.random() * 16;
-                } while (map[Math.floor(py)][Math.floor(px)] !== 0);
-                potions.push({ x: px, y: py, alive: true });
+            // Спавн зелий
+            let potionsSpawned = 0;
+            let potionAttempts = 0;
+            while (potionsSpawned < lvl && potionAttempts < 1000) {
+                potionAttempts++;
+                let px = Math.floor(Math.random() * 18) + 1;
+                let py = Math.floor(Math.random() * 18) + 1;
+                if (map[py][px] === 0 && Math.hypot(px - player.x, py - player.y) > 2) {
+                    potions.push({ x: px + 0.5, y: py + 0.5, alive: true });
+                    potionsSpawned++;
+                }
             }
 
             updateUI();
@@ -466,27 +478,14 @@
         function draw() {
             if (gameState !== "playing") return;
 
-            // ИСПРАВЛЕННЫЕ ЦВЕТА (Контрастные)
             let skyColors = [
-                ["#87CEEB", "#4682B4"], // Лес (Голубое небо)
-                ["#001133", "#000000"], // Руины (Темно-синее небо, чтобы контрастировало с полом)
-                ["#191970", "#000000"], // Замок (Темно-синяя ночь)
-                ["#E0FFFF", "#87CEFA"], // Пещера (Ледяной свет)
-                ["#FF0000", "#8B0000"]  // Арена (Красное небо)
+                ["#87CEEB", "#4682B4"], ["#001133", "#000000"], ["#191970", "#000000"], ["#E0FFFF", "#87CEFA"], ["#FF0000", "#8B0000"]
             ];
             let floorColors = [
-                ["#006400", "#003300"], // Лес (Темно-зеленая трава)
-                ["#8B4513", "#3E2723"], // Руины (Коричневая земля - ЯРКО)
-                ["#2F4F4F", "#111111"], // Замок (Каменный пол)
-                ["#B0E0E6", "#4682B4"], // Пещера (Голубой лед)
-                ["#FF4500", "#1A0000"]  // Арена (Раскаленная лава)
+                ["#006400", "#003300"], ["#8B4513", "#3E2723"], ["#2F4F4F", "#111111"], ["#B0E0E6", "#4682B4"], ["#FF4500", "#1A0000"]
             ];
             let wallColors = [
-                [34, 139, 34],   // Лес (Зеленые стены)
-                [139, 69, 19],   // Руины (Коричневый камень)
-                [105, 105, 105], // Замок (Серый камень)
-                [0, 191, 255],   // Пещера (Голубой лед)
-                [255, 69, 0]     // Арена (Огненные стены)
+                [34, 139, 34], [139, 69, 19], [105, 105, 105], [0, 191, 255], [255, 69, 0]
             ];
 
             let gradSky = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
