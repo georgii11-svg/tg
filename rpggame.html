@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D RPG: Подземелье</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background-color: #000; overflow: hidden;
+            font-family: 'Courier New', Courier, monospace; color: white;
+            touch-action: none; user-select: none;
+        }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        /* Интерфейс (HUD) */
+        #hud {
+            position: absolute; top: 10px; left: 10px;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+        }
+        .stat { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .hp { color: #ff3333; }
+        .mp { color: #3333ff; }
+        .gold { color: #ffcc00; }
+
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; background: white;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+        }
+
+        #message {
+            position: absolute; bottom: 20%; left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px; color: yellow; text-align: center;
+            text-shadow: 2px 2px 0 #000;
+            opacity: 0; transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* Мобильное управление */
+        #mobile-controls {
+            display: none; position: absolute; bottom: 20px; width: 100%;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box;
+        }
+        .d-pad {
+            display: grid; grid-template-columns: 50px 50px 50px; gap: 5px;
+        }
+        .btn {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.2);
+            border: 2px solid white; border-radius: 10px; color: white;
+            font-size: 24px; display: flex; justify-content: center; align-items: center;
+        }
+        .btn:active { background: rgba(255,255,255,0.5); }
+        #btn-attack {
+            width: 80px; height: 80px; border-radius: 50%; background: rgba(255,0,0,0.4);
+            border: 2px solid red; font-size: 16px; font-weight: bold; align-self: flex-end;
+        }
+
+        @media (pointer: coarse) {
+            #mobile-controls { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="stat hp">❤️ HP: <span id="hp-val">100</span></div>
+        <div class="stat mp">💧 MP: <span id="mp-val">50</span></div>
+        <div class="stat gold">🪙 Золото: <span id="gold-val">0</span></div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="message"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Мобильное управление -->
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <div></div>
+            <div class="btn" id="m-up">▲</div>
+            <div></div>
+            <div class="btn" id="m-left">◀</div>
+            <div class="btn" id="m-down">▼</div>
+            <div class="btn" id="m-right">▶</div>
+        </div>
+        <div class="btn" id="btn-attack">АТАКА</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Настройки 3D
+        const FOV = Math.PI / 3; // Угол обзора
+        const RENDER_DIST = 15;  // Дальность прорисовки
+        const NUM_RAYS = canvas.width / 4; // Количество лучей (чем больше, тем четче)
+
+        // Состояние игрока
+        let player = {
+            x: 2, y: 2, // Позиция
+            angle: 0,   // Направление взгляда (в радианах)
+            hp: 100,
+            mp: 50,
+            gold: 0,
+            attackTimer: 0
+        };
+
+        // Карта (1 - стена, 0 - пусто, 2 - сундук)
+        const map = [
+            [1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,1,0,0,2,1],
+            [1,0,1,1,0,1,0,1,0,1],
+            [1,0,1,0,0,0,0,1,0,1],
+            [1,0,0,0,1,1,0,1,0,1],
+            [1,1,1,0,1,0,0,0,0,1],
+            [1,0,0,0,1,0,1,1,0,1],
+            [1,0,1,0,0,0,1,2,0,1],
+            [1,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Монстры
+        let monsters = [
+            { x: 5, y: 5, hp: 30, alive: true },
+            { x: 8, y: 7, hp: 30, alive: true }
+        ];
+
+        // Управление
+        const keys = { w: false, a: false, s: false, d: false, attack: false };
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'w' || e.key === 'ArrowUp') keys.w = true;
+            if (e.key === 's' || e.key === 'ArrowDown') keys.s = true;
+            if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = true;
+            if (e.key === 'd' || e.key === 'ArrowRight') keys.d = true;
+            if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'w' || e.key === 'ArrowUp') keys.w = false;
+            if (e.key === 's' || e.key === 'ArrowDown') keys.s = false;
+            if (e.key === 'a' || e.key === 'ArrowLeft') keys.a = false;
+            if (e.key === 'd' || e.key === 'ArrowRight') keys.d = false;
+            if (e.key === ' ') keys.attack = false;
+        });
+
+        // Кнопки мобилки
+        const bindBtn = (id, key) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', e => { e.preventDefault(); keys[key] = true; });
+            el.addEventListener('touchend', e => { e.preventDefault(); keys[key] = false; });
+        };
+        bindBtn('m-up', 'w'); bindBtn('m-down', 's');
+        bindBtn('m-left', 'a'); bindBtn('m-right', 'd');
+        bindBtn('btn-attack', 'attack');
+
+        // Функции утилиты
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x1-x2)**2 + (y1-y2)**2);
+        }
+
+        function showMsg(text) {
+            const msg = document.getElementById('message');
+            msg.innerText = text;
+            msg.style.opacity = 1;
+            setTimeout(() => msg.style.opacity = 0, 2000);
+        }
+
+        function updateStats() {
+            document.getElementById('hp-val').innerText = player.hp;
+            document.getElementById('mp-val').innerText = player.mp;
+            document.getElementById('gold-val').innerText = player.gold;
+        }
+
+        // Логика игры
+        function update() {
+            if (player.hp <= 0) {
+                showMsg("ВЫ ПОГИБЛИ! Обновите страницу.");
+                return;
+            }
+
+            // Движение (с проверкой на стены)
+            const speed = 0.05;
+            const rotSpeed = 0.05;
+            let dx = 0, dy = 0;
+
+            if (keys.w) {
+                dx += Math.cos(player.angle) * speed;
+                dy += Math.sin(player.angle) * speed;
+            }
+            if (keys.s) {
+                dx -= Math.cos(player.angle) * speed;
+                dy -= Math.sin(player.angle) * speed;
+            }
+            if (keys.a) player.angle -= rotSpeed;
+            if (keys.d) player.angle += rotSpeed;
+
+            // Проверка стен
+            let nextX = player.x + dx;
+            let nextY = player.y + dy;
+            
+            if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(nextX)] === 0) {
+                player.x = nextX; player.y = nextY;
+            } else if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) {
+                player.x = nextX; // Движение по X
+            } else if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) {
+                player.y = nextY; // Движение по Y
+            }
+
+            // Атака
+            if (keys.attack && player.attackTimer <= 0) {
+                player.attackTimer = 30; // Кулдаун 30 кадров
+                // Проверяем, есть ли монстр перед нами
+                for (let m of monsters) {
+                    if (m.alive) {
+                        let dist = distance(player.x, player.y, m.x, m.y);
+                        let angleToMonster = Math.atan2(m.y - player.y, m.x - player.x);
+                        let angleDiff = Math.abs(player.angle - angleToMonster);
+                        
+                        // Если монстр близко и прямо перед нами
+                        if (dist < 2 && (angleDiff < 0.5 || angleDiff > Math.PI * 2 - 0.5)) {
+                            m.hp -= 15;
+                            showMsg("УДАР!");
+                            if (m.hp <= 0) {
+                                m.alive = false;
+                                player.gold += 10;
+                                showMsg("МОНСТР ПОВЕРЖЕН! +10 золота");
+                                updateStats();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Регенерация и кулдауны
+            if (player.attackTimer > 0) player.attackTimer--;
+
+            // Логика монстров
+            for (let m of monsters) {
+                if (m.alive) {
+                    let dist = distance(player.x, player.y, m.x, m.y);
+                    if (dist < 5) { // Если игрок близко, монстр идет к нему
+                        let angleToPlayer = Math.atan2(player.y - m.y, player.x - m.x);
+                        let nextMX = m.x + Math.cos(angleToPlayer) * 0.02;
+                        let nextMY = m.y + Math.sin(angleToPlayer) * 0.02;
+                        
+                        // Монстры тоже не проходят сквозь стены
+                        if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
+                            m.x = nextMX; m.y = nextMY;
+                        }
+                    }
+                    // Если монстр касается игрока - бьет его
+                    if (dist < 0.8 && player.attackTimer % 20 === 0) {
+                        player.hp -= 5;
+                        showMsg("МОНСТР АТАКУЕТ!");
+                        updateStats();
+                    }
+                }
+            }
+
+            // Сбор сундуков
+            if (map[Math.floor(player.y)][Math.floor(player.x)] === 2) {
+                map[Math.floor(player.y)][Math.floor(player.x)] = 0;
+                player.gold += 50;
+                showMsg("ВЫ НАШЛИ СУНДУК! +50 золота");
+                updateStats();
+            }
+        }
+
+        // Отрисовка 3D
+        function draw() {
+            // Небо и пол
+            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            ctx.fillStyle = "#333"; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+
+            // Лучи для стен
+            const rayAngleStep = FOV / canvas.width;
+            
+            for (let x = 0; x < canvas.width; x++) {
+                let rayAngle = player.angle - (FOV / 2) + (x * rayAngleStep);
+                let dist = 0;
+                let hitWall = false;
+
+                // Пускаем луч, пока не врежемся в стену или не выйдем за дистанцию
+                while (!hitWall && dist < RENDER_DIST) {
+                    dist += 0.05;
+                    let testX = player.x + Math.cos(rayAngle) * dist;
+                    let testY = player.y + Math.sin(rayAngle) * dist;
+
+                    // Проверка границ карты
+                    if (testX < 0 || testX >= map[0].length || testY < 0 || testY >= map.length) {
+                        hitWall = true; dist = RENDER_DIST;
+                    } else if (map[Math.floor(testY)][Math.floor(testX)] > 0) {
+                        hitWall = true;
+                        // Коррекция "рыбьего глаза"
+                        dist = dist * Math.cos(rayAngle - player.angle); 
+                    }
+                }
+
+                // Высота стены обратно пропорциональна дистанции
+                let wallHeight = (canvas.height * 0.8) / dist;
+                let drawStart = (canvas.height - wallHeight) / 2;
+                
+                // Цвет стены (чем дальше, тем темнее)
+                let brightness = Math.max(0, 255 - (dist * 15));
+                if (map[Math.floor(player.y + Math.sin(rayAngle)*dist)] && map[Math.floor(player.y + Math.sin(rayAngle)*dist)][Math.floor(player.x + Math.cos(rayAngle)*dist)] === 2) {
+                    ctx.fillStyle = "rgb(200, 150, 0)"; // Сундук (желтый)
+                } else {
+                    ctx.fillStyle = `rgb(${brightness/2}, ${brightness/2}, ${brightness})`; // Синие стены
+                }
+                
+                ctx.fillRect(x, drawStart, 1, wallHeight);
+            }
+
+            // Сортировка спрайтов (монстров) по дальности (дальние рисуем первыми)
+            let visibleSprites = monsters.filter(m => m.alive).map(m => {
+                return { ...m, dist: distance(player.x, player.y, m.x, m.y) };
+            }).sort((a, b) => b.dist - a.dist);
+
+            for (let m of visibleSprites) {
+                let angleToMonster = Math.atan2(m.y - player.y, m.x - player.x) - player.angle;
+                // Нормализация угла
+                while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
+                while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
+
+                // Если монстр в поле зрения
+                if (Math.abs(angleToMonster) < FOV / 2 + 0.2) {
+                    let screenX = (canvas.width / 2) + (Math.tan(angleToMonster) / Math.tan(FOV / 2)) * (canvas.width / 2);
+                    let spriteHeight = (canvas.height * 0.8) / m.dist;
+                    let spriteWidth = spriteHeight * 0.6;
+                    let drawStartY = (canvas.height - spriteHeight) / 2;
+
+                    // Рисуем монстра (просто красный силуэт с глазами)
+                    ctx.fillStyle = "#880000"; 
+                    ctx.fillRect(screenX - spriteWidth/2, drawStartY, spriteWidth, spriteHeight);
+                    
+                    // Глаза
+                    ctx.fillStyle = "#ffff00";
+                    ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
+                    ctx.fillRect(screenX + spriteWidth/8, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
+                }
+            }
+        }
+
+        // Настройка размера канваса
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Главный цикл
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        updateStats();
+        gameLoop();
+    </script>
+</body>
+</html>
