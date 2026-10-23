@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Хардкор: Убеги от кубов</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        canvas {
+            background-color: #111;
+            border: 2px solid #555;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        #game-over {
+            position: absolute;
+            color: red;
+            font-size: 40px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 2px solid red;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Убегай от красных кубов! (Стрелочки влево/вправо)</h2>
+    
+    <!-- Само поле игры -->
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    
+    <!-- Текст проигрыша -->
+    <div id="game-over">ТЫ ПОПАЛСЯ!<br><span style="font-size: 20px; color: white;">Нажми ПРОБЕЛ для рестарта</span></div>
+
+    <!-- Весь код игры прямо тут -->
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameOverText = document.getElementById('game-over');
+
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+        const PLAYER_SPEED = 8;
+
+        let player = { x: 275, y: 350, w: 50, h: 50, color: "#00ffff" };
+        let enemies = [];
+        let score = 0;
+        let isGameOver = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let difficultyTimer = 0;
+
+        // Управление
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveLeft = true;
+            if (e.key === 'ArrowRight') moveRight = true;
+            // Пробел для рестарта
+            if (e.key === ' ' && isGameOver) restartGame();
+            // Чтобы страница не скроллилась при нажатии стрелок
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') moveLeft = false;
+            if (e.key === 'ArrowRight') moveRight = false;
+        });
+
+        function spawnEnemy() {
+            // 0 - маленький и быстрый, 1 - большой и медленный
+            let sizeType = Math.random() < 0.5 ? 0 : 1; 
+            let size = sizeType === 0 ? 25 : 60;
+            let speed = sizeType === 0 ? Math.random() * 3 + 6 : Math.random() * 2 + 3;
+            
+            // Ускорение со временем
+            speed += (score * 0.2); 
+
+            let x = Math.random() * (WIDTH - size);
+            let y = -size;
+            let color = sizeType === 0 ? "#ff3333" : "#ff8800";
+
+            enemies.push({ x: x, y: y, w: size, h: size, speed: speed, color: color });
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            // Движение игрока
+            if (moveLeft && player.x > 0) player.x -= PLAYER_SPEED;
+            if (moveRight && player.x < WIDTH - player.w) player.x += PLAYER_SPEED;
+
+            // Движение и проверка врагов
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                e.y += e.speed;
+
+                // Если враг улетел вниз
+                if (e.y > HEIGHT) {
+                    enemies.splice(i, 1);
+                    score++;
+                }
+                // Проверка столкновения (AABB)
+                else if (player.x < e.x + e.w && player.x + player.w > e.x &&
+                         player.y < e.y + e.h && player.y + player.h > e.y) {
+                    isGameOver = true;
+                    gameOverText.style.display = 'block';
+                    return;
+                }
+            }
+
+            // Спавн новых врагов
+            difficultyTimer++;
+            if (difficultyTimer > 30) {
+                difficultyTimer = 0;
+                let spawnChance = 0.4 + (score * 0.03);
+                if (Math.random() < spawnChance) {
+                    spawnEnemy();
+                    // Если счет высокий, иногда спавним сразу двух
+                    if (score > 10 && Math.random() < 0.3) {
+                        spawnEnemy();
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            // Очищаем экран
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            // Рисуем игрока
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // Рисуем врагов
+            for (let e of enemies) {
+                ctx.fillStyle = e.color;
+                ctx.fillRect(e.x, e.y, e.w, e.h);
+            }
+
+            // Рисуем счет
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.fillText("Счет: " + score, 20, 30);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            if (!isGameOver) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function restartGame() {
+            player = { x: 275, y: 350, w: 50, h: 50, color: "#00ffff" };
+            enemies = [];
+            score = 0;
+            isGameOver = false;
+            difficultyTimer = 0;
+            gameOverText.style.display = 'none';
+            gameLoop();
+        }
+
+        // Запускаем игру
+        gameLoop();
+    </script>
+</body>
+</html>
