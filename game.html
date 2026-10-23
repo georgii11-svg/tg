@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>СИСТЕМА ВЗЛОМАНА</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #ff0000;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Эффект тряски экрана */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shaking {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
+        }
+
+        #fake-virus {
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            background: rgba(50, 0, 0, 0.9);
+            border: 3px solid red;
+            border-radius: 10px;
+            box-shadow: 0 0 50px red;
+            display: none;
+            z-index: 10;
+        }
+
+        .hacked-title {
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: blink 0.5s infinite alternate;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; }
+            to { opacity: 0.3; }
+        }
+
+        #loading-bar {
+            width: 100%;
+            height: 20px;
+            background: #300;
+            border: 1px solid red;
+            margin: 15px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progress {
+            width: 0%;
+            height: 100%;
+            background: red;
+            transition: width 0.1s;
+        }
+
+        #console-text {
+            text-align: left;
+            font-size: 12px;
+            color: #ff4444;
+            height: 100px;
+            overflow: hidden;
+            margin-top: 10px;
+            word-wrap: break-word;
+        }
+
+        #prank-message {
+            display: none;
+            text-align: center;
+            color: #00ff00;
+            font-size: 40px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            text-shadow: 0 0 20px #00ff00;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body class="shaking" id="body">
+
+    <div id="fake-virus">
+        <div class="hacked-title">СИСТЕМА ВЗЛОМАНА!</div>
+        <div>Идет загрузка личных данных...</div>
+        <div id="loading-bar"><div id="progress"></div></div>
+        <div id="percent">0%</div>
+        <div id="console-text"></div>
+    </div>
+
+    <div id="prank-message">
+        ХА-ХА!<br>ЭТО БЫЛ ПРАНК! 😜<br>
+        <span style="font-size: 20px; color: white;">Твой телефон в порядке.</span>
+    </div>
+
+    <script>
+        const body = document.getElementById('body');
+        const fakeVirus = document.getElementById('fake-virus');
+        const progress = document.getElementById('progress');
+        const percent = document.getElementById('percent');
+        const consoleText = document.getElementById('console-text');
+        const prankMessage = document.getElementById('prank-message');
+
+        const hackLines = [
+            "> Обход защиты ядра...",
+            "> Доступ к галерее получен...",
+            "> Скачивание фото...",
+            "> Поиск банковских приложений...",
+            "> Перехват СМС...",
+            "> Взлом паролей...",
+            "> Отправка данных на сервер...",
+            "> ОШИБКА: АНТИВИРУС НЕ НАЙДЕН",
+            "> УНИЧТОЖЕНИЕ СИСТЕМЫ..."
+        ];
+
+        // Функция для вибрации (работает только на Android в Chrome)
+        function vibrate() {
+            if ("vibrate" in navigator) {
+                // Вибрация: [вибрировать, пауза, вибрировать, пауза...]
+                navigator.vibrate([500, 200, 500, 200, 1000, 300, 1000]);
+            }
+        }
+
+        // Генерация страшного звука (сирена) через Web Audio API
+        function playSiren() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sawtooth';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                // Резкий звук
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 2);
+                
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 2);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 2);
+            } catch (e) {
+                console.log("Браузер заблокировал звук без клика");
+            }
+        }
+
+        // Запускаем пранк при клике (чтобы браузер разрешил звук)
+        document.body.addEventListener('click', startPrank, { once: true });
+        document.body.addEventListener('touchstart', startPrank, { once: true });
+
+        function startPrank() {
+            fakeVirus.style.display = 'block';
+            
+            // Запускаем звук и вибрацию
+            playSiren();
+            vibrate();
+
+            // Запускаем ползунок загрузки
+            let currentPercent = 0;
+            let interval = setInterval(() => {
+                currentPercent += Math.random() * 3; // Случайное ускорение
+                if (currentPercent >= 100) {
+                    currentPercent = 100;
+                    clearInterval(interval);
+                }
+                
+                progress.style.width = currentPercent + "%";
+                percent.innerText = Math.floor(currentPercent) + "%";
+
+                // Рандомно добавляем текст в консоль
+                if (Math.random() < 0.3) {
+                    let line = document.createElement('div');
+                    line.innerText = hackLines[Math.floor(Math.random() * hackLines.length)];
+                    consoleText.appendChild(line);
+                    consoleText.scrollTop = consoleText.scrollHeight;
+                }
+            }, 100);
+
+            // Через 10 секунд останавливаем "вирус" и показываем пранк
+            setTimeout(() => {
+                clearInterval(interval);
+                fakeVirus.style.display = 'none';
+                prankMessage.style.display = 'block';
+                body.style.animation = 'none'; // Останавливаем тряску
+                body.style.backgroundColor = '#111'; // Меняем фон
+                
+                // Вибрация радости
+                if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+            }, 10000);
+        }
+    </script>
+</body>
+</html>
