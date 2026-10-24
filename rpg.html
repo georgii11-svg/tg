@@ -3,106 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>3D RPG v6.1</title>
+    <title>3D RPG: Ужас в Подземелье</title>
     <style>
-        /* --- ЗАЩИТА ОТ ЗУМА И ВЫДЕЛЕНИЯ --- */
-        * {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation; 
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        body {
-            margin: 0; padding: 0; background-color: #000; overflow: hidden;
-            font-family: 'Courier New', Courier, monospace; color: white;
-            touch-action: none;
-            width: 100vw; height: 100vh;
-        }
+        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+        body { margin: 0; padding: 0; background-color: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; color: white; touch-action: none; width: 100vw; height: 100vh; }
         canvas { display: block; width: 100%; height: 100%; }
         
-        #version-tag {
-            position: absolute; top: 10px; right: 10px; color: #00ff00; font-weight: bold; font-size: 14px;
-            z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid #00ff00;
-        }
+        #version-tag { position: absolute; top: 10px; right: 10px; color: #ff0000; font-weight: bold; font-size: 14px; z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid #ff0000; text-shadow: 0 0 10px red; }
 
-        #hud {
-            position: absolute; top: 10px; left: 10px; text-shadow: 2px 2px 0 #000;
-            pointer-events: none; font-size: 16px; font-weight: bold; z-index: 20;
-        }
+        #hud { position: absolute; top: 10px; left: 10px; text-shadow: 2px 2px 0 #000; pointer-events: none; font-size: 16px; font-weight: bold; z-index: 20; }
         .hp { color: #ff3333; margin-bottom: 5px; }
         .gold { color: #ffcc00; margin-bottom: 5px; }
         .quest { color: #00ffcc; font-size: 14px; margin-top: 5px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; border: 1px solid #00ffcc; }
         .weapon { color: #ffa500; font-size: 14px; margin-top: 5px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; border: 1px solid #ffa500; }
 
-        #crosshair {
-            position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white;
-            transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0.7; z-index: 20;
-        }
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0.7; z-index: 20; }
 
-        #message {
-            position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
-            font-size: 20px; color: yellow; text-align: center; text-shadow: 2px 2px 0 #000;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; white-space: nowrap; z-index: 20;
-        }
+        #message { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); font-size: 20px; color: #ff0000; text-align: center; text-shadow: 2px 2px 0 #000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; white-space: nowrap; z-index: 20; }
 
-        #level-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100; text-align: center;
-            cursor: pointer; padding: 20px; box-sizing: border-box;
-        }
-        #level-screen h1 { color: #00ffcc; font-size: 32px; margin-bottom: 10px; text-shadow: 0 0 20px #00ffcc; }
+        #level-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; cursor: pointer; padding: 20px; box-sizing: border-box; }
+        #level-screen h1 { color: #ff0000; font-size: 32px; margin-bottom: 10px; text-shadow: 0 0 20px red; }
         #level-screen p { font-size: 18px; color: white; }
 
-        #mobile-controls {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
-        }
+        #mobile-controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
-        #joystick-zone {
-            position: absolute; bottom: 20px; left: 20px;
-            width: 140px; height: 140px; background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
-            pointer-events: auto; z-index: 15;
-            touch-action: none; /* Жестко запрещаем браузеру трогать этот элемент */
-        }
-        #joystick-knob {
-            position: absolute; top: 45px; left: 45px; width: 50px; height: 50px;
-            background: rgba(255,255,255,0.5); border-radius: 50%;
-            pointer-events: none;
-        }
+        #joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 140px; height: 140px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; z-index: 15; touch-action: none; }
+        #joystick-knob { position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; }
 
-        #btn-attack {
-            position: absolute; bottom: 30px; right: 30px;
-            width: 90px; height: 90px; border-radius: 50%;
-            background: rgba(255, 0, 0, 0.4); border: 3px solid red;
-            color: white; font-size: 18px; font-weight: bold;
-            display: flex; justify-content: center; align-items: center;
-            pointer-events: auto; box-shadow: 0 0 15px red;
-            z-index: 15;
-            touch-action: none; /* Жестко запрещаем браузеру трогать эту кнопку */
-        }
+        #btn-attack { position: absolute; bottom: 30px; right: 30px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 0, 0, 0.4); border: 3px solid red; color: white; font-size: 18px; font-weight: bold; display: flex; justify-content: center; align-items: center; pointer-events: auto; box-shadow: 0 0 15px red; z-index: 15; touch-action: none; -webkit-touch-callout: none; }
         #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
 
-        #weapon-view {
-            position: absolute; bottom: 0; right: 15%; width: 80px; height: 120px;
-            background: linear-gradient(to top, #888, #ccc);
-            border: 2px solid #fff; border-radius: 5px;
-            clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
-            display: none; pointer-events: none; transform: rotate(15deg);
-            box-shadow: 0 0 10px #fff; z-index: 6;
-        }
+        #weapon-view { position: absolute; bottom: 0; right: 15%; width: 80px; height: 120px; background: linear-gradient(to top, #555, #888); border: 2px solid #fff; border-radius: 5px; clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%); display: none; pointer-events: none; transform: rotate(15deg); box-shadow: 0 0 10px #fff; z-index: 6; }
 
-        @media (pointer: coarse) {
-            #mobile-controls { display: block; }
-            #weapon-view { right: 25%; width: 60px; height: 90px; }
-        }
+        @media (pointer: coarse) { #mobile-controls { display: block; } #weapon-view { right: 25%; width: 60px; height: 90px; } }
     </style>
 </head>
 <body>
 
-    <div id="version-tag">v6.1 ANTI-ZOOM</div>
+    <div id="version-tag">v7.0 HORROR</div>
 
     <div id="hud">
         <div class="hp">❤️ HP: <span id="hp-val">100</span></div>
@@ -122,9 +60,7 @@
     </div>
 
     <div id="mobile-controls">
-        <div id="joystick-zone">
-            <div id="joystick-knob"></div>
-        </div>
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="btn-attack">БЕЙ!</div>
     </div>
 
@@ -139,11 +75,7 @@
         const ROT_SPEED = 2.5;  
 
         let level = 1;
-        let player = { 
-            x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, 
-            gold: 0, attackTimer: 0, healTimer: 0, 
-            damage: 25, weaponName: "Кулаки"
-        };
+        let player = { x: 1.5, y: 1.5, angle: 0, hp: 100, maxHp: 100, gold: 0, attackTimer: 0, healTimer: 0, damage: 25, weaponName: "Кулаки" };
         let map = [];
         let monsters = [];
         let potions = [];
@@ -153,6 +85,7 @@
 
         const levelNames = ["ЗЕЛЕНЫЙ ЛЕС", "КАМЕННЫЕ РУИНЫ", "ЗАБРОШЕННЫЙ ЗАМОК", "ЛЕДЯНАЯ ПЕЩЕРА", "ОГНЕННАЯ АРЕНА"];
 
+        // Карты оставил те же (они большие и открытые)
         const maps = [
             [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1], [1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
             [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ],
@@ -164,53 +97,31 @@
         const keys = { w: false, a: false, s: false, d: false, left: false, right: false };
         let attackRequested = false;
         let autoAttack = false;
-        
         let joyActive = false, joyStartX = 0, joyStartY = 0, joyDX = 0, joyDY = 0;
         let lookActive = false, lookLastX = 0;
 
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resizeCanvas);
         window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
         resizeCanvas();
 
         function startLevel(lvl) {
             level = lvl;
-            player.x = 1.5; player.y = 1.5; player.angle = 0;
-            player.healTimer = 0;
-            if (lvl === 1) { 
-                player.hp = 100; 
-                player.damage = 25;
-                player.weaponName = "Кулаки";
-            }
+            player.x = 1.5; player.y = 1.5; player.angle = 0; player.healTimer = 0;
+            if (lvl === 1) { player.hp = 100; player.damage = 25; player.weaponName = "Кулаки"; }
 
             map = maps[lvl - 1].map(row => [...row]);
-            monsters = [];
-            potions = [];
-            weapons = [];
+            monsters = []; potions = []; weapons = [];
 
             let numMonsters = 10 + (lvl * 2); 
-            let spawned = 0;
-            let attempts = 0;
+            let spawned = 0, attempts = 0;
             
             while (spawned < numMonsters && attempts < 2000) {
                 attempts++;
                 let mx = Math.floor(Math.random() * 18) + 1;
                 let my = Math.floor(Math.random() * 18) + 1;
-                let distToPlayer = Math.hypot(mx - player.x, my - player.y);
-                
-                if (map[my][mx] === 0 && distToPlayer > 6) {
-                    let colors = ["#880000", "#444444", "#4a0080", "#008080", "#ff4400"];
-                    monsters.push({ 
-                        x: mx + 0.5, y: my + 0.5, 
-                        homeX: mx + 0.5, homeY: my + 0.5,
-                        hp: 20 + (lvl * 15), maxHp: 20 + (lvl * 15), 
-                        attackCd: 0, alive: true,
-                        color: colors[lvl-1],
-                        aggro: false
-                    });
+                if (map[my][mx] === 0 && Math.hypot(mx - player.x, my - player.y) > 6) {
+                    monsters.push({ x: mx + 0.5, y: my + 0.5, homeX: mx + 0.5, homeY: my + 0.5, hp: 20 + (lvl * 15), maxHp: 20 + (lvl * 15), attackCd: 0, alive: true, aggro: false, shakeOffset: 0 });
                     spawned++;
                 }
             }
@@ -219,26 +130,17 @@
             while (potionsSpawned < lvl + 2) {
                 let px = Math.floor(Math.random() * 18) + 1;
                 let py = Math.floor(Math.random() * 18) + 1;
-                if (map[py][px] === 0 && Math.hypot(px - player.x, py - player.y) > 2) {
-                    potions.push({ x: px + 0.5, y: py + 0.5, alive: true });
-                    potionsSpawned++;
-                }
+                if (map[py][px] === 0 && Math.hypot(px - player.x, py - player.y) > 2) { potions.push({ x: px + 0.5, y: py + 0.5, alive: true }); potionsSpawned++; }
             }
 
             let weaponsToSpawn = (lvl === 5) ? 3 : 1;
             for (let i = 0; i < weaponsToSpawn; i++) {
                 let px, py;
-                do {
-                    px = Math.floor(Math.random() * 18) + 1;
-                    py = Math.floor(Math.random() * 18) + 1;
-                } while (map[py][px] !== 0 || Math.hypot(px - player.x, py - player.y) < 3);
-                
-                let dmg = 35 + (lvl * 5); 
-                weapons.push({ x: px + 0.5, y: py + 0.5, alive: true, damage: dmg });
+                do { px = Math.floor(Math.random() * 18) + 1; py = Math.floor(Math.random() * 18) + 1; } while (map[py][px] !== 0 || Math.hypot(px - player.x, py - player.y) < 3);
+                weapons.push({ x: px + 0.5, y: py + 0.5, alive: true, damage: 35 + (lvl * 5) });
             }
 
-            updateUI();
-            gameState = "playing";
+            updateUI(); gameState = "playing";
             document.getElementById('level-screen').style.display = 'none';
             lastTime = performance.now();
         }
@@ -247,14 +149,11 @@
             document.getElementById('hp-val').innerText = Math.floor(player.hp);
             document.getElementById('gold-val').innerText = player.gold;
             document.getElementById('weapon-text').innerText = `🗡️ Оружие: ${player.weaponName} (Урон: ${player.damage})`;
-            
             let aliveMonsters = monsters.filter(m => m.alive).length;
-            let totalMonsters = monsters.length;
-            document.getElementById('quest-text').innerText = `${levelNames[level-1]}: Убейте монстров (${totalMonsters - aliveMonsters}/${totalMonsters})`;
+            document.getElementById('quest-text').innerText = `${levelNames[level-1]}: Убейте монстров (${monsters.length - aliveMonsters}/${monsters.length})`;
 
-            if (player.weaponName === "Кулаки") {
-                weaponView.style.display = 'none';
-            } else {
+            if (player.weaponName === "Кулаки") weaponView.style.display = 'none';
+            else {
                 weaponView.style.display = 'block';
                 let colors = ["#aaa", "#cd7f32", "#c0c0c0", "#00ffff", "#ff4500"];
                 weaponView.style.background = `linear-gradient(to top, ${colors[level-1]}, #fff)`;
@@ -262,7 +161,7 @@
             }
         }
 
-        function showMsg(text, color = "yellow") {
+        function showMsg(text, color = "#ff0000") {
             const msg = document.getElementById('message');
             msg.innerText = text; msg.style.color = color; msg.style.opacity = 1;
             setTimeout(() => msg.style.opacity = 0, 1000);
@@ -279,9 +178,7 @@
 
         function update(time) {
             if (gameState !== "playing") return;
-            
-            let dt = (time - lastTime) / 1000;
-            lastTime = time;
+            let dt = (time - lastTime) / 1000; lastTime = time;
             if (dt > 0.1) dt = 0.1;
 
             if (player.hp <= 0) {
@@ -296,55 +193,32 @@
             player.healTimer += dt;
             if (player.healTimer >= 4.0) {
                 player.healTimer = 0;
-                if (player.hp < player.maxHp) {
-                    player.hp = Math.min(player.maxHp, player.hp + 5);
-                    updateUI();
-                }
+                if (player.hp < player.maxHp) { player.hp = Math.min(player.maxHp, player.hp + 5); updateUI(); }
             }
 
-            // --- ДВИЖЕНИЕ V6 ---
-            let moveX = 0; 
-            let moveY = 0; 
-
-            if (keys.w) moveY += 1;
-            if (keys.s) moveY -= 1;
-            if (keys.a) moveX -= 1;
-            if (keys.d) moveX += 1;
-
-            if (keys.left) player.angle -= ROT_SPEED * dt;
-            if (keys.right) player.angle += ROT_SPEED * dt;
+            let moveX = 0, moveY = 0;
+            if (keys.w) moveY += 1; if (keys.s) moveY -= 1; if (keys.a) moveX -= 1; if (keys.d) moveX += 1;
+            if (keys.left) player.angle -= ROT_SPEED * dt; if (keys.right) player.angle += ROT_SPEED * dt;
 
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
-                if (dist > 10) {
-                    let jx = joyDX / 50;
-                    let jy = -joyDY / 50; 
-                    moveX += jx;
-                    moveY += jy;
-                }
+                if (dist > 10) { moveX += joyDX / 50; moveY -= joyDY / 50; }
             }
 
             let moveLen = Math.hypot(moveX, moveY);
-            if (moveLen > 1) {
-                moveX /= moveLen;
-                moveY /= moveLen;
-            }
+            if (moveLen > 1) { moveX /= moveLen; moveY /= moveLen; }
 
             let dx = (Math.cos(player.angle) * moveY + Math.cos(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
             let dy = (Math.sin(player.angle) * moveY + Math.sin(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
 
-            let nextX = player.x + dx;
-            let nextY = player.y + dy;
-
+            let nextX = player.x + dx; let nextY = player.y + dy;
             if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
             if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
 
             // АТАКА
             if ((keys.attack || attackRequested || autoAttack) && player.attackTimer <= 0) {
-                player.attackTimer = 0.4; 
-                attackRequested = false;
-                let closestMonster = null;
-                let closestAngleDiff = 999;
+                player.attackTimer = 0.4; attackRequested = false;
+                let closestMonster = null, closestAngleDiff = 999;
 
                 for (let m of monsters) {
                     if (m.alive) {
@@ -352,64 +226,50 @@
                         let angleToMonster = Math.atan2(m.y - player.y, m.x - player.x) - player.angle;
                         while (angleToMonster > Math.PI) angleToMonster -= Math.PI * 2;
                         while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
-
-                        if (dist < 3.0 && Math.abs(angleToMonster) < 0.6) {
-                            if (Math.abs(angleToMonster) < closestAngleDiff) {
-                                closestAngleDiff = Math.abs(angleToMonster);
-                                closestMonster = m;
-                            }
+                        if (dist < 3.0 && Math.abs(angleToMonster) < 0.6 && Math.abs(angleToMonster) < closestAngleDiff) {
+                            closestAngleDiff = Math.abs(angleToMonster); closestMonster = m;
                         }
                     }
                 }
 
                 if (closestMonster) {
                     closestMonster.hp -= player.damage; 
-                    showMsg("УДАР!", "#ff4444");
+                    showMsg("ХРЯСЬ!", "#ff0000");
                     
                     let pushAngle = Math.atan2(closestMonster.y - player.y, closestMonster.x - player.x);
                     let nextMX = closestMonster.x + Math.cos(pushAngle) * 0.8;
                     let nextMY = closestMonster.y + Math.sin(pushAngle) * 0.8;
-                    if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
-                        closestMonster.x = nextMX; closestMonster.y = nextMY;
-                    }
-
-                    if (closestMonster.hp <= 0) { 
-                        closestMonster.alive = false; 
-                        player.gold += 10; 
-                        showMsg("+10 ЗОЛОТА", "#ffcc00");
-                    }
+                    if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) { closestMonster.x = nextMX; closestMonster.y = nextMY; }
+                    if (closestMonster.hp <= 0) { closestMonster.alive = false; player.gold += 10; showMsg("+10 ЗОЛОТА", "#ffcc00"); }
                     updateUI();
                 }
             }
-
             if (player.attackTimer > 0) player.attackTimer -= dt;
 
             // МОНСТРЫ
             for (let m of monsters) {
                 if (!m.alive) continue;
                 if (m.attackCd > 0) m.attackCd -= dt;
-
                 let distToPlayer = Math.hypot(player.x - m.x, player.y - m.y);
                 
                 if (distToPlayer < 4.0) m.aggro = true;
                 else if (distToPlayer > 7.0) m.aggro = false;
 
+                // Эффект тряски для монстров
+                if (m.aggro) m.shakeOffset = (Math.random() - 0.5) * 4; else m.shakeOffset = 0;
+
                 if (m.aggro && distToPlayer > 1.0) {
                     let angleToPlayer = Math.atan2(player.y - m.y, player.x - m.x);
                     let nextMX = m.x + Math.cos(angleToPlayer) * 2.5 * dt;
                     let nextMY = m.y + Math.sin(angleToPlayer) * 2.5 * dt;
-                    if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
-                        m.x = nextMX; m.y = nextMY;
-                    }
+                    if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) { m.x = nextMX; m.y = nextMY; }
                 } else if (!m.aggro) {
                     let distToHome = Math.hypot(m.homeX - m.x, m.homeY - m.y);
                     if (distToHome > 0.5) {
                         let angleToHome = Math.atan2(m.homeY - m.y, m.homeX - m.x);
                         let nextMX = m.x + Math.cos(angleToHome) * 1.5 * dt;
                         let nextMY = m.y + Math.sin(angleToHome) * 1.5 * dt;
-                        if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) {
-                            m.x = nextMX; m.y = nextMY;
-                        }
+                        if (map[Math.floor(nextMY)] && map[Math.floor(nextMY)][Math.floor(nextMX)] === 0) { m.x = nextMX; m.y = nextMY; }
                     }
                 }
                 
@@ -419,36 +279,14 @@
                     while (angleToMonster < -Math.PI) angleToMonster += Math.PI * 2;
                     
                     if (Math.abs(angleToMonster) < FOV / 2 + 0.2) {
-                        player.hp -= 5 + (level * 1.5); 
-                        m.attackCd = 2.0; 
-                        showMsg("МОНСТР АТАКУЕТ!", "#ff3333");
-                        updateUI();
-                    } else {
-                        m.attackCd = 1.0; 
-                    }
+                        player.hp -= 5 + (level * 1.5); m.attackCd = 2.0; showMsg("МОНСТР АТАКУЕТ!", "#ff0000"); updateUI();
+                    } else { m.attackCd = 1.0; }
                 }
             }
 
-            // ЗЕЛЬЯ
-            for (let p of potions) {
-                if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.6) {
-                    p.alive = false;
-                    player.hp = Math.min(player.maxHp, player.hp + 40); 
-                    showMsg("ЗЕЛЬЕ! +40 HP", "#00ff00");
-                    updateUI();
-                }
-            }
-
-            // ОРУЖИЕ
-            for (let w of weapons) {
-                if (w.alive && Math.hypot(player.x - w.x, player.y - w.y) < 0.6) {
-                    w.alive = false;
-                    player.damage = w.damage;
-                    player.weaponName = `Меч (+${w.damage})`;
-                    showMsg(`ВЫ НАШЛИ МЕЧ! Урон: ${w.damage}`, "#ffa500");
-                    updateUI();
-                }
-            }
+            // ЗЕЛЬЯ И ОРУЖИЕ
+            for (let p of potions) { if (p.alive && Math.hypot(player.x - p.x, player.y - p.y) < 0.6) { p.alive = false; player.hp = Math.min(player.maxHp, player.hp + 40); showMsg("ЗЕЛЬЕ! +40 HP", "#00ff00"); updateUI(); } }
+            for (let w of weapons) { if (w.alive && Math.hypot(player.x - w.x, player.y - w.y) < 0.6) { w.alive = false; player.damage = w.damage; player.weaponName = `Меч (+${w.damage})`; showMsg(`ВЫ НАШЛИ МЕЧ! Урон: ${w.damage}`, "#ffa500"); updateUI(); } }
 
             if (monsters.every(m => !m.alive)) {
                 if (document.pointerLockElement) document.exitPointerLock();
@@ -458,7 +296,7 @@
                     document.getElementById('level-desc').innerText = "Нажмите на экран для перехода";
                 } else {
                     gameState = "win";
-                    document.getElementById('level-title').innerText = "ПОБЕДА!";
+                    document.getElementById('level-title').innerText = "ВЫ ВЫЖИЛИ!";
                     document.getElementById('level-desc').innerText = `Вы прошли все миры! Золото: ${player.gold}\nНажмите, чтобы начать заново`;
                 }
                 document.getElementById('level-screen').style.display = 'flex';
@@ -468,15 +306,10 @@
         function draw() {
             if (gameState !== "playing") return;
 
-            let skyColors = [
-                ["#87CEEB", "#4682B4"], ["#001133", "#000000"], ["#191970", "#000000"], ["#E0FFFF", "#87CEFA"], ["#FF0000", "#8B0000"]
-            ];
-            let floorColors = [
-                ["#006400", "#003300"], ["#8B4513", "#3E2723"], ["#2F4F4F", "#111111"], ["#B0E0E6", "#4682B4"], ["#FF4500", "#1A0000"]
-            ];
-            let wallColors = [
-                [34, 139, 34], [139, 69, 19], [105, 105, 105], [0, 191, 255], [255, 69, 0]
-            ];
+            // Мрачные цвета для хоррора
+            let skyColors = [ ["#111", "#000"], ["#001133", "#000"], ["#110000", "#000"], ["#001a1a", "#000"], ["#330000", "#000"] ];
+            let floorColors = [ ["#002200", "#000"], ["#331100", "#000"], ["#111", "#000"], ["#001133", "#000"], ["#330000", "#000"] ];
+            let wallColors = [ [10, 40, 10], [60, 20, 10], [30, 30, 30], [0, 50, 60], [80, 0, 0] ];
 
             let gradSky = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
             gradSky.addColorStop(0, skyColors[level-1][0]); gradSky.addColorStop(1, skyColors[level-1][1]);
@@ -487,30 +320,20 @@
             ctx.fillStyle = gradFloor; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
             const rayAngleStep = FOV / canvas.width;
-
             for (let x = 0; x < canvas.width; x++) {
                 let rayAngle = player.angle - (FOV / 2) + (x * rayAngleStep);
-                let dist = 0;
-                let hitWall = false;
-
+                let dist = 0, hitWall = false;
                 while (!hitWall && dist < RENDER_DIST) {
                     dist += 0.05;
                     let testX = player.x + Math.cos(rayAngle) * dist;
                     let testY = player.y + Math.sin(rayAngle) * dist;
-                    if (testX < 0 || testX >= map[0].length || testY < 0 || testY >= map.length) {
-                        hitWall = true; dist = RENDER_DIST;
-                    } else if (map[Math.floor(testY)][Math.floor(testX)] > 0) {
-                        hitWall = true;
-                        dist = dist * Math.cos(rayAngle - player.angle); 
-                    }
+                    if (testX < 0 || testX >= map[0].length || testY < 0 || testY >= map.length) { hitWall = true; dist = RENDER_DIST; }
+                    else if (map[Math.floor(testY)][Math.floor(testX)] > 0) { hitWall = true; dist = dist * Math.cos(rayAngle - player.angle); }
                 }
-
                 let wallHeight = (canvas.height * 0.8) / dist;
                 let drawStart = (canvas.height - wallHeight) / 2;
-                
-                let shade = Math.max(0.2, 1 - (dist / RENDER_DIST)); 
+                let shade = Math.max(0.1, 1 - (dist / RENDER_DIST)); 
                 let baseCol = wallColors[level-1];
-                
                 ctx.fillStyle = `rgb(${baseCol[0]*shade}, ${baseCol[1]*shade}, ${baseCol[2]*shade})`;
                 ctx.fillRect(x, drawStart, 1, wallHeight);
             }
@@ -543,23 +366,72 @@
                     let drawStartY = (canvas.height - spriteHeight) / 2;
 
                     if (s.type === 'monster') {
-                        ctx.fillStyle = s.aggro ? "#ff0000" : s.color; 
-                        ctx.fillRect(screenX - spriteWidth/2, drawStartY, spriteWidth, spriteHeight);
-                        
-                        ctx.fillStyle = "#ffff00";
-                        ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
-                        ctx.fillRect(screenX + spriteWidth/8, drawStartY + spriteHeight/4, spriteWidth/8, spriteWidth/8);
-                        
+                        // ЭФФЕКТ ТРЯСКИ
+                        let shake = s.shakeOffset || 0;
+                        let cx = screenX + shake;
+                        let cy = drawStartY + shake;
+
+                        // Кровавая аура (если агрессивный)
+                        if (s.aggro) {
+                            ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+                            ctx.beginPath();
+                            ctx.arc(cx, cy + spriteHeight/2, spriteWidth * 0.8, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Тело монстра (темное, уродливое)
+                        ctx.fillStyle = s.aggro ? "#440000" : "#1a1a1a";
+                        ctx.beginPath();
+                        ctx.moveTo(cx - spriteWidth/2, cy + spriteHeight); // Низ лево
+                        ctx.lineTo(cx + spriteWidth/2, cy + spriteHeight); // Низ право
+                        ctx.lineTo(cx + spriteWidth/2.5, cy + spriteHeight*0.2); // Плечо право
+                        ctx.lineTo(cx + spriteWidth/4, cy); // Голова право
+                        ctx.lineTo(cx - spriteWidth/4, cy); // Голова лево
+                        ctx.lineTo(cx - spriteWidth/2.5, cy + spriteHeight*0.2); // Плечо лево
+                        ctx.closePath();
+                        ctx.fill();
+
+                        // Горящие глаза
+                        ctx.fillStyle = "#ff0000";
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = "red";
+                        ctx.beginPath();
+                        ctx.arc(cx - spriteWidth/6, cy + spriteHeight*0.15, spriteWidth/10, 0, Math.PI*2);
+                        ctx.arc(cx + spriteWidth/6, cy + spriteHeight*0.15, spriteWidth/10, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0; // Сброс
+
+                        // Зрачки (смотрят прямо на игрока)
+                        ctx.fillStyle = "#000";
+                        ctx.beginPath();
+                        ctx.arc(cx - spriteWidth/6, cy + spriteHeight*0.15, spriteWidth/30, 0, Math.PI*2);
+                        ctx.arc(cx + spriteWidth/6, cy + spriteHeight*0.15, spriteWidth/30, 0, Math.PI*2);
+                        ctx.fill();
+
+                        // Рот с зубами
+                        ctx.fillStyle = "#000";
+                        ctx.fillRect(cx - spriteWidth/4, cy + spriteHeight*0.4, spriteWidth/2, spriteHeight*0.15);
+                        // Зубы
+                        ctx.fillStyle = "#fff";
+                        for(let i=0; i<4; i++) {
+                            ctx.fillRect(cx - spriteWidth/4 + (i * spriteWidth/8), cy + spriteHeight*0.4, spriteWidth/16, spriteHeight*0.05);
+                            ctx.fillRect(cx - spriteWidth/4 + (i * spriteWidth/8), cy + spriteHeight*0.5, spriteWidth/16, spriteHeight*0.05);
+                        }
+
+                        // Полоска здоровья
                         ctx.fillStyle = "red";
-                        ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth, 5);
-                        ctx.fillStyle = "green";
-                        ctx.fillRect(screenX - spriteWidth/2, drawStartY - 10, spriteWidth * (s.hp / s.maxHp), 5);
+                        ctx.fillRect(cx - spriteWidth/2, cy - 15, spriteWidth, 6);
+                        ctx.fillStyle = "#00ff00";
+                        ctx.fillRect(cx - spriteWidth/2, cy - 15, spriteWidth * (s.hp / s.maxHp), 6);
                     } else if (s.type === 'potion') {
                         ctx.fillStyle = "#00ff00";
+                        ctx.shadowBlur = 10; ctx.shadowColor = "#00ff00";
                         ctx.fillRect(screenX - spriteWidth/4, drawStartY + spriteHeight/3, spriteWidth/2, spriteHeight/6);
                         ctx.fillRect(screenX - spriteWidth/12, drawStartY + spriteHeight/4, spriteWidth/6, spriteHeight/3);
+                        ctx.shadowBlur = 0;
                     } else if (s.type === 'weapon') {
                         ctx.fillStyle = "#ffa500";
+                        ctx.shadowBlur = 10; ctx.shadowColor = "#ffa500";
                         ctx.beginPath();
                         ctx.moveTo(screenX, drawStartY + spriteHeight/4);
                         ctx.lineTo(screenX + spriteWidth/4, drawStartY + spriteHeight/2);
@@ -567,8 +439,7 @@
                         ctx.lineTo(screenX - spriteWidth/4, drawStartY + spriteHeight/2);
                         ctx.closePath();
                         ctx.fill();
-                        ctx.fillStyle = "#fff";
-                        ctx.fillRect(screenX - 2, drawStartY + spriteHeight/2 - 2, 4, 4);
+                        ctx.shadowBlur = 0;
                     }
                 }
             }
@@ -580,8 +451,7 @@
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = true;
             if (e.key === 'a' || e.key.toLowerCase() === 'ф') keys.a = true;
             if (e.key === 'd' || e.key.toLowerCase() === 'в') keys.d = true;
-            if (e.key === 'ArrowLeft') keys.left = true; 
-            if (e.key === 'ArrowRight') keys.right = true; 
+            if (e.key === 'ArrowLeft') keys.left = true; if (e.key === 'ArrowRight') keys.right = true; 
             if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
             if ((e.key === ' ' || e.key === 'Enter') && gameState !== "playing") handleTransition();
         });
@@ -590,124 +460,54 @@
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = false;
             if (e.key === 'a' || e.key.toLowerCase() === 'ф') keys.a = false;
             if (e.key === 'd' || e.key.toLowerCase() === 'в') keys.d = false;
-            if (e.key === 'ArrowLeft') keys.left = false; 
-            if (e.key === 'ArrowRight') keys.right = false; 
+            if (e.key === 'ArrowLeft') keys.left = false; if (e.key === 'ArrowRight') keys.right = false; 
             if (e.key === ' ') keys.attack = false;
         });
 
-        canvas.addEventListener('mousemove', e => {
-            if (document.pointerLockElement === canvas) {
-                player.angle += e.movementX * 0.002;
-            }
-        });
-        canvas.addEventListener('click', () => {
-            if (gameState === "playing" && !('ontouchstart' in window)) {
-                canvas.requestPointerLock();
-                attackRequested = true;
-            }
-        });
+        canvas.addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) player.angle += e.movementX * 0.002; });
+        canvas.addEventListener('click', () => { if (gameState === "playing" && !('ontouchstart' in window)) { canvas.requestPointerLock(); attackRequested = true; } });
 
-        // --- МОБИЛЬНОЕ УПРАВЛЕНИЕ (Pointer Events) ---
-        const zoneLeft = document.getElementById('joystick-zone');
-        const knob = document.getElementById('joystick-knob');
-        const btnAttack = document.getElementById('btn-attack');
-
+        // Мобильное управление
+        const zoneLeft = document.getElementById('joystick-zone'); const knob = document.getElementById('joystick-knob'); const btnAttack = document.getElementById('btn-attack');
         let joyPointerId = null;
 
-        zoneLeft.addEventListener('pointerdown', e => {
-            e.preventDefault();
-            joyActive = true;
-            joyPointerId = e.pointerId;
-            joyStartX = e.clientX; joyStartY = e.clientY;
-            zoneLeft.setPointerCapture(e.pointerId);
-        });
-
+        zoneLeft.addEventListener('pointerdown', e => { e.preventDefault(); joyActive = true; joyPointerId = e.pointerId; joyStartX = e.clientX; joyStartY = e.clientY; zoneLeft.setPointerCapture(e.pointerId); });
         zoneLeft.addEventListener('pointermove', e => {
             if (!joyActive || e.pointerId !== joyPointerId) return;
-            e.preventDefault();
-            joyDX = e.clientX - joyStartX; joyDY = e.clientY - joyStartY;
+            e.preventDefault(); joyDX = e.clientX - joyStartX; joyDY = e.clientY - joyStartY;
             let dist = Math.hypot(joyDX, joyDY);
             if (dist > 50) { joyDX = (joyDX / dist) * 50; joyDY = (joyDY / dist) * 50; }
             knob.style.transform = `translate(${joyDX}px, ${joyDY}px)`;
         });
-
-        zoneLeft.addEventListener('pointerup', e => {
-            if (e.pointerId !== joyPointerId) return;
-            joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null;
-            knob.style.transform = `translate(0px, 0px)`;
-        });
-
-        zoneLeft.addEventListener('pointercancel', e => {
-            if (e.pointerId !== joyPointerId) return;
-            joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null;
-            knob.style.transform = `translate(0px, 0px)`;
-        });
+        zoneLeft.addEventListener('pointerup', e => { if (e.pointerId !== joyPointerId) return; joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null; knob.style.transform = `translate(0px, 0px)`; });
+        zoneLeft.addEventListener('pointercancel', e => { if (e.pointerId !== joyPointerId) return; joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null; knob.style.transform = `translate(0px, 0px)`; });
 
         let lookPointerId = null;
-
         canvas.addEventListener('pointerdown', e => {
             if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
-            lookActive = true;
-            lookPointerId = e.pointerId;
-            lookLastX = e.clientX;
+            lookActive = true; lookPointerId = e.pointerId; lookLastX = e.clientX;
         });
-
         canvas.addEventListener('pointermove', e => {
             if (!lookActive || e.pointerId !== lookPointerId) return;
-            let currentX = e.clientX;
-            let deltaX = currentX - lookLastX;
-            player.angle += deltaX * 0.005; 
-            lookLastX = currentX;
+            let currentX = e.clientX; let deltaX = currentX - lookLastX;
+            player.angle += deltaX * 0.005; lookLastX = currentX;
         });
-
-        canvas.addEventListener('pointerup', e => {
-            if (e.pointerId !== lookPointerId) return;
-            lookActive = false; lookPointerId = null;
-        });
-
-        canvas.addEventListener('pointercancel', e => {
-            if (e.pointerId !== lookPointerId) return;
-            lookActive = false; lookPointerId = null;
-        });
+        canvas.addEventListener('pointerup', e => { if (e.pointerId !== lookPointerId) return; lookActive = false; lookPointerId = null; });
+        canvas.addEventListener('pointercancel', e => { if (e.pointerId !== lookPointerId) return; lookActive = false; lookPointerId = null; });
 
         let attackPointerId = null;
+        btnAttack.addEventListener('pointerdown', e => { e.preventDefault(); autoAttack = true; attackPointerId = e.pointerId; btnAttack.setPointerCapture(e.pointerId); });
+        btnAttack.addEventListener('pointerup', e => { if (e.pointerId !== attackPointerId) return; autoAttack = false; attackPointerId = null; });
+        btnAttack.addEventListener('pointercancel', e => { if (e.pointerId !== attackPointerId) return; autoAttack = false; attackPointerId = null; });
 
-        btnAttack.addEventListener('pointerdown', e => {
-            e.preventDefault();
-            autoAttack = true;
-            attackPointerId = e.pointerId;
-            btnAttack.setPointerCapture(e.pointerId);
-        });
-
-        btnAttack.addEventListener('pointerup', e => {
-            if (e.pointerId !== attackPointerId) return;
-            autoAttack = false; attackPointerId = null;
-        });
-
-        btnAttack.addEventListener('pointercancel', e => {
-            if (e.pointerId !== attackPointerId) return;
-            autoAttack = false; attackPointerId = null;
-        });
-
-        // Отключаем контекстное меню (вызов по долгому нажатию)
         window.addEventListener('contextmenu', e => e.preventDefault());
-
         document.getElementById('level-screen').addEventListener('click', handleTransition);
-        
-        document.body.addEventListener('click', () => {
-            if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {});
-            }
-        }, { once: true });
+        document.body.addEventListener('click', () => { if (document.documentElement.requestFullscreen && !document.fullscreenElement) { document.documentElement.requestFullscreen().catch(err => {}); } }, { once: true });
 
-        function gameLoop(time) {
-            update(time);
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+        function gameLoop(time) { update(time); draw(); requestAnimationFrame(gameLoop); }
         
-        document.getElementById('level-title').innerText = "3D RPG: 5 Миров";
-        document.getElementById('level-desc').innerText = "Кликните, чтобы играть\n(WASD + Мышь / Тач)";
+        document.getElementById('level-title').innerText = "3D RPG: УЖАС";
+        document.getElementById('level-desc').innerText = "Кликните, чтобы играть\n(Приготовься...)";
         document.getElementById('level-screen').style.display = 'flex';
         requestAnimationFrame(gameLoop);
     </script>
