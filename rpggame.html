@@ -288,12 +288,11 @@
                 }
             }
 
-            // --- ЛОГИКА ДВИЖЕНИЯ ---
+            // --- ДВИЖЕНИЕ ---
             let moveX = 0;
             let moveY = 0;
             let rotAmount = 0;
 
-            // Клавиатура
             if (keys.w) moveY += 1;
             if (keys.s) moveY -= 1;
             if (keys.a) moveX -= 1;
@@ -301,24 +300,24 @@
             if (keys.left) rotAmount -= 1;
             if (keys.right) rotAmount += 1;
 
-            // Джойстик (Вверх = Вперед, Вниз = Назад, Влево/Вправо = Стрейф)
+            // Джойстик
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
-                    // Вверх по джойстику (отрицательный Y) должен давать положительный moveY (вперед)
                     moveX += joyDX / 50; 
                     moveY -= joyDY / 50; 
                 }
             }
 
-            // Нормализация
             let moveLen = Math.hypot(moveX, moveY);
             if (moveLen > 0) {
                 moveX /= moveLen;
                 moveY /= moveLen;
             }
 
-            // Пересчет в мировые координаты
+            // Применяем поворот ДО движения, чтобы идти туда, куда смотрим
+            player.angle += rotAmount * ROT_SPEED * dt;
+
             let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
             let dy = (moveX * Math.sin(player.angle) + moveY * Math.cos(player.angle)) * MOVE_SPEED * dt;
 
@@ -327,9 +326,6 @@
 
             if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
             if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
-
-            // Поворот с клавиатуры
-            player.angle += rotAmount * ROT_SPEED * dt;
 
             // АТАКА
             if ((keys.attack || attackRequested || autoAttack) && player.attackTimer <= 0) {
@@ -604,7 +600,7 @@
         const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
 
-        // 1. ДЖОЙСТИК (Ходьба) - останавливаем всплытие, чтобы не крутить камеру
+        // Джойстик
         function handleJoyStart(e) {
             e.preventDefault(); e.stopPropagation();
             joyActive = true;
@@ -628,9 +624,8 @@
         zoneLeft.addEventListener('touchmove', handleJoyMove, {passive: false});
         zoneLeft.addEventListener('touchend', handleJoyEnd);
 
-        // 2. КАМЕРА (Поворот пальцем по экрану, если не попал на джойстик/кнопку)
+        // Камера (поворот по свайпу на фоне)
         canvas.addEventListener('touchstart', e => {
-            // Если палец попал на джойстик или кнопку - игнорируем (они сами обработают)
             if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
             lookActive = true;
             lookLastX = e.touches[0].clientX;
@@ -639,7 +634,7 @@
         canvas.addEventListener('touchmove', e => {
             if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
             if (!lookActive) return;
-            e.preventDefault(); // Предотвращаем скролл страницы
+            e.preventDefault();
 
             let currentX = e.touches[0].clientX;
             let deltaX = currentX - lookLastX;
@@ -651,7 +646,7 @@
             lookActive = false;
         });
 
-        // 3. КНОПКА АТАКИ
+        // Атака
         btnAttack.addEventListener('touchstart', e => { 
             e.preventDefault(); e.stopPropagation(); 
             autoAttack = true; 
