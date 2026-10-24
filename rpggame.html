@@ -48,12 +48,13 @@
             pointer-events: none; z-index: 10;
         }
         
-        /* Джойстик */
+        /* Джойстик (Зона захвата) */
         #joystick-zone {
             position: absolute; bottom: 20px; left: 20px;
             width: 130px; height: 130px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
             pointer-events: auto; z-index: 15;
+            touch-action: none;
         }
         #joystick-knob {
             position: absolute; top: 40px; left: 40px; width: 50px; height: 50px;
@@ -315,7 +316,7 @@
                 moveY /= moveLen;
             }
 
-            // Применяем поворот ДО движения, чтобы идти туда, куда смотрим
+            // Применяем поворот ДО движения
             player.angle += rotAmount * ROT_SPEED * dt;
 
             let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
@@ -562,7 +563,7 @@
             }
         }
 
-        // --- УПРАВЛЕНИЕ ---
+        // --- УПРАВЛЕНИЕ (Pointer Events — самый надежный метод) ---
         window.addEventListener('keydown', e => {
             if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = true;
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = true;
@@ -595,68 +596,91 @@
             }
         });
 
-        // --- МОБИЛЬНОЕ УПРАВЛЕНИЕ ---
+        // --- МОБИЛЬНОЕ УПРАВЛЕНИЕ (Pointer Events) ---
         const zoneLeft = document.getElementById('joystick-zone');
         const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
 
-        // Джойстик
-        function handleJoyStart(e) {
-            e.preventDefault(); e.stopPropagation();
+        // 1. Джойстик
+        let joyPointerId = null;
+
+        zoneLeft.addEventListener('pointerdown', e => {
+            e.preventDefault();
             joyActive = true;
-            joyStartX = e.touches[0].clientX; joyStartY = e.touches[0].clientY;
-        }
-        function handleJoyMove(e) {
-            e.preventDefault(); e.stopPropagation();
-            if (!joyActive) return;
-            joyDX = e.touches[0].clientX - joyStartX; joyDY = e.touches[0].clientY - joyStartY;
+            joyPointerId = e.pointerId;
+            joyStartX = e.clientX; joyStartY = e.clientY;
+            zoneLeft.setPointerCapture(e.pointerId); // Захватываем палец
+        });
+
+        zoneLeft.addEventListener('pointermove', e => {
+            if (!joyActive || e.pointerId !== joyPointerId) return;
+            e.preventDefault();
+            joyDX = e.clientX - joyStartX; joyDY = e.clientY - joyStartY;
             let dist = Math.hypot(joyDX, joyDY);
             if (dist > 50) { joyDX = (joyDX / dist) * 50; joyDY = (joyDY / dist) * 50; }
             knob.style.transform = `translate(${joyDX}px, ${joyDY}px)`;
-        }
-        function handleJoyEnd(e) {
-            e.preventDefault(); e.stopPropagation();
-            joyActive = false; joyDX = 0; joyDY = 0;
+        });
+
+        zoneLeft.addEventListener('pointerup', e => {
+            if (e.pointerId !== joyPointerId) return;
+            joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null;
             knob.style.transform = `translate(0px, 0px)`;
-        }
+        });
 
-        zoneLeft.addEventListener('touchstart', handleJoyStart, {passive: false});
-        zoneLeft.addEventListener('touchmove', handleJoyMove, {passive: false});
-        zoneLeft.addEventListener('touchend', handleJoyEnd);
+        zoneLeft.addEventListener('pointercancel', e => {
+            if (e.pointerId !== joyPointerId) return;
+            joyActive = false; joyDX = 0; joyDY = 0; joyPointerId = null;
+            knob.style.transform = `translate(0px, 0px)`;
+        });
 
-        // Камера (поворот по свайпу на фоне)
-        canvas.addEventListener('touchstart', e => {
+        // 2. Поворот камеры (по свайпу на фоне)
+        let lookPointerId = null;
+
+        canvas.addEventListener('pointerdown', e => {
+            // Если это был клик по джойстику или кнопке, игнорируем
             if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
+            
             lookActive = true;
-            lookLastX = e.touches[0].clientX;
-        }, {passive: false});
+            lookPointerId = e.pointerId;
+            lookLastX = e.clientX;
+        });
 
-        canvas.addEventListener('touchmove', e => {
-            if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
-            if (!lookActive) return;
-            e.preventDefault();
-
-            let currentX = e.touches[0].clientX;
+        canvas.addEventListener('pointermove', e => {
+            if (!lookActive || e.pointerId !== lookPointerId) return;
+            let currentX = e.clientX;
             let deltaX = currentX - lookLastX;
             player.angle += deltaX * 0.005; 
             lookLastX = currentX;
-        }, {passive: false});
-
-        canvas.addEventListener('touchend', e => {
-            lookActive = false;
         });
 
-        // Атака
-        btnAttack.addEventListener('touchstart', e => { 
-            e.preventDefault(); e.stopPropagation(); 
-            autoAttack = true; 
+        canvas.addEventListener('pointerup', e => {
+            if (e.pointerId !== lookPointerId) return;
+            lookActive = false; lookPointerId = null;
         });
-        btnAttack.addEventListener('touchend', e => { 
-            e.preventDefault(); e.stopPropagation(); 
-            autoAttack = false; 
+
+        canvas.addEventListener('pointercancel', e => {
+            if (e.pointerId !== lookPointerId) return;
+            lookActive = false; lookPointerId = null;
         });
-        btnAttack.addEventListener('touchcancel', e => { 
-            autoAttack = false; 
+
+        // 3. Кнопка атаки
+        let attackPointerId = null;
+
+        btnAttack.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            autoAttack = true;
+            attackPointerId = e.pointerId;
+            btnAttack.setPointerCapture(e.pointerId);
+        });
+
+        btnAttack.addEventListener('pointerup', e => {
+            if (e.pointerId !== attackPointerId) return;
+            autoAttack = false; attackPointerId = null;
+        });
+
+        btnAttack.addEventListener('pointercancel', e => {
+            if (e.pointerId !== attackPointerId) return;
+            autoAttack = false; attackPointerId = null;
         });
 
         document.getElementById('level-screen').addEventListener('click', handleTransition);
