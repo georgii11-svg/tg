@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>3D RPG: Путешествие по Мирам</title>
+    <title>3D RPG: Путешествие по Мирам v5.0</title>
     <style>
         body {
             margin: 0; padding: 0; background-color: #000; overflow: hidden;
@@ -13,6 +13,12 @@
         }
         canvas { display: block; width: 100%; height: 100%; }
         
+        /* Индикатор версии (чтобы ты видел, что код обновился) */
+        #version-tag {
+            position: absolute; top: 10px; right: 10px; color: red; font-weight: bold; font-size: 12px;
+            z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 3px;
+        }
+
         #hud {
             position: absolute; top: 10px; left: 10px; text-shadow: 2px 2px 0 #000;
             pointer-events: none; font-size: 16px; font-weight: bold; z-index: 20;
@@ -48,13 +54,11 @@
             pointer-events: none; z-index: 10;
         }
         
-        /* Джойстик (Зона захвата) */
         #joystick-zone {
             position: absolute; bottom: 20px; left: 20px;
             width: 130px; height: 130px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
             pointer-events: auto; z-index: 15;
-            touch-action: none;
         }
         #joystick-knob {
             position: absolute; top: 40px; left: 40px; width: 50px; height: 50px;
@@ -62,7 +66,6 @@
             pointer-events: none;
         }
 
-        /* Кнопка атаки */
         #btn-attack {
             position: absolute; bottom: 30px; right: 30px;
             width: 90px; height: 90px; border-radius: 50%;
@@ -70,7 +73,7 @@
             color: white; font-size: 18px; font-weight: bold;
             display: flex; justify-content: center; align-items: center;
             pointer-events: auto; box-shadow: 0 0 15px red;
-            touch-action: none; z-index: 15;
+            z-index: 15;
         }
         #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
 
@@ -90,6 +93,8 @@
     </style>
 </head>
 <body>
+
+    <div id="version-tag">v5.0 FIXED</div>
 
     <div id="hud">
         <div class="hp">❤️ HP: <span id="hp-val">100</span></div>
@@ -289,7 +294,7 @@
                 }
             }
 
-            // --- ДВИЖЕНИЕ ---
+            // --- ДВИЖЕНИЕ (Исправленное) ---
             let moveX = 0;
             let moveY = 0;
             let rotAmount = 0;
@@ -301,7 +306,7 @@
             if (keys.left) rotAmount -= 1;
             if (keys.right) rotAmount += 1;
 
-            // Джойстик
+            // Джойстик (без поворота камеры!)
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
@@ -316,7 +321,6 @@
                 moveY /= moveLen;
             }
 
-            // Применяем поворот ДО движения
             player.angle += rotAmount * ROT_SPEED * dt;
 
             let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
@@ -563,7 +567,7 @@
             }
         }
 
-        // --- УПРАВЛЕНИЕ (Pointer Events — самый надежный метод) ---
+        // --- УПРАВЛЕНИЕ ---
         window.addEventListener('keydown', e => {
             if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = true;
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = true;
@@ -601,7 +605,6 @@
         const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
 
-        // 1. Джойстик
         let joyPointerId = null;
 
         zoneLeft.addEventListener('pointerdown', e => {
@@ -609,7 +612,7 @@
             joyActive = true;
             joyPointerId = e.pointerId;
             joyStartX = e.clientX; joyStartY = e.clientY;
-            zoneLeft.setPointerCapture(e.pointerId); // Захватываем палец
+            zoneLeft.setPointerCapture(e.pointerId);
         });
 
         zoneLeft.addEventListener('pointermove', e => {
@@ -633,13 +636,10 @@
             knob.style.transform = `translate(0px, 0px)`;
         });
 
-        // 2. Поворот камеры (по свайпу на фоне)
         let lookPointerId = null;
 
         canvas.addEventListener('pointerdown', e => {
-            // Если это был клик по джойстику или кнопке, игнорируем
             if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
-            
             lookActive = true;
             lookPointerId = e.pointerId;
             lookLastX = e.clientX;
@@ -663,7 +663,6 @@
             lookActive = false; lookPointerId = null;
         });
 
-        // 3. Кнопка атаки
         let attackPointerId = null;
 
         btnAttack.addEventListener('pointerdown', e => {
