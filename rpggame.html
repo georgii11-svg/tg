@@ -15,7 +15,7 @@
         
         #hud {
             position: absolute; top: 10px; left: 10px; text-shadow: 2px 2px 0 #000;
-            pointer-events: none; font-size: 16px; font-weight: bold;
+            pointer-events: none; font-size: 16px; font-weight: bold; z-index: 20;
         }
         .hp { color: #ff3333; margin-bottom: 5px; }
         .gold { color: #ffcc00; margin-bottom: 5px; }
@@ -24,13 +24,13 @@
 
         #crosshair {
             position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: white;
-            transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0.7;
+            transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; opacity: 0.7; z-index: 20;
         }
 
         #message {
             position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
             font-size: 20px; color: yellow; text-align: center; text-shadow: 2px 2px 0 #000;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; white-space: nowrap;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; white-space: nowrap; z-index: 20;
         }
 
         #level-screen {
@@ -42,39 +42,41 @@
         #level-screen h1 { color: #00ffcc; font-size: 32px; margin-bottom: 10px; text-shadow: 0 0 20px #00ffcc; }
         #level-screen p { font-size: 18px; color: white; }
 
-        /* Мобильное управление */
+        /* --- МОБИЛЬНОЕ УПРАВЛЕНИЕ --- */
         #mobile-controls {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 10;
         }
         
+        /* Зона джойстика (ходьба) */
         #joystick-zone {
             position: absolute; bottom: 20px; left: 20px;
-            width: 120px; height: 120px; background: rgba(255,255,255,0.1);
+            width: 130px; height: 130px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
-            pointer-events: auto;
+            pointer-events: auto; z-index: 12;
         }
         #joystick-knob {
-            position: absolute; top: 35px; left: 35px; width: 50px; height: 50px;
+            position: absolute; top: 40px; left: 40px; width: 50px; height: 50px;
             background: rgba(255,255,255,0.5); border-radius: 50%;
             pointer-events: none;
         }
 
+        /* Кнопка атаки */
         #btn-attack {
-            position: absolute; bottom: 20px; right: 20px;
+            position: absolute; bottom: 30px; right: 30px;
             width: 90px; height: 90px; border-radius: 50%;
             background: rgba(255, 0, 0, 0.4); border: 3px solid red;
             color: white; font-size: 18px; font-weight: bold;
             display: flex; justify-content: center; align-items: center;
             pointer-events: auto; box-shadow: 0 0 15px red;
-            touch-action: none;
+            touch-action: none; z-index: 12;
         }
         #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
 
-        /* Зона для поворота камеры пальцем (невидимая) */
-        #touch-look-zone {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: auto; z-index: 5;
+        /* Невидимая зона для поворота камеры (только правая половина экрана) */
+        #look-zone {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            pointer-events: auto; z-index: 11;
         }
 
         #weapon-view {
@@ -112,12 +114,15 @@
     </div>
 
     <div id="mobile-controls">
-        <!-- Невидимая зона на весь экран для поворота камеры -->
-        <div id="touch-look-zone"></div>
+        <!-- Зона поворота камеры (только справа) -->
+        <div id="look-zone"></div>
         
+        <!-- Джойстик (слева) -->
         <div id="joystick-zone">
             <div id="joystick-knob"></div>
         </div>
+        
+        <!-- Кнопка атаки -->
         <div id="btn-attack">БЕЙ!</div>
     </div>
 
@@ -154,15 +159,16 @@
             [ [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] ]
         ];
 
-        const keys = { w: false, a: false, s: false, d: false };
+        // Клавиши
+        const keys = { w: false, a: false, s: false, d: false, left: false, right: false };
         let attackRequested = false;
         let autoAttack = false;
         
-        // Переменные для джойстика (аналоговый ввод)
+        // Джойстик (аналоговый)
         let joyActive = false, joyStartX = 0, joyStartY = 0, joyDX = 0, joyDY = 0;
         
-        // Переменные для поворота камеры пальцем
-        let lookActive = false, lookLastX = 0, lookLastY = 0;
+        // Поворот камеры пальцем
+        let lookActive = false, lookLastX = 0;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
@@ -298,44 +304,47 @@
                 }
             }
 
-            // --- НОВАЯ ЛОГИКА ДВИЖЕНИЯ (Стрейф) ---
+            // --- ЛОГИКА ДВИЖЕНИЯ ---
             let moveX = 0;
             let moveY = 0;
             let rotAmount = 0;
 
-            // 1. Движение с клавиатуры (WASD) - теперь это стрейф!
-            if (keys.w) moveY += 1; // Вперед
-            if (keys.s) moveY -= 1; // Назад
-            if (keys.a) moveX -= 1; // Влево (стрейф)
-            if (keys.d) moveX += 1; // Вправо (стрейф)
+            // 1. Клавиатура (Стрейф по A/D, поворот по стрелкам)
+            if (keys.w) moveY += 1;
+            if (keys.s) moveY -= 1;
+            if (keys.a) moveX -= 1;
+            if (keys.d) moveX += 1;
+            if (keys.left) rotAmount -= 1;
+            if (keys.right) rotAmount += 1;
 
-            // 2. Движение с джойстика (аналоговое)
+            // 2. Джойстик (аналоговый)
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
-                    // joyDX/joyDY дают значения от -50 до 50. Нормализуем в -1 до 1.
                     moveX += joyDX / 50; 
-                    moveY -= joyDY / 50; // Инвертируем Y, так как вверх джойстика это -Y
+                    moveY -= joyDY / 50; 
                 }
             }
 
-            // Нормализация вектора движения (чтобы по диагонали не бегать быстрее)
+            // Нормализация
             let moveLen = Math.hypot(moveX, moveY);
             if (moveLen > 0) {
                 moveX /= moveLen;
                 moveY /= moveLen;
             }
 
-            // Вычисляем смещение с учетом угла поворота камеры
+            // Смещение
             let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
             let dy = (moveX * Math.sin(player.angle) + moveY * Math.cos(player.angle)) * MOVE_SPEED * dt;
 
             let nextX = player.x + dx;
             let nextY = player.y + dy;
 
-            // Коллизии
             if (map[Math.floor(player.y)] && map[Math.floor(player.y)][Math.floor(nextX)] === 0) player.x = nextX;
             if (map[Math.floor(nextY)] && map[Math.floor(nextY)][Math.floor(player.x)] === 0) player.y = nextY;
+
+            // Поворот с клавиатуры
+            player.angle += rotAmount * ROT_SPEED * dt;
 
             // АТАКА
             if ((keys.attack || attackRequested || autoAttack) && player.attackTimer <= 0) {
@@ -576,27 +585,30 @@
         window.addEventListener('keydown', e => {
             if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = true;
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = true;
-            if (e.key === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'ф') keys.a = true;
-            if (e.key === 'd' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'в') keys.d = true;
+            if (e.key === 'a' || e.key.toLowerCase() === 'ф') keys.a = true;
+            if (e.key === 'd' || e.key.toLowerCase() === 'в') keys.d = true;
+            if (e.key === 'ArrowLeft') keys.left = true; 
+            if (e.key === 'ArrowRight') keys.right = true; 
             if (e.key === ' ') { keys.attack = true; e.preventDefault(); }
             if ((e.key === ' ' || e.key === 'Enter') && gameState !== "playing") handleTransition();
         });
         window.addEventListener('keyup', e => {
             if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = false;
             if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = false;
-            if (e.key === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'ф') keys.a = false;
-            if (e.key === 'd' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'в') keys.d = false;
+            if (e.key === 'a' || e.key.toLowerCase() === 'ф') keys.a = false;
+            if (e.key === 'd' || e.key.toLowerCase() === 'в') keys.d = false;
+            if (e.key === 'ArrowLeft') keys.left = false; 
+            if (e.key === 'ArrowRight') keys.right = false; 
             if (e.key === ' ') keys.attack = false;
         });
 
-        // Мышь для поворота камеры (только на компе)
         canvas.addEventListener('mousemove', e => {
             if (document.pointerLockElement === canvas) {
                 player.angle += e.movementX * 0.002;
             }
         });
         canvas.addEventListener('click', () => {
-            if (gameState === "playing") {
+            if (gameState === "playing" && !('ontouchstart' in window)) {
                 canvas.requestPointerLock();
                 attackRequested = true;
             }
@@ -606,9 +618,9 @@
         const zoneLeft = document.getElementById('joystick-zone');
         const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
-        const lookZone = document.getElementById('touch-look-zone');
+        const lookZone = document.getElementById('look-zone');
 
-        // 1. Джойстик (ходьба)
+        // Джойстик
         function handleJoyStart(e) {
             e.preventDefault(); joyActive = true;
             joyStartX = e.touches[0].clientX; joyStartY = e.touches[0].clientY;
@@ -629,34 +641,25 @@
         zoneLeft.addEventListener('touchmove', handleJoyMove, {passive: false});
         zoneLeft.addEventListener('touchend', handleJoyEnd);
 
-        // 2. Поворот камеры пальцем (свайп по экрану)
+        // Зона поворота камеры (только правая половина)
         lookZone.addEventListener('touchstart', e => {
             e.preventDefault();
-            // Игнорируем касания, если они начались на джойстике или кнопке
-            if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
             lookActive = true;
             lookLastX = e.touches[0].clientX;
         });
-        
         lookZone.addEventListener('touchmove', e => {
             e.preventDefault();
             if (!lookActive) return;
-            if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
-
             let currentX = e.touches[0].clientX;
             let deltaX = currentX - lookLastX;
-            
-            // Поворачиваем камеру в зависимости от сдвига пальца
             player.angle += deltaX * 0.005; 
-            
             lookLastX = currentX;
         });
-
         lookZone.addEventListener('touchend', e => {
             lookActive = false;
         });
 
-        // 3. Кнопка атаки
+        // Кнопка атаки
         btnAttack.addEventListener('touchstart', e => { 
             e.preventDefault(); 
             autoAttack = true; 
@@ -671,7 +674,6 @@
 
         document.getElementById('level-screen').addEventListener('click', handleTransition);
         
-        // Полный экран при первом клике
         document.body.addEventListener('click', () => {
             if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {});
