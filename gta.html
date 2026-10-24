@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mini GTA: Open World</title>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+        body { margin: 0; padding: 0; background-color: #222; overflow: hidden; font-family: 'Arial', sans-serif; color: white; touch-action: none; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        #hud { position: absolute; top: 10px; left: 10px; pointer-events: none; z-index: 20; text-shadow: 2px 2px 0 #000; }
+        .stars { color: #ffcc00; font-size: 24px; letter-spacing: 2px; }
+        .stats { font-size: 18px; font-weight: bold; margin-top: 5px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px;}
+        
+        #weapon-hud { position: absolute; bottom: 150px; left: 20px; font-size: 24px; font-weight: bold; color: #ffcc00; text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 20; }
+
+        #message { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 24px; color: #ff0000; text-align: center; text-shadow: 2px 2px 0 #000; opacity: 0; transition: opacity 0.3s; pointer-events: none; font-weight: bold; white-space: nowrap; z-index: 20; }
+
+        #mobile-controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        
+        #joystick-zone { position: absolute; bottom: 20px; left: 20px; width: 140px; height: 140px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; pointer-events: auto; z-index: 15; touch-action: none; }
+        #joystick-knob { position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; }
+
+        #btn-action { position: absolute; bottom: 40px; right: 40px; width: 90px; height: 90px; border-radius: 50%; background: rgba(255, 0, 0, 0.4); border: 3px solid red; color: white; font-size: 16px; font-weight: bold; display: flex; justify-content: center; align-items: center; pointer-events: auto; box-shadow: 0 0 15px red; z-index: 15; touch-action: none; -webkit-touch-callout: none; }
+        #btn-action:active { background: rgba(255, 0, 0, 0.8); }
+        
+        #btn-car { position: absolute; bottom: 150px; right: 40px; width: 70px; height: 70px; border-radius: 50%; background: rgba(0, 150, 255, 0.4); border: 3px solid #00aaff; color: white; font-size: 14px; font-weight: bold; display: flex; justify-content: center; align-items: center; pointer-events: auto; z-index: 15; touch-action: none; }
+
+        @media (pointer: coarse) { #mobile-controls { display: block; } }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        <div class="stars" id="wanted-level"></div>
+        <div class="stats">💵 $<span id="money">0</span></div>
+        <div class="stats">❤️ <span id="health">100</span></div>
+    </div>
+    
+    <div id="weapon-hud">🔫 Пистолет</div>
+    <div id="message"></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="mobile-controls">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <div id="btn-action">ОГОНЬ</div>
+        <div id="btn-car">УГНАТЬ</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let WIDTH = window.innerWidth;
+        let HEIGHT = window.innerHeight;
+        
+        function resize() { WIDTH = canvas.width = window.innerWidth; HEIGHT = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- МИР ---
+        const WORLD_SIZE = 3000;
+        let camera = { x: 0, y: 0 };
+        
+        // Генерация зданий
+        let buildings = [];
+        for (let i = 0; i < 60; i++) {
+            buildings.push({
+                x: Math.random() * WORLD_SIZE,
+                y: Math.random() * WORLD_SIZE,
+                w: 100 + Math.random() * 200,
+                h: 100 + Math.random() * 200,
+                color: `hsl(${Math.random() * 360}, 20%, 30%)`
+            });
+        }
+        
+        // Дороги (просто сетка)
+        let roads = [];
+        for(let i=0; i<WORLD_SIZE; i+=300) {
+            roads.push({x: i, y: 0, w: 80, h: WORLD_SIZE}); // Вертикальные
+            roads.push({x: 0, y: i, w: WORLD_SIZE, h: 80}); // Горизонтальные
+        }
+
+        // --- СУЩНОСТИ ---
+        let player = { x: WORLD_SIZE/2, y: WORLD_SIZE/2, angle: 0, speed: 5, hp: 100, money: 0, inCar: false, shootCd: 0 };
+        
+        let npcs = [];
+        for(let i=0; i<30; i++) npcs.push({ x: Math.random()*WORLD_SIZE, y: Math.random()*WORLD_SIZE, angle: Math.random()*Math.PI*2, speed: 1.5, color: `hsl(${Math.random()*360}, 70%, 50%)`, alive: true });
+
+        let cars = [];
+        for(let i=0; i<15; i++) cars.push({ x: Math.random()*WORLD_SIZE, y: Math.random()*WORLD_SIZE, angle: Math.random()*Math.PI*2, speed: 0, color: `hsl(${Math.random()*360}, 80%, 50%)`, isPlayer: false });
+
+        let cops = [];
+        let bullets = [];
+        let wantedLevel = 0;
+
+        // --- УПРАВЛЕНИЕ ---
+        const keys = { w: false, a: false, s: false, d: false };
+        let attackRequested = false;
+        
+        // Мышь / Тач
+        let mouseX = WIDTH/2, mouseY = HEIGHT/2;
+        let joyActive = false, joyStartX = 0, joyStartY = 0, joyDX = 0, joyDY = 0;
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = true;
+            if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = true;
+            if (e.key === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'ф') keys.a = true;
+            if (e.key === 'd' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'в') keys.d = true;
+            if (e.key === ' ') { attackRequested = true; e.preventDefault(); }
+            if (e.key === 'e' || e.key.toLowerCase() === 'у') enterExitCar();
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'w' || e.key === 'ArrowUp' || e.key.toLowerCase() === 'ц') keys.w = false;
+            if (e.key === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'ы') keys.s = false;
+            if (e.key === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'ф') keys.a = false;
+            if (e.key === 'd' || e.key === 'ArrowRight' || e.key.toLowerCase() === 'в') keys.d = false;
+        });
+
+        canvas.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+        canvas.addEventListener('mousedown', () => { attackRequested = true; });
+        
+        // Мобильный джойстик
+        const zoneLeft = document.getElementById('joystick-zone'); const knob = document.getElementById('joystick-knob'); const btnAction = document.getElementById('btn-action'); const btnCar = document.getElementById('btn-car');
+        
+        zoneLeft.addEventListener('pointerdown', e => { e.preventDefault(); joyActive = true; joyStartX = e.clientX; joyStartY = e.clientY; zoneLeft.setPointerCapture(e.pointerId); });
+        zoneLeft.addEventListener('pointermove', e => {
+            if (!joyActive) return;
+            joyDX = e.clientX - joyStartX; joyDY = e.clientY - joyStartY;
+            let dist = Math.hypot(joyDX, joyDY);
+            if (dist > 50) { joyDX = (joyDX / dist) * 50; joyDY = (joyDY / dist) * 50; }
+            knob.style.transform = `translate(${joyDX}px, ${joyDY}px)`;
+        });
+        zoneLeft.addEventListener('pointerup', () => { joyActive = false; joyDX = 0; joyDY = 0; knob.style.transform = `translate(0px, 0px)`; });
+        
+        btnAction.addEventListener('pointerdown', e => { e.preventDefault(); attackRequested = true; });
+        btnCar.addEventListener('pointerdown', e => { e.preventDefault(); enterExitCar(); });
+
+        // --- ЛОГИКА ---
+        function showMsg(text, color = "#ffcc00") {
+            const msg = document.getElementById('message');
+            msg.innerText = text; msg.style.color = color; msg.style.opacity = 1;
+            setTimeout(() => msg.style.opacity = 0, 1500);
+        }
+
+        function updateUI() {
+            document.getElementById('money').innerText = player.money;
+            document.getElementById('health').innerText = Math.max(0, Math.floor(player.hp));
+            let stars = "";
+            for(let i=0; i<wantedLevel; i++) stars += "★";
+            document.getElementById('wanted-level').innerText = stars;
+        }
+
+        function enterExitCar() {
+            if (player.inCar) {
+                player.inCar = false;
+                cars[0].isPlayer = false; // Возвращаем машину
+                player.x -= 40; // Выходим рядом
+                showMsg("Вы вышли из машины");
+            } else {
+                // Ищем ближайшую машину
+                let closestCar = null; let minDist = 100;
+                for (let c of cars) {
+                    let d = Math.hypot(player.x - c.x, player.y - c.y);
+                    if (d < minDist) { minDist = d; closestCar = c; }
+                }
+                if (closestCar) {
+                    player.inCar = true;
+                    closestCar.isPlayer = true;
+                    // Делаем её первой в массиве для удобства
+                    cars = cars.filter(c => c !== closestCar);
+                    cars.unshift(closestCar);
+                    player.x = closestCar.x; player.y = closestCar.y;
+                    showMsg("Машина угнана! 🚗");
+                } else {
+                    showMsg("Нет машины рядом", "#ff0000");
+                }
+            }
+        }
+
+        function addWantedLevel() {
+            if (wantedLevel < 5) {
+                wantedLevel++;
+                showMsg("РОЗЫСК! ⭐".repeat(wantedLevel), "#ff0000");
+                // Спавн копов
+                for(let i=0; i<wantedLevel; i++) {
+                    cops.push({ x: player.x + (Math.random()-0.5)*1000, y: player.y + (Math.random()-0.5)*1000, angle: 0, speed: 2.5, shootCd: 0 });
+                }
+            }
+        }
+
+        function update() {
+            // 1. Движение игрока
+            let moveX = 0, moveY = 0;
+            if (keys.w) moveY -= 1; if (keys.s) moveY += 1; if (keys.a) moveX -= 1; if (keys.d) moveX += 1;
+            
+            if (joyActive) {
+                if (Math.hypot(joyDX, joyDY) > 10) { moveX = joyDX / 50; moveY = joyDY / 50; }
+            }
+            
+            let moveLen = Math.hypot(moveX, moveY);
+            if (moveLen > 1) { moveX /= moveLen; moveY /= moveLen; }
+
+            // Поворот персонажа (направление на мышь/палец)
+            let targetAngle = Math.atan2(mouseY - HEIGHT/2, mouseX - WIDTH/2);
+            if (joyActive && Math.hypot(joyDX, joyDY) > 10) {
+                targetAngle = Math.atan2(joyDY, joyDX);
+            }
+
+            if (!player.inCar) {
+                // Пешком
+                player.x += moveX * player.speed;
+                player.y += moveY * player.speed;
+                player.angle = targetAngle;
+            } else {
+                // На машине
+                let car = cars[0];
+                if (moveLen > 0) car.speed = Math.min(car.speed + 0.2, 8); else car.speed *= 0.95;
+                
+                // Управление
+                if (moveX !== 0) car.angle += moveX * 0.05;
+                
+                car.x += Math.cos(car.angle) * car.speed;
+                car.y += Math.sin(car.angle) * car.speed;
+                
+                player.x = car.x; player.y = car.y; player.angle = car.angle;
+                
+                // Проверка на сбивание пешеходов
+                for(let n of npcs) {
+                    if (n.alive && Math.hypot(car.x - n.x, car.y - n.y) < 30) {
+                        n.alive = false; player.money += 10; addWantedLevel(); showMsg("СБИЛ ПЕШЕХОДА!", "#ff0000");
+                    }
+                }
+            }
+            
+            // Ограничение мира
+            player.x = Math.max(50, Math.min(WORLD_SIZE - 50, player.x));
+            player.y = Math.max(50, Math.min(WORLD_SIZE - 50, player.y));
+
+            // Коллизии со зданиями (только для игрока пешком)
+            if (!player.inCar) {
+                for (let b of buildings) {
+                    if (player.x > b.x && player.x < b.x + b.w && player.y > b.y && player.y < b.y + b.h) {
+                        // Выталкиваем
+                        if (player.x < b.x + b.w/2) player.x = b.x; else player.x = b.x + b.w;
+                        if (player.y < b.y + b.h/2) player.y = b.y; else player.y = b.y + b.h;
+                    }
+                }
+            }
+
+            // 2. Стрельба
+            if (player.shootCd > 0) player.shootCd--;
+            if (attackRequested && player.shootCd <= 0 && !player.inCar) {
+                player.shootCd = 15; // Задержка
+                bullets.push({ x: player.x, y: player.y, angle: player.angle + (Math.random()-0.5)*0.1, speed: 15, life: 60 });
+            }
+            attackRequested = false;
+
+            // Пули
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.x += Math.cos(b.angle) * b.speed;
+                b.y += Math.sin(b.angle) * b.speed;
+                b.life--;
+                
+                let hit = false;
+                // Попадание в НПС
+                for (let n of npcs) {
+                    if (n.alive && Math.hypot(b.x - n.x, b.y - n.y) < 20) {
+                        n.alive = false; player.money += 20; addWantedLevel(); showMsg("УБИЙСТВО!", "#ff0000"); hit = true; break;
+                    }
+                }
+                // Попадание в копов
+                for (let i2 = cops.length - 1; i2 >= 0; i2--) {
+                    let c = cops[i2];
+                    if (Math.hypot(b.x - c.x, b.y - c.y) < 20) {
+                        cops.splice(i2, 1); player.money += 50; showMsg("КОП УБИТ!", "#ff0000"); hit = true; break;
+                    }
+                }
+                
+                if (b.life <= 0 || hit) bullets.splice(i, 1);
+            }
+
+            // 3. NPC (ходят туда-сюда)
+            for (let n of npcs) {
+                if (!n.alive) continue;
+                n.x += Math.cos(n.angle) * n.speed;
+                n.y += Math.sin(n.angle) * n.speed;
+                if (Math.random() < 0.02) n.angle += (Math.random() - 0.5) * Math.PI;
+                if (n.x < 0 || n.x > WORLD_SIZE) n.angle = Math.PI - n.angle;
+                if (n.y < 0 || n.y > WORLD_SIZE) n.angle = -n.angle;
+            }
+
+            // 4. Полиция
+            for (let c of cops) {
+                if (c.shootCd > 0) c.shootCd--;
+                let dist = Math.hypot(player.x - c.x, player.y - c.y);
+                if (dist < 800) {
+                    c.angle = Math.atan2(player.y - c.y, player.x - c.x);
+                    c.x += Math.cos(c.angle) * c.speed;
+                    c.y += Math.sin(c.angle) * c.speed;
+
+                    // Копы стреляют
+                    if (dist < 400 && c.shootCd <= 0) {
+                        c.shootCd = 60;
+                        bullets.push({ x: c.x, y: c.y, angle: c.angle + (Math.random()-0.5)*0.2, speed: 10, life: 60, isCop: true });
+                    }
+                }
+            }
+
+            // Пули копов (проверка попадания в игрока)
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                if (b.isCop && Math.hypot(b.x - player.x, b.y - player.y) < 25) {
+                    player.hp -= 10;
+                    bullets.splice(i, 1);
+                    updateUI();
+                    if (player.hp <= 0) {
+                        gameOver();
+                    }
+                }
+            }
+
+            // Камера
+            camera.x += (player.x - WIDTH/2 - camera.x) * 0.1;
+            camera.y += (player.y - HEIGHT/2 - camera.y) * 0.1;
+            
+            // UI
+            updateUI();
+        }
+
+        function gameOver() {
+            showMsg("ВАС УБИЛИ. ИГРА ОКОНЧЕНА.", "#ff0000");
+            setTimeout(() => {
+                player.hp = 100; player.money = 0; wantedLevel = 0; cops = [];
+                player.x = WORLD_SIZE/2; player.y = WORLD_SIZE/2; player.inCar = false;
+                for (let n of npcs) n.alive = true;
+                updateUI();
+            }, 3000);
+        }
+
+        // --- ОТРИСОВКА ---
+        function draw() {
+            // Очистка
+            ctx.fillStyle = "#4a4a4a"; // Асфальт
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            // Дороги
+            ctx.fillStyle = "#333";
+            for(let r of roads) ctx.fillRect(r.x, r.y, r.w, r.h);
+
+            // Здания
+            for (let b of buildings) {
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.strokeStyle = "#111";
+                ctx.lineWidth = 4;
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+            }
+
+            // Пули
+            for (let b of bullets) {
+                ctx.fillStyle = b.isCop ? "blue" : "yellow";
+                ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
+            }
+
+            // NPC
+            for (let n of npcs) {
+                if (!n.alive) continue;
+                ctx.fillStyle = n.color;
+                ctx.beginPath(); ctx.arc(n.x, n.y, 10, 0, Math.PI*2); ctx.fill();
+                // Глаза
+                ctx.fillStyle = "black";
+                ctx.beginPath(); ctx.arc(n.x + Math.cos(n.angle)*5, n.y + Math.sin(n.angle)*5, 3, 0, Math.PI*2); ctx.fill();
+            }
+
+            // Копы
+            for (let c of cops) {
+                ctx.fillStyle = "#0000ff";
+                ctx.beginPath(); ctx.arc(c.x, c.y, 15, 0, Math.PI*2); ctx.fill();
+                // Мигалка
+                if (Math.floor(Date.now()/200) % 2 === 0) {
+                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(c.x, c.y-15, 6, 0, Math.PI*2); ctx.fill();
+                }
+                ctx.fillStyle = "white";
+                ctx.beginPath(); ctx.arc(c.x + Math.cos(c.angle)*8, c.y + Math.sin(c.angle)*8, 4, 0, Math.PI*2); ctx.fill();
+            }
+
+            // Машины
+            for (let c of cars) {
+                if (c.isPlayer) continue;
+                drawCar(c, c.color);
+            }
+            if (player.inCar) {
+                drawCar(cars[0], cars[0].color);
+            } else {
+                // Игрок пешком
+                ctx.fillStyle = "#00ffcc";
+                ctx.beginPath(); ctx.arc(player.x, player.y, 12, 0, Math.PI*2); ctx.fill();
+                // Пушка
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 6;
+                ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(player.x + Math.cos(player.angle)*20, player.y + Math.sin(player.angle)*20); ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawCar(c, color) {
+            ctx.save();
+            ctx.translate(c.x, c.y);
+            ctx.rotate(c.angle);
+            
+            // Кузов
+            ctx.fillStyle = color;
+            ctx.fillRect(-30, -15, 60, 30);
+            // Крыша
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillRect(-15, -12, 30, 24);
+            // Фары
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(25, -12, 5, 5); ctx.fillRect(25, 7, 5, 5);
+            
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>
