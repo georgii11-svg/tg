@@ -3,17 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>3D RPG v6.0</title>
+    <title>3D RPG v6.1</title>
     <style>
+        /* --- ЗАЩИТА ОТ ЗУМА И ВЫДЕЛЕНИЯ --- */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation; 
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
         body {
             margin: 0; padding: 0; background-color: #000; overflow: hidden;
             font-family: 'Courier New', Courier, monospace; color: white;
-            touch-action: none; user-select: none; -webkit-user-select: none;
+            touch-action: none;
             width: 100vw; height: 100vh;
         }
         canvas { display: block; width: 100%; height: 100%; }
         
-        /* Индикатор версии */
         #version-tag {
             position: absolute; top: 10px; right: 10px; color: #00ff00; font-weight: bold; font-size: 14px;
             z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid #00ff00;
@@ -58,6 +65,7 @@
             width: 140px; height: 140px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
             pointer-events: auto; z-index: 15;
+            touch-action: none; /* Жестко запрещаем браузеру трогать этот элемент */
         }
         #joystick-knob {
             position: absolute; top: 45px; left: 45px; width: 50px; height: 50px;
@@ -73,6 +81,7 @@
             display: flex; justify-content: center; align-items: center;
             pointer-events: auto; box-shadow: 0 0 15px red;
             z-index: 15;
+            touch-action: none; /* Жестко запрещаем браузеру трогать эту кнопку */
         }
         #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
 
@@ -93,7 +102,7 @@
 </head>
 <body>
 
-    <div id="version-tag">v6.0 HARDCODED</div>
+    <div id="version-tag">v6.1 ANTI-ZOOM</div>
 
     <div id="hud">
         <div class="hp">❤️ HP: <span id="hp-val">100</span></div>
@@ -294,43 +303,33 @@
             }
 
             // --- ДВИЖЕНИЕ V6 ---
-            let moveX = 0; // Стрейф (A/D)
-            let moveY = 0; // Вперед/Назад (W/S)
+            let moveX = 0; 
+            let moveY = 0; 
 
-            // Клавиатура
             if (keys.w) moveY += 1;
             if (keys.s) moveY -= 1;
             if (keys.a) moveX -= 1;
             if (keys.d) moveX += 1;
 
-            // Поворот камеры клавиатурой (Стрелки)
             if (keys.left) player.angle -= ROT_SPEED * dt;
             if (keys.right) player.angle += ROT_SPEED * dt;
 
-            // ДЖОЙСТИК (Чистая математика, никакого поворота камеры)
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
-                    // Нормализуем значения джойстика от -1 до 1
                     let jx = joyDX / 50;
-                    let jy = -joyDY / 50; // Инвертируем Y, так как в браузере Y идет вниз, а нам надо вверх
-
-                    // Добавляем к общему движению
+                    let jy = -joyDY / 50; 
                     moveX += jx;
                     moveY += jy;
                 }
             }
 
-            // Ограничиваем вектор движения (чтобы по диагонали не было быстрее)
             let moveLen = Math.hypot(moveX, moveY);
             if (moveLen > 1) {
                 moveX /= moveLen;
                 moveY /= moveLen;
             }
 
-            // Вычисляем, куда двигаться в мировых координатах
-            // Вперед (moveY) — это cos/sin угла
-            // Вбок (moveX) — это перпендикуляр (cos(angle + PI/2), sin(angle + PI/2))
             let dx = (Math.cos(player.angle) * moveY + Math.cos(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
             let dy = (Math.sin(player.angle) * moveY + Math.sin(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
 
@@ -689,6 +688,9 @@
             if (e.pointerId !== attackPointerId) return;
             autoAttack = false; attackPointerId = null;
         });
+
+        // Отключаем контекстное меню (вызов по долгому нажатию)
+        window.addEventListener('contextmenu', e => e.preventDefault());
 
         document.getElementById('level-screen').addEventListener('click', handleTransition);
         
