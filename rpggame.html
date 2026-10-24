@@ -53,7 +53,7 @@
             position: absolute; bottom: 20px; left: 20px;
             width: 130px; height: 130px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
-            pointer-events: auto; z-index: 15; /* Самый высокий приоритет */
+            pointer-events: auto; z-index: 15;
         }
         #joystick-knob {
             position: absolute; top: 40px; left: 40px; width: 50px; height: 50px;
@@ -72,12 +72,6 @@
             touch-action: none; z-index: 15;
         }
         #btn-attack:active { background: rgba(255, 0, 0, 0.8); }
-
-        /* Зона поворота камеры (вся правая часть экрана) */
-        #look-zone {
-            position: absolute; top: 0; right: 0; width: 60%; height: 100%;
-            pointer-events: auto; z-index: 12; /* Ниже джойстика и кнопки */
-        }
 
         #weapon-view {
             position: absolute; bottom: 0; right: 15%; width: 80px; height: 120px;
@@ -114,15 +108,9 @@
     </div>
 
     <div id="mobile-controls">
-        <!-- Зона поворота камеры -->
-        <div id="look-zone"></div>
-        
-        <!-- Джойстик -->
         <div id="joystick-zone">
             <div id="joystick-knob"></div>
         </div>
-        
-        <!-- Кнопка атаки -->
         <div id="btn-attack">БЕЙ!</div>
     </div>
 
@@ -317,7 +305,7 @@
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
-                    // Инвертируем Y, потому что на экране ось Y идет вниз, а нам надо вверх
+                    // Вверх по джойстику (отрицательный Y) должен давать положительный moveY (вперед)
                     moveX += joyDX / 50; 
                     moveY -= joyDY / 50; 
                 }
@@ -330,7 +318,7 @@
                 moveY /= moveLen;
             }
 
-            // Пересчет в мировые координаты (вперед = по направлению взгляда)
+            // Пересчет в мировые координаты
             let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
             let dy = (moveX * Math.sin(player.angle) + moveY * Math.cos(player.angle)) * MOVE_SPEED * dt;
 
@@ -615,11 +603,10 @@
         const zoneLeft = document.getElementById('joystick-zone');
         const knob = document.getElementById('joystick-knob');
         const btnAttack = document.getElementById('btn-attack');
-        const lookZone = document.getElementById('look-zone');
 
-        // Джойстик (останавливаем всплытие событий, чтобы не срабатывала зона камеры)
+        // 1. ДЖОЙСТИК (Ходьба) - останавливаем всплытие, чтобы не крутить камеру
         function handleJoyStart(e) {
-            e.preventDefault(); e.stopPropagation(); // ВАЖНО: останавливаем клик по lookZone
+            e.preventDefault(); e.stopPropagation();
             joyActive = true;
             joyStartX = e.touches[0].clientX; joyStartY = e.touches[0].clientY;
         }
@@ -641,25 +628,30 @@
         zoneLeft.addEventListener('touchmove', handleJoyMove, {passive: false});
         zoneLeft.addEventListener('touchend', handleJoyEnd);
 
-        // Зона поворота камеры (правая половина)
-        lookZone.addEventListener('touchstart', e => {
-            e.preventDefault();
+        // 2. КАМЕРА (Поворот пальцем по экрану, если не попал на джойстик/кнопку)
+        canvas.addEventListener('touchstart', e => {
+            // Если палец попал на джойстик или кнопку - игнорируем (они сами обработают)
+            if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
             lookActive = true;
             lookLastX = e.touches[0].clientX;
-        });
-        lookZone.addEventListener('touchmove', e => {
-            e.preventDefault();
+        }, {passive: false});
+
+        canvas.addEventListener('touchmove', e => {
+            if (e.target.id === 'joystick-zone' || e.target.id === 'joystick-knob' || e.target.id === 'btn-attack') return;
             if (!lookActive) return;
+            e.preventDefault(); // Предотвращаем скролл страницы
+
             let currentX = e.touches[0].clientX;
             let deltaX = currentX - lookLastX;
             player.angle += deltaX * 0.005; 
             lookLastX = currentX;
-        });
-        lookZone.addEventListener('touchend', e => {
+        }, {passive: false});
+
+        canvas.addEventListener('touchend', e => {
             lookActive = false;
         });
 
-        // Кнопка атаки
+        // 3. КНОПКА АТАКИ
         btnAttack.addEventListener('touchstart', e => { 
             e.preventDefault(); e.stopPropagation(); 
             autoAttack = true; 
