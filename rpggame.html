@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>3D RPG: Путешествие по Мирам v5.0</title>
+    <title>3D RPG v6.0</title>
     <style>
         body {
             margin: 0; padding: 0; background-color: #000; overflow: hidden;
@@ -13,10 +13,10 @@
         }
         canvas { display: block; width: 100%; height: 100%; }
         
-        /* Индикатор версии (чтобы ты видел, что код обновился) */
+        /* Индикатор версии */
         #version-tag {
-            position: absolute; top: 10px; right: 10px; color: red; font-weight: bold; font-size: 12px;
-            z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.5); padding: 2px 5px; border-radius: 3px;
+            position: absolute; top: 10px; right: 10px; color: #00ff00; font-weight: bold; font-size: 14px;
+            z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 4px; border: 1px solid #00ff00;
         }
 
         #hud {
@@ -48,7 +48,6 @@
         #level-screen h1 { color: #00ffcc; font-size: 32px; margin-bottom: 10px; text-shadow: 0 0 20px #00ffcc; }
         #level-screen p { font-size: 18px; color: white; }
 
-        /* Мобильное управление */
         #mobile-controls {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 10;
@@ -56,12 +55,12 @@
         
         #joystick-zone {
             position: absolute; bottom: 20px; left: 20px;
-            width: 130px; height: 130px; background: rgba(255,255,255,0.1);
+            width: 140px; height: 140px; background: rgba(255,255,255,0.1);
             border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
             pointer-events: auto; z-index: 15;
         }
         #joystick-knob {
-            position: absolute; top: 40px; left: 40px; width: 50px; height: 50px;
+            position: absolute; top: 45px; left: 45px; width: 50px; height: 50px;
             background: rgba(255,255,255,0.5); border-radius: 50%;
             pointer-events: none;
         }
@@ -94,7 +93,7 @@
 </head>
 <body>
 
-    <div id="version-tag">v5.0 FIXED</div>
+    <div id="version-tag">v6.0 HARDCODED</div>
 
     <div id="hud">
         <div class="hp">❤️ HP: <span id="hp-val">100</span></div>
@@ -294,37 +293,46 @@
                 }
             }
 
-            // --- ДВИЖЕНИЕ (Исправленное) ---
-            let moveX = 0;
-            let moveY = 0;
-            let rotAmount = 0;
+            // --- ДВИЖЕНИЕ V6 ---
+            let moveX = 0; // Стрейф (A/D)
+            let moveY = 0; // Вперед/Назад (W/S)
 
+            // Клавиатура
             if (keys.w) moveY += 1;
             if (keys.s) moveY -= 1;
             if (keys.a) moveX -= 1;
             if (keys.d) moveX += 1;
-            if (keys.left) rotAmount -= 1;
-            if (keys.right) rotAmount += 1;
 
-            // Джойстик (без поворота камеры!)
+            // Поворот камеры клавиатурой (Стрелки)
+            if (keys.left) player.angle -= ROT_SPEED * dt;
+            if (keys.right) player.angle += ROT_SPEED * dt;
+
+            // ДЖОЙСТИК (Чистая математика, никакого поворота камеры)
             if (joyActive) {
                 let dist = Math.hypot(joyDX, joyDY);
                 if (dist > 10) {
-                    moveX += joyDX / 50; 
-                    moveY -= joyDY / 50; 
+                    // Нормализуем значения джойстика от -1 до 1
+                    let jx = joyDX / 50;
+                    let jy = -joyDY / 50; // Инвертируем Y, так как в браузере Y идет вниз, а нам надо вверх
+
+                    // Добавляем к общему движению
+                    moveX += jx;
+                    moveY += jy;
                 }
             }
 
+            // Ограничиваем вектор движения (чтобы по диагонали не было быстрее)
             let moveLen = Math.hypot(moveX, moveY);
-            if (moveLen > 0) {
+            if (moveLen > 1) {
                 moveX /= moveLen;
                 moveY /= moveLen;
             }
 
-            player.angle += rotAmount * ROT_SPEED * dt;
-
-            let dx = (moveX * Math.cos(player.angle) - moveY * Math.sin(player.angle)) * MOVE_SPEED * dt;
-            let dy = (moveX * Math.sin(player.angle) + moveY * Math.cos(player.angle)) * MOVE_SPEED * dt;
+            // Вычисляем, куда двигаться в мировых координатах
+            // Вперед (moveY) — это cos/sin угла
+            // Вбок (moveX) — это перпендикуляр (cos(angle + PI/2), sin(angle + PI/2))
+            let dx = (Math.cos(player.angle) * moveY + Math.cos(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
+            let dy = (Math.sin(player.angle) * moveY + Math.sin(player.angle + Math.PI/2) * moveX) * MOVE_SPEED * dt;
 
             let nextX = player.x + dx;
             let nextY = player.y + dy;
