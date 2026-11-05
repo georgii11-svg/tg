@@ -1,0 +1,647 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>Python Studio 4.0</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:#080d17;
+ color:#e8edf7;
+ font-family:-apple-system,Arial,sans-serif;
+}
+
+header{
+ height:65px;
+ background:#111a2a;
+ border-bottom:1px solid #26364d;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:0 16px;
+}
+
+.logo{
+ font-size:19px;
+ font-weight:800;
+ color:#65b5ff;
+}
+
+#status{
+ font-size:12px;
+ color:#fbbf24;
+}
+
+main{
+ padding:14px;
+ max-width:1000px;
+ margin:auto;
+}
+
+.toolbar{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin:5px 0 12px;
+ color:#9aacc5;
+ font-size:13px;
+ font-weight:600;
+}
+
+.editor{
+ border:1px solid #34445e;
+ border-radius:12px;
+ overflow:hidden;
+}
+
+.CodeMirror{
+ height:45vh;
+ min-height:310px;
+ font-size:15px;
+ line-height:1.65;
+ font-family:Menlo,monospace;
+ padding-top:8px;
+}
+
+.CodeMirror-gutters{
+ background:#282a36;
+ border-right:1px solid #41465b;
+}
+
+.CodeMirror-linenumber{
+ color:#71869b;
+}
+
+.buttons{
+ display:flex;
+ gap:9px;
+ margin:14px 0 22px;
+}
+
+button{
+ border:0;
+ border-radius:9px;
+ padding:13px;
+ font-size:13px;
+ font-weight:800;
+ cursor:pointer;
+}
+
+button:disabled{
+ opacity:.5;
+}
+
+.run{
+ flex:1;
+ background:#3478ed;
+ color:white;
+}
+
+.clear{
+ background:#26364d;
+ color:white;
+}
+
+.console{
+ background:#050912;
+ border:1px solid #2a3b54;
+ border-radius:12px;
+ overflow:hidden;
+}
+
+.console-head{
+ padding:14px;
+ background:#131d2e;
+ display:flex;
+ justify-content:space-between;
+ color:#9aacc5;
+ font-size:13px;
+ font-weight:700;
+}
+
+#output{
+ padding:15px;
+ min-height:170px;
+ max-height:350px;
+ overflow:auto;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere;
+ font-family:Menlo,monospace;
+ font-size:13px;
+ line-height:1.7;
+ color:#a8edbd;
+}
+
+.error{
+ color:#ff7777;
+}
+
+.input-panel{
+ display:none;
+ padding:12px;
+ border-top:1px solid #293a52;
+ background:#111a2a;
+}
+
+.input-label{
+ font-size:12px;
+ color:#8fa9c9;
+ margin-bottom:9px;
+}
+
+.input-row{
+ display:flex;
+ gap:8px;
+}
+
+#consoleInput{
+ flex:1;
+ min-width:0;
+ padding:12px;
+ border-radius:8px;
+ border:1px solid #405574;
+ outline:none;
+ background:#080d17;
+ color:white;
+ font-size:16px;
+}
+
+#consoleInput:focus{
+ border-color:#3478ed;
+}
+
+#sendInput{
+ background:#3478ed;
+ color:white;
+}
+
+.bottom{
+ display:flex;
+ gap:8px;
+ margin-top:15px;
+}
+
+.bottom button{
+ flex:1;
+ background:#17263a;
+ color:#b9d9ff;
+}
+
+footer{
+ text-align:center;
+ padding:25px;
+ font-size:11px;
+ color:#60728a;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">🐍 PYTHON STUDIO</div>
+ <div id="status">Загрузка Python...</div>
+</header>
+
+<main>
+
+<div class="toolbar">
+ <span>EDITOR / main.py</span>
+ <span>Python 3.12</span>
+</div>
+
+<div class="editor">
+<textarea id="source"># Моя первая программа!
+
+name = input("Как тебя зовут? ")
+
+if name == "Гоша":
+    print("Молодец!")
+else:
+    print("Привет,", name)
+
+print("Python работает!")
+
+for i in range(5):
+    print("Число:", i + 1)
+</textarea>
+</div>
+
+<div class="buttons">
+ <button class="run" id="runBtn" onclick="runCode()">
+ ▶ ЗАПУСТИТЬ
+ </button>
+
+ <button class="clear" onclick="clearOutput()">
+ ⌫
+ </button>
+</div>
+
+<div class="toolbar">
+ <span>TERMINAL / CONSOLE</span>
+ <span id="consoleStatus">Ожидание</span>
+</div>
+
+<div class="console">
+
+ <div class="console-head">
+  <span>PYTHON OUTPUT</span>
+  <span>● ONLINE</span>
+ </div>
+
+ <div id="output">Добро пожаловать в Python Studio!
+
+Напиши свой код и нажми «Запустить».</div>
+
+ <div class="input-panel" id="inputPanel">
+  <div class="input-label" id="inputLabel">
+   PYTHON INPUT
+  </div>
+
+  <div class="input-row">
+   <input
+    id="consoleInput"
+    type="text"
+    placeholder="Введи значение..."
+    autocomplete="off"
+   >
+   <button id="sendInput" onclick="submitInput()">
+    ENTER
+   </button>
+  </div>
+ </div>
+
+</div>
+
+<div class="bottom">
+ <button onclick="copyCode()">КОПИРОВАТЬ</button>
+ <button onclick="downloadCode()">СКАЧАТЬ .PY</button>
+ <button onclick="newFile()">НОВЫЙ ФАЙЛ</button>
+</div>
+
+</main>
+
+<footer>
+PYTHON STUDIO 4.0 · MOBILE PYTHON IDE
+</footer>
+
+<script>
+
+let editor;
+let pyodide = null;
+let running = false;
+let inputResolver = null;
+
+// EDITOR
+
+function initEditor(){
+
+ editor = CodeMirror.fromTextArea(
+  document.getElementById("source"),
+  {
+   mode:"python",
+   theme:"dracula",
+   lineNumbers:true,
+   indentUnit:4,
+   tabSize:4,
+   indentWithTabs:false,
+   lineWrapping:false,
+   autofocus:false,
+   extraKeys:{
+    "Tab":function(cm){
+     if(cm.somethingSelected()){
+      cm.indentSelection("add");
+     }else{
+      cm.replaceSelection("    ");
+     }
+    },
+    "Enter":"newlineAndIndent"
+   }
+  }
+ );
+
+}
+
+// CONSOLE
+
+const output=document.getElementById("output");
+
+function write(text){
+ output.textContent+=text;
+ output.scrollTop=output.scrollHeight;
+}
+
+function setStatus(text){
+ document.getElementById("consoleStatus").textContent=text;
+}
+
+// INPUT SYSTEM
+
+function consoleInput(promptText){
+
+ return new Promise(resolve=>{
+
+  inputResolver=resolve;
+
+  document.getElementById("inputLabel").textContent=
+   promptText || "ВВЕДИ ДАННЫЕ";
+
+  const panel=document.getElementById("inputPanel");
+  const field=document.getElementById("consoleInput");
+
+  panel.style.display="block";
+  field.value="";
+
+  panel.scrollIntoView({
+   behavior:"smooth",
+   block:"nearest"
+  });
+
+  field.focus();
+
+ });
+
+}
+
+function submitInput(){
+
+ if(!inputResolver)return;
+
+ const field=document.getElementById("consoleInput");
+ const value=field.value;
+
+ const resolve=inputResolver;
+ inputResolver=null;
+
+ write(value+"\n");
+
+ document.getElementById("inputPanel").style.display="none";
+
+ resolve(value);
+
+}
+
+document.getElementById("consoleInput")
+.addEventListener("keydown",function(event){
+
+ if(event.key==="Enter"){
+  event.preventDefault();
+  submitInput();
+ }
+
+});
+
+// PYTHON INITIALIZATION
+
+async function initializePython(){
+
+ try{
+
+  pyodide=await loadPyodide();
+
+  // Передаём функцию ввода из JavaScript в Python.
+  pyodide.globals.set(
+   "__console_input_js",
+   consoleInput
+  );
+
+  document.getElementById("status").textContent=
+   "● Python готов";
+
+  document.getElementById("status").style.color=
+   "#4ade80";
+
+ }catch(error){
+
+  document.getElementById("status").textContent=
+   "Ошибка загрузки";
+
+  write("\n"+error);
+
+ }
+
+}
+
+// PYTHON EXECUTION
+
+async function runCode(){
+
+ if(!pyodide || running)return;
+
+ running=true;
+
+ const button=document.getElementById("runBtn");
+
+ button.disabled=true;
+ button.textContent="ВЫПОЛНЕНИЕ...";
+
+ output.textContent="";
+
+ document.getElementById("inputPanel").style.display="none";
+
+ setStatus("Выполняется");
+
+ try{
+
+  // PYTHON OUTPUT
+
+  pyodide.setStdout({
+   batched:text=>{
+    write(text+"\n");
+   }
+  });
+
+  pyodide.setStderr({
+   batched:text=>{
+    const element=document.createElement("div");
+    element.className="error";
+    element.textContent=text;
+    output.appendChild(element);
+   }
+  });
+
+  // Асинхронный input() внутри консоли.
+  // AST преобразует input() в await __console_input().
+
+  pyodide.globals.set(
+   "__user_code",
+   editor.getValue()
+  );
+
+  const runner=`
+import ast
+
+class InputTransformer(ast.NodeTransformer):
+
+    def visit_Call(self, node):
+        self.generic_visit(node)
+
+        if isinstance(node.func, ast.Name) and node.func.id == "input":
+            return ast.copy_location(
+                ast.Await(
+                    ast.Call(
+                        func=ast.Name(
+                            id="__console_input",
+                            ctx=ast.Load()
+                        ),
+                        args=node.args,
+                        keywords=node.keywords
+                    )
+                ),
+                node
+            )
+
+        return node
+
+async def __console_input(prompt=""):
+    return await __console_input_js(str(prompt))
+
+tree = ast.parse(__user_code)
+tree = InputTransformer().visit(tree)
+
+wrapped = ast.AsyncFunctionDef(
+    name="__user_main__",
+    args=ast.arguments(
+        posonlyargs=[],
+        args=[],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[]
+    ),
+    body=tree.body if tree.body else [ast.Pass()],
+    decorator_list=[]
+)
+
+module = ast.Module(
+    body=[wrapped],
+    type_ignores=[]
+)
+
+ast.fix_missing_locations(module)
+
+exec(compile(module, "<main.py>", "exec"), globals())
+
+await __user_main__()
+`;
+
+  await pyodide.runPythonAsync(runner);
+
+  write("\n[Программа завершена]");
+
+  setStatus("Успешно");
+
+ }catch(error){
+
+  const element=document.createElement("div");
+
+  element.className="error";
+  element.textContent="\n"+error;
+
+  output.appendChild(element);
+
+  setStatus("Ошибка");
+
+ }finally{
+
+  running=false;
+
+  inputResolver=null;
+
+  document.getElementById("inputPanel").style.display="none";
+
+  button.disabled=false;
+  button.textContent="▶ ЗАПУСТИТЬ";
+
+ }
+
+}
+
+// CLEAR CONSOLE
+
+function clearOutput(){
+
+ if(running)return;
+
+ output.textContent="";
+ setStatus("Ожидание");
+
+}
+
+// COPY CODE
+
+async function copyCode(){
+
+ try{
+
+  await navigator.clipboard.writeText(
+   editor.getValue()
+  );
+
+  alert("Код скопирован!");
+
+ }catch(error){
+
+  alert("Не удалось скопировать");
+
+ }
+
+}
+
+// DOWNLOAD PYTHON FILE
+
+function downloadCode(){
+
+ const blob=new Blob(
+  [editor.getValue()],
+  {type:"text/x-python"}
+ );
+
+ const url=URL.createObjectURL(blob);
+
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="main.py";
+ a.click();
+
+ URL.revokeObjectURL(url);
+
+}
+
+// NEW FILE
+
+function newFile(){
+
+ if(running)return;
+
+ if(confirm("Создать новый пустой файл?")){
+
+  editor.setValue("");
+  clearOutput();
+
+ }
+
+}
+
+// START
+
+initEditor();
+initializePython();
+
+</script>
+
+</body>
+</html>
