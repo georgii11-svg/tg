@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Patrick Jane | Lie Detector</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ min-height:100vh;
+ background:radial-gradient(ellipse at top,#263b43,#10191e 55%,#080d11);
+ color:#e8e8df;
+ font-family:Georgia,serif;
+ padding:22px 15px;
+}
+.container{max-width:760px;margin:auto}
+header{text-align:center;margin:20px 0 30px}
+.logo{font-size:13px;letter-spacing:5px;color:#c69c60}
+h1{font-size:35px;letter-spacing:2px;margin:13px 0 5px}
+.subtitle{color:#9ba8a5;font:13px Arial}
+.line{height:1px;background:#806b4a;margin:22px 0}
+.panel{
+ background:rgba(15,25,29,.88);
+ border:1px solid #52605b;
+ padding:22px;
+ border-radius:8px;
+ box-shadow:0 12px 45px #0007;
+ margin-bottom:17px;
+}
+label{display:block;color:#c9a66e;font-size:14px;margin-bottom:12px}
+input,textarea{
+ width:100%;background:#0b1317;border:1px solid #42514e;
+ border-radius:5px;padding:14px;color:#fff;
+ font-size:16px;outline:none;margin-bottom:18px;
+ font-family:Arial,sans-serif;
+}
+textarea{height:150px;resize:vertical;line-height:1.5}
+input:focus,textarea:focus{border-color:#c69c60}
+button{
+ width:100%;padding:16px;border:1px solid #c69c60;
+ background:linear-gradient(120deg,#84613c,#b28a51);
+ color:#fff;font-weight:bold;letter-spacing:2px;
+ font-size:14px;border-radius:5px;cursor:pointer;
+ transition:.2s;
+}
+button:active{transform:scale(.98)}
+button:hover{filter:brightness(1.15)}
+.hint{font:12px Arial;color:#85928e;margin-top:12px;line-height:1.5}
+.hidden{display:none}
+.result{text-align:center}
+.verdict{font-size:27px;margin:15px 0}
+.score{font-size:57px;color:#d0ad76;margin:12px}
+.meter{height:9px;background:#253238;border-radius:10px;overflow:hidden}
+.fill{height:100%;width:0;background:#c69c60;transition:1s}
+.section{text-align:left;margin-top:23px}
+.section h3{font-size:14px;color:#c69c60;letter-spacing:1px}
+.section p{font:14px/1.6 Arial;color:#c3cdca}
+.tag{
+ display:inline-block;border:1px solid #53625c;
+ padding:6px 10px;border-radius:20px;
+ font:12px Arial;margin:4px;color:#c5c9bd
+}
+.warning{font:12px Arial;color:#87918d;line-height:1.6}
+.footer{text-align:center;color:#60706b;font:11px Arial;margin:30px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+ <div class="logo">MENTALIST INVESTIGATION SYSTEM</div>
+ <h1>PATRICK JANE</h1>
+ <div class="subtitle">BEHAVIORAL TEXT ANALYZER · VERSION 1.0</div>
+ <div class="line"></div>
+</header>
+
+<div class="panel">
+ <label>ИМЯ ПОДОЗРЕВАЕМОГО</label>
+ <input id="person" placeholder="Например, Михаил">
+
+ <label>ФРАЗА ИЛИ ПОКАЗАНИЯ</label>
+ <textarea id="speech" placeholder="Введите слова человека, которые нужно проанализировать..."></textarea>
+
+ <button onclick="analyze()">ПРОВЕСТИ АНАЛИЗ</button>
+ <div class="hint">Совет Джейна: обращайте внимание не только на то, что человек говорит, но и на то, как он строит свои объяснения.</div>
+</div>
+
+<div class="panel hidden" id="result">
+ <div class="logo">ANALYSIS COMPLETE</div>
+ <div class="verdict" id="verdict"></div>
+ <div class="score" id="score">0%</div>
+ <div class="subtitle">ИНДЕКС ТЕКСТОВОЙ ПОДОЗРИТЕЛЬНОСТИ</div>
+ <div class="meter"><div class="fill" id="fill"></div></div>
+
+ <div class="section">
+  <h3>ПСИХОЛОГИЧЕСКИЙ РАЗБОР</h3>
+  <p id="explanation"></p>
+ </div>
+
+ <div class="section">
+  <h3>ОБНАРУЖЕННЫЕ ПРИЗНАКИ</h3>
+  <div id="tags"></div>
+ </div>
+
+ <div class="section">
+  <h3>ВЫВОД ДЖЕЙНА</h3>
+  <p id="conclusion"></p>
+ </div>
+
+ <div class="line"></div>
+ <p class="warning">ВНИМАНИЕ: это эвристический анализ текста, а не настоящий детектор лжи. Слова сами по себе не доказывают обман.</p>
+</div>
+
+<div class="footer">© PATRICK JANE INVESTIGATION SYSTEM</div>
+</div>
+
+<script>
+function analyze(){
+ const person=document.getElementById('person').value.trim()||'Подозреваемый';
+ const original=document.getElementById('speech').value.trim();
+
+ if(original.length<5){
+  alert('Введите показания подозреваемого.');
+  return;
+ }
+
+ const t=original.toLowerCase();
+ let score=0;
+ let findings=[];
+ let explanations=[];
+
+ const patterns=[
+  {
+   words:['честно говоря','клянусь','зуб даю','поверьте мне','говорю правду'],
+   points:9,
+   name:'Усиленное заверение',
+   explanation:'Человек отдельно подчёркивает свою честность. Это может быть обычным способом речи, но заслуживает внимания в контексте.'
+  },
+  {
+   words:['не помню','не знаю','без понятия','не могу сказать'],
+   points:7,
+   name:'Недостаток конкретики',
+   explanation:'В ответе присутствует неопределённость. Возможно, человек действительно не помнит подробностей.'
+  },
+  {
+   words:['это не я','я этого не делал','я не виноват','не трогал'],
+   points:8,
+   name:'Отрицание причастности',
+   explanation:'Человек отрицает участие. Важно проверить, отвечает ли он именно на заданный вопрос.'
+  },
+  {
+   words:['зачем мне это','какой смысл мне','мне это незачем'],
+   points:10,
+   name:'Апелляция к мотиву',
+   explanation:'Вместо описания событий человек приводит довод о том, почему ему якобы незачем было это делать.'
+  },
+  {
+   words:['возможно','наверное','кажется','вроде бы'],
+   points:5,
+   name:'Неуверенные формулировки',
+   explanation:'Используются слова, выражающие неопределённость. Это не обязательно означает обман.'
+  },
+  {
+   words:['не помню точно','примерно','около того'],
+   points:5,
+   name:'Неточность деталей',
+   explanation:'Некоторые детали сформулированы приблизительно.'
+  },
+  {
+   words:['потом','после этого','затем','сначала'],
+   points:0,
+   name:'Хронологические маркеры',
+   explanation:'Человек использует последовательность событий. Стоит проверить, согласуется ли она с другими показаниями.'
+  },
+  {
+   words:['но','однако','хотя'],
+   points:3,
+   name:'Оговорки и противопоставления',
+   explanation:'Присутствуют противопоставления. Нужно посмотреть, не противоречат ли части высказывания друг другу.'
+  }
+ ];
+
+ patterns.forEach(p=>{
+  const found=p.words.filter(w=>t.includes(w));
+  if(found.length){
+   score+=p.points;
+   findings.push(p.name);
+   explanations.push(p.explanation);
+  }
+ });
+
+ // Повторения слов
+ const words=t.match(/[а-яёa-z]{3,}/g)||[];
+ const counts={};
+ words.forEach(w=>counts[w]=(counts[w]||0)+1);
+ const repeated=Object.entries(counts)
+  .filter(([w,n])=>n>=3 && !['это','что','как','его','она','они','мне','для'].includes(w));
+
+ if(repeated.length){
+  score+=Math.min(10,repeated.length*3);
+  findings.push('Повторение слов');
+  explanations.push('Некоторые слова повторяются несколько раз. Это может быть особенностью речи или попыткой подчеркнуть мысль.');
+ }
+
+ // Внутреннее противоречие
+ const contradictions=[
+  {
+   a:['я был дома','я находился дома'],
+   b:['я был на улице','я находился на улице'],
+   name:'Возможное противоречие местонахождения'
+  },
+  {
+   a:['я никого не видел','никого не встречал'],
+   b:['я видел его','я встретил его'],
+   name:'Возможное противоречие о встрече'
+  },
+  {
+   a:['я ничего не брал','я не брал'],
+   b:['я взял','я забрал'],
+   name:'Возможное противоречие о предмете'
+  }
+ ];
+
+ contradictions.forEach(c=>{
+  if(c.a.some(x=>t.includes(x)) && c.b.some(x=>t.includes(x))){
+   score+=20;
+   findings.push(c.name);
+   explanations.push('В тексте есть две формулировки, которые могут противоречить друг другу. Необходимо уточнить контекст и последовательность событий.');
+  }
+ });
+
+ // Длина и структура
+ if(words.length<8){
+  explanations.push('Показания короткие. Для полноценного анализа недостаточно контекста.');
+ }else{
+  explanations.push('Объём текста позволяет оценить несколько особенностей формулировок, но не установить достоверность рассказа.');
+ }
+
+ score=Math.min(95,score);
+
+ let verdict='';
+ let conclusion='';
+
+ if(score<15){
+  verdict='ЯВНЫХ ПОДОЗРИТЕЛЬНЫХ ПРИЗНАКОВ НЕТ';
+  conclusion='В тексте мало отмеченных особенностей. Но это не доказывает, что человек говорит правду.';
+ }else if(score<35){
+  verdict='НЕБОЛЬШИЕ ПОДОЗРЕНИЯ';
+  conclusion='Есть отдельные особенности речи. Джейн посоветовал бы задать дополнительные вопросы.';
+ }else if(score<60){
+  verdict='ТРЕБУЕТСЯ ДОПРОС';
+  conclusion='Обнаружено несколько признаков, требующих проверки. Сравните показания с независимыми фактами.';
+ }else{
+  verdict='ВЫСОКИЙ ИНДЕКС ПОДОЗРИТЕЛЬНОСТИ';
+  conclusion='В тексте есть несколько потенциально важных особенностей. Однако высокий индекс не означает, что человек лжёт.';
+ }
+
+ document.getElementById('verdict').textContent=verdict;
+ document.getElementById('score').textContent=score+'%';
+ document.getElementById('fill').style.width=score+'%';
+ document.getElementById('explanation').textContent=explanations.join(' ');
+ document.getElementById('conclusion').textContent=person+': '+conclusion;
+
+ const tags=document.getElementById('tags');
+ tags.innerHTML='';
+ if(findings.length===0){
+  tags.innerHTML='<span class="tag">Особых признаков не найдено</span>';
+ }else{
+  findings.forEach(f=>{
+   const el=document.createElement('span');
+   el.className='tag';
+   el.textContent=f;
+   tags.appendChild(el);
+  });
+ }
+
+ const result=document.getElementById('result');
+ result.classList.remove('hidden');
+ result.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
