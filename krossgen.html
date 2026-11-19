@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crossword Generator PRO</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  background: #10131d;
+  color: #f2f4ff;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 27px;
+  margin: 12px 0 5px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #929bb5;
+  margin-bottom: 25px;
+}
+
+.panel {
+  background: #1b2030;
+  border: 1px solid #343c53;
+  border-radius: 15px;
+  padding: 17px;
+  margin-bottom: 15px;
+}
+
+h2 {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+
+label {
+  display: block;
+  margin: 14px 0 7px;
+  font-weight: bold;
+}
+
+textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+  border: 1px solid #414c69;
+  background: #111625;
+  color: white;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 15px;
+  outline: none;
+  font-family: monospace;
+}
+
+textarea:focus {
+  border-color: #8b83ff;
+}
+
+.hint {
+  color: #929bb5;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 11px;
+  background: #7668ff;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:active {
+  transform: scale(.98);
+}
+
+.secondary {
+  background: #303951;
+}
+
+#status {
+  padding: 13px;
+  border-radius: 10px;
+  background: #111625;
+  margin-top: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.good {
+  color: #60e6a0;
+}
+
+.bad {
+  color: #ff7777;
+}
+
+.grid-scroll {
+  overflow: auto;
+  padding: 10px 2px;
+  max-height: 70vh;
+}
+
+.crossword {
+  display: grid;
+  gap: 2px;
+  width: max-content;
+  margin: auto;
+}
+
+.cell {
+  width: 29px;
+  height: 29px;
+  background: #30394e;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.cell.filled {
+  background: #f2f4ff;
+  color: #151a28;
+}
+
+.cell.crossing {
+  background: #91f0b8;
+  color: #10251b;
+}
+
+.word-list {
+  line-height: 1.9;
+  font-size: 14px;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+td, th {
+  border-bottom: 1px solid #414b63;
+  padding: 9px 5px;
+  text-align: left;
+}
+
+th {
+  color: #aeb8d4;
+}
+
+footer {
+  text-align: center;
+  color: #78839e;
+  font-size: 12px;
+  padding: 20px;
+}
+
+@media(max-width:500px) {
+  body { padding: 10px; }
+  .cell {
+    width: 25px;
+    height: 25px;
+    font-size: 13px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>🧩 CROSSWORD PRO</h1>
+<div class="subtitle">
+Точный генератор кроссвордов
+</div>
+
+<div class="panel">
+
+<h2>Ввод слов</h2>
+
+<label>↔ По горизонтали</label>
+<textarea id="horizontal"
+placeholder="ПРИРОДА
+ЗОЛОТО
+САХАРА
+САВАННА"></textarea>
+
+<div class="hint">
+Вводи каждое слово с новой строки или через запятую.
+</div>
+
+<label>↕ По вертикали</label>
+<textarea id="vertical"
+placeholder="РАЗНООБРАЗНОЙ
+МАЛИ
+ГАНА
+ИСЛАМ"></textarea>
+
+<div class="hint">
+Слова будут размещаться только в указанном направлении.
+</div>
+
+<button onclick="generate()">
+⚡ СОЗДАТЬ КРОССВОРД
+</button>
+
+<button class="secondary" onclick="example()">
+Загрузить пример
+</button>
+
+<div id="status">
+Ожидание запуска генератора.
+</div>
+
+</div>
+
+<div class="panel" id="result" style="display:none">
+
+<h2>🧩 Готовый кроссворд</h2>
+
+<div class="grid-scroll">
+<div id="grid" class="crossword"></div>
+</div>
+
+<div class="hint">
+Зелёные клетки — пересечения слов.
+</div>
+
+</div>
+
+<div class="panel" id="wordsPanel" style="display:none">
+<h2>📚 Расположение слов</h2>
+<div id="wordList" class="word-list"></div>
+</div>
+
+<div class="panel" id="checkPanel" style="display:none">
+<h2>🔍 Проверка пересечений</h2>
+<div id="checks"></div>
+</div>
+
+</div>
+
+<footer>
+CROSSWORD GENERATOR PRO 1.0
+</footer>
+
+<script>
+
+// ======================================
+// НАСТРОЙКИ
+// ======================================
+
+const MAX_NODES = 120000;
+const MAX_SPAN = 45;
+
+let nodes = 0;
+
+// ======================================
+// ЧТЕНИЕ СЛОВ
+// ======================================
+
+function readWords(id, direction) {
+
+  const text = document.getElementById(id).value;
+
+  return text
+    .split(/[\n,;]+/)
+    .map(x => x.trim().toUpperCase()
+      .replace(/Ё/g, "Е")
+      .replace(/[^А-ЯA-Z]/g, ""))
+    .filter(Boolean)
+    .map((word, index) => ({
+      word,
+      dir: direction,
+      id: direction + index
+    }));
+}
+
+// ======================================
+// СОЗДАНИЕ КАРТЫ ЗАНЯТЫХ КЛЕТОК
+// ======================================
+
+function buildMap(placements) {
+
+  const map = new Map();
+
+  for (const p of placements) {
+
+    for (let i = 0; i < p.word.length; i++) {
+
+      const r = p.r + (p.dir === "V" ? i : 0);
+      const c = p.c + (p.dir === "H" ? i : 0);
+      const key = `${r},${c}`;
+
+      if (!map.has(key)) {
+        map.set(key, {
+          char: p.word[i],
+          dirs: new Set()
+        });
+      }
+
+      map.get(key).dirs.add(p.dir);
+    }
+  }
+
+  return map;
+}
+
+// ======================================
+// ПРОВЕРКА ГРАНИЦ
+// ======================================
+
+function withinBounds(placements, candidate) {
+
+  const all = [...placements, candidate];
+
+  let minR = Infinity;
+  let maxR = -Infinity;
+  let minC = Infinity;
+  let maxC = -Infinity;
+
+  for (const p of all) {
+
+    const endR = p.r + (p.dir === "V" ? p.word.length - 1 : 0);
+    const endC = p.c + (p.dir === "H" ? p.word.length - 1 : 0);
+
+    minR = Math.min(minR, p.r);
+    maxR = Math.max(maxR, endR);
+    minC = Math.min(minC, p.c);
+    maxC = Math.max(maxC, endC);
+  }
+
+  return (
+    maxR - minR + 1 <= MAX_SPAN &&
+    maxC - minC + 1 <= MAX_SPAN
+  );
+}
+
+// ======================================
+// ПРОВЕРКА КАНДИДАТА
+// ======================================
+
+function canPlace(candidate, placements) {
+
+  const map = buildMap(placements);
+  const { word, dir, r, c } = candidate;
+
+  if (!withinBounds(placements, candidate)) {
+    return false;
+  }
+
+  // Клетки перед и после слова должны быть свободны.
+
+  const beforeR = r - (dir === "V" ? 1 : 0);
+  const beforeC = c - (dir === "H" ? 1 : 0);
+
+  const afterR = r + (dir === "V" ? word.length : 0);
+  const afterC = c + (dir === "H" ? word.length : 0);
+
+  if (map.has(`${beforeR},${beforeC}`)) return false;
+  if (map.has(`${afterR},${afterC}`)) return false;
+
+  let intersections = 0;
+
+  for (let i = 0; i < word.length; i++) {
+
+    const rr = r + (dir === "V" ? i : 0);
+    const cc = c + (dir === "H" ? i : 0);
+
+    const key = `${rr},${cc}`;
+    const existing = map.get(key);
+
+    if (existing) {
+
+      // Пересечение возможно только разными направлениями.
+
+      if (existing.char !== word[i]) return false;
+      if (existing.dirs.has(dir)) return false;
+
+      intersections++;
+
+    } else {
+
+      // Нельзя касаться другого слова боковой стороной.
+
+      const neighbors = dir === "H"
+        ? [[rr - 1, cc], [rr + 1, cc]]
+        : [[rr, cc - 1], [rr, cc + 1]];
+
+      for (const [nr, nc] of neighbors) {
+        if (map.has(`${nr},${nc}`)) return false;
+      }
+    }
+  }
+
+  return intersections > 0;
+}
+
+// ======================================
+// ПОИСК ВОЗМОЖНЫХ РАЗМЕЩЕНИЙ
+// ======================================
+
+function getCandidates(item, placements) {
+
+  const map = buildMap(placements);
+  const candidates = new Map();
+
+  for (const p of placements) {
+
+    if (p.dir === item.dir) continue;
+
+    for (let i = 0; i < p.word.length; i++) {
+
+      const er = p.r + (p.dir === "V" ? i : 0);
+      const ec = p.c + (p.dir === "H" ? i : 0);
+
+      for (let j = 0; j < item.word.length; j++) {
+
+        if (p.word[i] !== item.word[j]) continue;
+
+        let r, c;
+
+        if (item.dir === "H") {
+          r = er;
+          c = ec - j;
+        } else {
+          r = er - j;
+          c = ec;
+        }
+
+        const candidate = {
+          word: item.word,
+          dir: item.dir,
+          id: item.id,
+          r,
+          c
+        };
+
+        const key = `${r},${c}`;
+
+        if (!candidates.has(key) &&
+            canPlace(candidate, placements)) {
+
+          candidates.set(key, candidate);
+        }
+      }
+    }
+  }
+
+  return [...candidates.values()];
+}
+
+// ======================================
+// РЕКУРСИВНЫЙ ПОИСК РЕШЕНИЯ
+// ======================================
+
+function solve(placements, remaining) {
+
+  nodes++;
+
+  if (nodes > MAX_NODES) return null;
+
+  if (remaining.length === 0) {
+    return placements;
+  }
+
+  let bestItem = null;
+  let bestCandidates = null;
+
+  // Выбираем слово с наименьшим числом доступных
+  // размещений. Это сокращает количество перебора.
+
+  for (const item of remaining) {
+
+    const candidates = getCandidates(item, placements);
+
+    if (candidates.length === 0) continue;
+
+    if (
+      bestCandidates === null ||
+      candidates.length < bestCandidates.length
+    ) {
+      bestItem = item;
+      bestCandidates = candidates;
+    }
+  }
+
+  if (!bestItem) return null;
+
+  const nextRemaining = remaining.filter(
+    x => x.id !== bestItem.id
+  );
+
+  for (const candidate of bestCandidates) {
+
+    const result = solve(
+      [...placements, candidate],
+      nextRemaining
+    );
+
+    if (result) return result;
+
+    if (nodes > MAX_NODES) return null;
+  }
+
+  return null;
+}
+
+// ======================================
+// ГЕНЕРАТОР
+// ======================================
+
+function generate() {
+
+  const status = document.getElementById("status");
+
+  const horizontal = readWords("horizontal", "H");
+  const vertical = readWords("vertical", "V");
+
+  const all = [...horizontal, ...vertical];
+
+  document.getElementById("result").style.display = "none";
+  document.getElementById("wordsPanel").style.display = "none";
+  document.getElementById("checkPanel").style.display = "none";
+
+  if (all.length < 2) {
+    status.innerHTML =
+      '<span class="bad">Добавь хотя бы два слова разных направлений.</span>';
+    return;
+  }
+
+  if (all.length > 15) {
+    status.innerHTML =
+      '<span class="bad">Для этой версии максимум 15 слов.</span>';
+    return;
+  }
+
+  if (all.some(x => x.word.length > 25)) {
+    status.innerHTML =
+      '<span class="bad">Максимальная длина слова — 25 букв.</span>';
+    return;
+  }
+
+  if (!horizontal.length || !vertical.length) {
+    status.innerHTML =
+      '<span class="bad">Нужны слова и по горизонтали, и по вертикали.</span>';
+    return;
+  }
+
+  const unique = new Set(all.map(x => x.id));
+
+  if (unique.size !== all.length) {
+    status.textContent = "Ошибка идентификаторов слов.";
+    return;
+  }
+
+  nodes = 0;
+
+  // Первым ставим самое длинное горизонтальное слово.
+
+  const first = [...horizontal].sort(
+    (a,b) => b.word.length - a.word.length
+  )[0];
+
+  const start = {
+    ...first,
+    r: 0,
+    c: 0
+  };
+
+  const remaining = all.filter(x => x.id !== first.id);
+
+  status.textContent = "Ищу корректное расположение слов...";
+
+  const solution = solve([start], remaining);
+
+  if (!solution) {
+
+    status.innerHTML =
+      '<span class="bad">Не удалось найти кроссворд со всеми словами. ' +
+      'Возможно, пересечения невозможны или превышен лимит поиска. ' +
+      'Попробуй заменить некоторые слова.</span>' +
+      '<br>Проверено вариантов: ' + nodes;
+
+    return;
+  }
+
+  render(solution);
+
+  status.innerHTML =
+    '<span class="good">✓ Кроссворд успешно создан!</span>' +
+    '<br>Всего слов: ' + solution.length +
+    '<br>Проверено узлов поиска: ' + nodes;
+}
+
+// ======================================
+// ПОСТРОЕНИЕ И ОТОБРАЖЕНИЕ СЕТКИ
+// ======================================
+
+function render(placements) {
+
+  const map = buildMap(placements);
+
+  let minR = Infinity, maxR = -Infinity;
+  let minC = Infinity, maxC = -Infinity;
+
+  for (const p of placements) {
+
+    minR = Math.min(minR, p.r);
+    minC = Math.min(minC, p.c);
+
+    maxR = Math.max(
+      maxR,
+      p.r + (p.dir === "V" ? p.word.length - 1 : 0)
+    );
+
+    maxC = Math.max(
+      maxC,
+      p.c + (p.dir === "H" ? p.word.length - 1 : 0)
+    );
+  }
+
+  const rows = maxR - minR + 1;
+  const cols = maxC - minC + 1;
+
+  const grid = document.getElementById("grid");
+
+  grid.innerHTML = "";
+  grid.style.gridTemplateColumns = `repeat(${cols}, 29px)`;
+
+  for (let r = minR; r <= maxR; r++) {
+
+    for (let c = minC; c <= maxC; c++) {
+
+      const cell = document.createElement("div");
+      const data = map.get(`${r},${c}`);
+
+      cell.className = "cell";
+
+      if (data) {
+
+        cell.textContent = data.char;
+        cell.classList.add("filled");
+
+        if (data.dirs.size > 1) {
+          cell.classList.add("crossing");
+        }
+      }
+
+      grid.appendChild(cell);
+    }
+  }
+
+  // Список размещённых слов.
+
+  const wordList = document.getElementById("wordList");
+
+  wordList.innerHTML = "";
+
+  const directions = {
+    H: "Горизонтально",
+    V: "Вертикально"
+  };
+
+  placements.forEach(p => {
+
+    const div = document.createElement("div");
+
+    div.textContent =
+      directions[p.dir] + ": " + p.word +
+      " (строка " + (p.r - minR + 1) +
+      ", столбец " + (p.c - minC + 1) + ")";
+
+    wordList.appendChild(div);
+  });
+
+  // Проверка всех пересечений.
+
+  const checks = document.getElementById("checks");
+
+  checks.innerHTML = "";
+
+  const table = document.createElement("table");
+
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Строка</th>
+        <th>Столбец</th>
+        <th>Буква</th>
+        <th>Проверка</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  `;
+
+  const tbody = table.querySelector("tbody");
+
+  let intersectionCount = 0;
+  let valid = true;
+
+  for (const [key, data] of map.entries()) {
+
+    if (data.dirs.size < 2) continue;
+
+    const [r,c] = key.split(",").map(Number);
+
+    const tr = document.createElement("tr");
+
+    const values = [
+      r - minR + 1,
+      c - minC + 1,
+      data.char,
+      "✓ Совпадает"
+    ];
+
+    values.forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+
+    intersectionCount++;
+  }
+
+  if (intersectionCount === 0) valid = false;
+
+  checks.appendChild(table);
+
+  const summary = document.createElement("p");
+
+  summary.className = valid ? "good" : "bad";
+
+  summary.textContent = valid
+    ? `✓ Все ${intersectionCount} пересечений совпадают.`
+    : "Пересечения не найдены.";
+
+  checks.appendChild(summary);
+
+  document.getElementById("result").style.display = "block";
+  document.getElementById("wordsPanel").style.display = "block";
+  document.getElementById("checkPanel").style.display = "block";
+}
+
+// ======================================
+// ПРИМЕР
+// ======================================
+
+function example() {
+
+  document.getElementById("horizontal").value =
+`ПРИРОДА
+ЗОЛОТО
+САХАРА
+САВАННА`;
+
+  document.getElementById("vertical").value =
+`РАЗНООБРАЗНОЙ
+МАЛИ
+ГАНА
+ИСЛАМ`;
+
+  document.getElementById("status").textContent =
+    "Пример загружен. Нажми «Создать кроссворд».";
+}
+
+</script>
+</body>
+</html>
