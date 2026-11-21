@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NEON PANIC</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#080912;color:white;
+ font-family:Arial,sans-serif;overflow:hidden;
+ touch-action:manipulation;
+}
+#game{
+ width:100vw;height:100dvh;position:relative;
+ overflow:hidden;
+ background:radial-gradient(ellipse at center,#17182c,#080912 75%);
+}
+header{
+ display:flex;justify-content:space-around;
+ padding:20px 5px;text-align:center;
+ position:relative;z-index:5;
+}
+.stat{font-size:12px;color:#9295b5}
+.stat b{display:block;color:white;font-size:24px;margin-top:5px}
+#arena{position:absolute;inset:85px 0 65px;overflow:hidden}
+.ball{
+ position:absolute;border-radius:50%;
+ display:flex;align-items:center;justify-content:center;
+ cursor:pointer;
+ box-shadow:0 0 18px currentColor,0 0 40px currentColor;
+ animation:appear .15s ease-out;
+}
+@keyframes appear{from{transform:scale(0)}to{transform:scale(1)}}
+.ball:active{transform:scale(.8)}
+#bottom{
+ position:absolute;bottom:15px;width:100%;text-align:center;
+ color:#777b9e;font-size:12px;
+}
+.overlay{
+ position:absolute;inset:0;background:#080912eF;
+ display:flex;flex-direction:column;
+ justify-content:center;align-items:center;
+ text-align:center;z-index:10;padding:25px;
+}
+h1{font-size:42px;margin:0 0 10px;
+ color:#48eaff;text-shadow:0 0 25px #00cfff}
+button{
+ border:0;border-radius:14px;padding:17px 42px;
+ background:#48eaff;color:#080912;
+ font-size:18px;font-weight:bold;margin-top:25px;
+ box-shadow:0 0 25px #48eaff66;
+}
+button:active{transform:scale(.95)}
+.small{color:#a3a5c3;line-height:1.8;max-width:300px}
+#combo{color:#ffdc63;font-weight:bold;font-size:18px}
+</style>
+</head>
+<body>
+<div id="game">
+<header>
+ <div class="stat">СЧЁТ<b id="score">0</b></div>
+ <div class="stat">РЕКОРД<b id="record">0</b></div>
+ <div class="stat">ЖИЗНИ<b id="lives">❤️❤️❤️</b></div>
+</header>
+<div id="arena"></div>
+<div id="bottom"><span id="combo">КОМБО ×1</span> · ЛОВИ И УВОРАЧИВАЙСЯ</div>
+
+<div class="overlay" id="menu">
+ <h1>NEON PANIC</h1>
+ <p class="small">
+ 🔵 Голубые шары: +1 очко<br>
+ 🟣 Фиолетовые: +5 очков<br>
+ 🔴 Красные: минус жизнь<br><br>
+ Чем больше очков — тем выше скорость!
+ </p>
+ <button onclick="startGame()">НАЧАТЬ ИГРУ</button>
+</div>
+
+<div class="overlay" id="end" style="display:none">
+ <h1>ИГРА ОКОНЧЕНА</h1>
+ <p class="small">Твой результат:</p>
+ <div id="final" style="font-size:48px;color:#48eaff;font-weight:bold">0</div>
+ <p id="bestText" class="small"></p>
+ <button onclick="startGame()">ЕЩЁ РАЗ</button>
+</div>
+</div>
+<script>
+const arena=document.getElementById('arena');
+const scoreEl=document.getElementById('score');
+const livesEl=document.getElementById('lives');
+const recordEl=document.getElementById('record');
+const comboEl=document.getElementById('combo');
+
+let score=0,lives=3,combo=1,playing=false;
+let timer,spawnTimer,speed=1;
+let record=Number(localStorage.getItem('neonRecord')||0);
+recordEl.textContent=record;
+
+function startGame(){
+ document.getElementById('menu').style.display='none';
+ document.getElementById('end').style.display='none';
+ arena.innerHTML='';
+ score=0;lives=3;combo=1;speed=1;playing=true;
+ update();
+ spawn();
+ spawnTimer=setInterval(spawn,750);
+ timer=setInterval(()=>{
+   speed=1+score/35;
+ },100);
+}
+
+function update(){
+ scoreEl.textContent=score;
+ livesEl.textContent='❤️'.repeat(lives)+'🖤'.repeat(3-lives);
+ comboEl.textContent='КОМБО ×'+combo;
+}
+
+function spawn(){
+ if(!playing)return;
+ const ball=document.createElement('div');
+ const chance=Math.random();
+ let type='blue',color='#48eaff',points=1;
+ if(chance>.78&&chance<.93){
+  type='purple';color='#c56aff';points=5;
+ }else if(chance>=.93){
+  type='red';color='#ff456b';points=-1;
+ }
+ const size=type==='purple'?49:43;
+ ball.className='ball';
+ ball.style.width=size+'px';
+ ball.style.height=size+'px';
+ ball.style.background=color;
+ ball.style.color=color;
+ ball.style.left=Math.random()*(arena.clientWidth-size)+'px';
+ ball.style.top='-55px';
+ ball.dataset.type=type;
+ ball.dataset.points=points;
+ arena.appendChild(ball);
+
+ let y=-55;
+ const velocity=(2.1+Math.random()*1.2)*speed;
+ const fall=setInterval(()=>{
+  if(!playing){clearInterval(fall);return}
+  y+=velocity;
+  ball.style.top=y+'px';
+  if(y>arena.clientHeight){
+   clearInterval(fall);
+   if(ball.parentNode)ball.remove();
+   if(type!=='red'){
+    combo=1;update();
+   }
+  }
+ },16);
+
+ ball.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  if(!playing)return;
+  clearInterval(fall);
+  if(type==='red'){
+   lives--;combo=1;
+  }else{
+   combo=Math.min(combo+1,10);
+   score+=points*combo;
+   if(type==='purple')score+=5*combo;
+  }
+  ball.remove();
+  update();
+  if(lives<=0)endGame();
+ });
+}
+
+function endGame(){
+ playing=false;
+ clearInterval(timer);
+ clearInterval(spawnTimer);
+ arena.innerHTML='';
+ if(score>record){
+  record=score;
+  localStorage.setItem('neonRecord',record);
+ }
+ recordEl.textContent=record;
+ document.getElementById('final').textContent=score;
+ document.getElementById('bestText').textContent=
+  score>=record?'НОВЫЙ РЕКОРД! 🏆':'Твой рекорд: '+record;
+ document.getElementById('end').style.display='flex';
+}
+</script>
+</body>
+</html>
